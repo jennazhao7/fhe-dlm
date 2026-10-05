@@ -288,3 +288,72 @@ Still open for you: sync `cluster/` to CRC (§6.4: rsync from this repo,
 `bash cluster/setup_fideslib.sh`, `qstat -u jzhao7`,
 `qsub cluster/job_gpu_fides.sh`. §6.2, §6.3 and the hoisting question need
 tjws-class RAM (≥ 40 GB) and were not started.
+
+## 9. Session 2026-10-05, part 2: layer audit + token-group packing (cloud, no cluster)
+
+1. **Per-layer depth audit (§6.3), done at toy size.** `scripts/e0_layer_audit.py`
+   builds the cost model's layer as real CKKS (same interleaved layout and kernels),
+   checks it against numpy, and records levels per stage. Toy shape, real crypto:
+   N=2^12, depth 43, 59/60, [4,4], full slots, d=48→D=64, head 16, T=32, B=4.
+   Level accounting does not depend on N or d. Full size:
+   `--logn 17 --d 768 --dpad 1024 --hd 64 --B 8` on tjws (not run).
+   Result (`results/e0_layer_audit.json`): **18 levels/layer (attention 8 + FFN 10)**,
+   matching the model's total. The split differs from the model's count:
+   - /Z, the head mask and the replicate step fold into one ptm (−1 vs the model);
+   - **GELU deg 31 costs 7 levels, not 6.** `e0_microbench.py` under-reported it
+     by ignoring FLEXIBLEAUTO's pending rescale (fixed for future runs).
+   12 layers run end to end: **10 bootstraps** with a full-depth (43-level)
+   upload, max error 1.2e-3. Bootstraps can only sit between half-layers on the
+   residual stream, and 2 layers (36) > 21, so after the fresh window there is
+   one bootstrap per layer. With the model's 19-tower upload the count is 11,
+   which matches the model's `ceil(216/21)`, but only by coincidence. The model
+   now simulates this schedule from the audited half-layer depths.
+2. **Numerics the real model must respect** (all surfaced by the toy run):
+   - (a) The residual stream must satisfy |x/S| < 1 at every bootstrap; S folds into
+     the norm constants and the out/down projections at no level cost. But
+     bootstrap error is relative to S: ~9 bits at full slots at 2^17.
+   - (b) GELU inputs must stay within the Chebyshev interval ([-8, 8]). One input
+     at 10.4 made decryption fail.
+   - (c) The public normaliser Z and the fixed norm constants need calibration
+     (uncalibrated power-2 attention diverged within 5 layers). These are E1 inputs.
+3. **Token-group packing: ~2.5× cheaper matvec, validated.** A pass has only B
+   live tokens in T=64 slots. Copy them into the G=T/B token groups and give
+   each group its own weight block: one 1024-diagonal pass then computes up to G
+   block products, because the diagonal method never mixes token slots. Per
+   layer: QKV, FFN-up and FFN-down each take 1 pass (were 3+3+3), plus one GELU
+   call instead of 3. The LM head takes ⌈50·B/64⌉ passes instead of 50. The
+   group masks fold into existing ops, so the audit (`--packed`,
+   `results/e0_layer_audit_packed.json`) shows the **same 18 levels/layer,
+   10 bootstraps, max err 1.3e-3 over 12 layers**. It includes the block's own
+   keys plus an encrypted KV-cache ct, and keeps garbage in idle slots that the
+   next norm drops.
+   Cost model with `FHEDLM_PACKED=1` (`results/e0_cost_model_packed.json`,
+   `results/fig1_cost_per_token_packed.*`); the baseline files are unchanged:
+
+   | min / committed token | baseline | packed |
+   |---|---|---|
+   | one pass B=8 ctx 128 (s) | 13,900 | 5,560 |
+   | AR | 226 | 76 |
+   | DLM B=8, k=4 | 88 | 35 |
+   | DLM B=16, k=8 | 45 | 21 |
+   | DLM B=16, k=16 | 30 | 14 |
+   | spec-AR α=0.8, k=4 | 69 | 26 |
+   | spec-AR α=0.8, k=8 | 54 | 23 |
+
+   C1 still holds: DLM beats AR from k ≥ 2. But packing helps the small-B
+   passes (AR, spec-AR verify) as much as DLM. **Spec-AR now beats DLM at
+   k ≤ 4 by more (26 vs 35), ties at k=8, and DLM wins clearly only at
+   B=16, k=16.** This strengthens §5.3: E4 decides the paper. The E5
+   estimate drops from ~375 to ~150 CPU-hours (256 tokens, B=8, k=4).
+   Bootstrap is now 13% of a pass and rotations 10%.
+4. **Sparse-slot diagonal encoding: measured, no net gain.** In a dims-inner
+   layout every diagonal is period-D, so OpenFHE can encode it with
+   `slots=D`: correct (err ~1e-12) and 2.3–3.9× faster at 2^15–2^16. But that
+   layout needs 1.5–2× more diagonals (token-boundary wrap), and OpenFHE still
+   runs the full-size NTT. Break-even through the API; a real win needs a custom
+   "small NTT + broadcast" encoder (C++/GPU), so this is parked.
+
+Next, in order: run `e0_layer_audit.py` at full size on tjws (timings +
+confirm 18 levels at d=768); have E1 report residual / GELU-input ranges of the
+real model (items 2a–c); measure spec-AR acceptance α early (item 3 makes it
+the decisive number).

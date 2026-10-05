@@ -58,6 +58,13 @@ NETS = {"LAN": (0.5e-3, 1e9), "WAN": (40e-3, 100e6), "mobile": (80e-3, 20e6)}
 SPEC_ACCEPT = [0.6, 0.8]
 MATVEC_JSON = "results/e0_matvec.json"   # set to None for the pure op-sum model
 RING = 1 << 17                  # 2^16 is infeasible: 3 usable levels < GELU depth
+# Measured circuit depths (e0_layer_audit.py): levels per attention / FFN half
+# and where bootstraps can go (on the residual stream between halves only).
+LAYER_AUDIT_JSON = "results/e0_layer_audit.json"   # None -> structural count below
+# Token-group packing (e0_layer_audit.py --packed, validated at 18 levels/layer):
+# a pass has B live tokens in T slots, so G = T/B groups each run a different
+# weight block in the same 1024-diagonal pass. FHEDLM_PACKED=1 to enable.
+PACKED = os.environ.get("FHEDLM_PACKED", "0") == "1"
 BUDGET = [4, 4]
 
 
@@ -127,6 +134,8 @@ def pass_ops(B, ctx, C):
     rep = 2 * math.ceil(math.log2(T / Bq)) if Bq < T else 0
     hs = int(math.log2(HEAD_DIM))
     layer = {}
+    if PACKED and nq == 1:
+        return pass_ops_packed(B, c, C)
     add(layer, matvec(1, 3))                                       # QKV
     add(layer, {"rot": rep})                                       # replicate Q
     add(layer, {"rot": 2 + hs, "ptm": 2, "ctm": 1}, Bq * c)        # scores
@@ -138,13 +147,67 @@ def pass_ops(B, ctx, C):
     add(layer, {"rot": 10, "ptm": 2}, 2)                           # 2 norms
     add(layer, matvec(1, 3)); add(layer, {"gelu": 3}); add(layer, matvec(3, 1))
     depth_layer = 1 + 2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + C["gelu_depth"] + 1 + 1
+    halves = [depth_layer // 2, depth_layer - depth_layer // 2]
+    if LAYER_AUDIT_JSON and os.path.exists(LAYER_AUDIT_JSON):
+        a = json.load(open(LAYER_AUDIT_JSON))
+        halves = [a["levels_attention"], a["levels_ffn"]]
+        depth_layer = sum(halves)
     ops = {}
     add(ops, layer, LAYERS * nq)
     vb = math.ceil(VOCAB / D_PAD)
     add(ops, matvec(1, vb), nq); add(ops, {"ptm": vb, "rot": vb}, nq)   # LM head + compact
     add(ops, {"ptm": 1, "rot": 10}, nq)                                  # confidence head
-    add(ops, {"boot": math.ceil(LAYERS * depth_layer / C["usable"])}, nq)
+    add(ops, {"boot": n_boots(halves, depth_layer + 1, C["usable"])}, nq)
     return ops, depth_layer
+
+
+def pass_ops_packed(B, c, C):
+    """Packed variant (B <= T, one query ct): matvec products i*o run
+    ceil(i*o / G) passes; the block's own keys are one extra key ct."""
+    T = C["T"]
+    G = T // B
+    lg = int(math.log2(G)) if G > 1 else 0
+    hs = int(math.log2(HEAD_DIM))
+    passes = lambda prods: math.ceil(prods / G)
+    mv = lambda n: matvec(1, n)          # n one-block passes
+    layer = {}
+    add(layer, {"rot": lg}); add(layer, mv(passes(3)))                    # replicate h, QKV
+    add(layer, {"rot": 2 + 3 * lg, "ptm": 3})                             # split Q/K/V, replicate
+    kc = B * (c + 1)                                                      # score cts (+block keys)
+    add(layer, {"rot": 2 + hs, "ptm": 2, "ctm": 1}, kc)                   # scores
+    add(layer, {"ctm": 1, "ptm": 1}, kc)                                  # power, /Z
+    add(layer, {"rot": hs}, kc)                                           # replicate score
+    add(layer, {"rot": 2, "ptm": 2, "ctm": 1, "add": 1}, kc)              # x V
+    add(layer, {"rot": lg})                                               # gather cache part
+    add(layer, mv(1))                                                     # out proj
+    add(layer, {"rot": 10, "ptm": 2}, 2)                                  # 2 norms
+    add(layer, {"rot": lg}); add(layer, mv(passes(3)))                    # FFN up
+    add(layer, {"gelu": passes(3)})
+    add(layer, mv(passes(3))); add(layer, {"rot": min(G, 3) - 1})         # FFN down + group sum
+    a = json.load(open(LAYER_AUDIT_JSON))
+    halves = [a["levels_attention"], a["levels_ffn"]]
+    depth_layer = sum(halves)
+    ops = {}
+    add(ops, layer, LAYERS)
+    vb = math.ceil(VOCAB / D_PAD)
+    add(ops, {"rot": lg}); add(ops, mv(passes(vb)))                       # LM head
+    add(ops, {"ptm": passes(vb), "rot": passes(vb)})                      # compact
+    add(ops, {"ptm": 1, "rot": 10})                                       # confidence head
+    add(ops, {"boot": n_boots(halves, depth_layer + 1, C["usable"])})
+    return ops, depth_layer
+
+
+def n_boots(halves, upload_levels, usable):
+    """Bootstraps per pass when they can only sit between half-layers: the
+    uploaded fresh ct carries `upload_levels` (the model uploads one layer's
+    worth, depth_layer + 1 towers), each bootstrap restores `usable`."""
+    left, n = upload_levels, 0
+    for _ in range(LAYERS):
+        for h in halves:
+            if left < h:
+                left, n = usable, n + 1
+            left -= h
+    return n
 
 
 def pass_cost(B, ctx, C, committed):
@@ -200,12 +263,13 @@ def gen_spec(k, a, C):
 
 def main():
     bench = sys.argv[1] if len(sys.argv) > 1 else "results/e0_microbench.json"
-    out_path = sys.argv[2] if len(sys.argv) > 2 else "results/e0_cost_model.json"
+    out_path = sys.argv[2] if len(sys.argv) > 2 else (
+        "results/e0_cost_model_packed.json" if PACKED else "results/e0_cost_model.json")
     C = load_costs(bench)
     MV["per_diag"] = C["matvec_per_diag"]
     res = {"assumptions": {"layers": LAYERS, "d_pad": D_PAD, "vocab": VOCAB, "L": L_GEN,
                            "gelu_degree": GELU_DEGREE, "kv_pass": KV_PASS, "ring": RING,
-                           "level_budget": BUDGET, "nets": NETS,
+                           "level_budget": BUDGET, "nets": NETS, "packed": PACKED,
                            "matvec": "measured (compute+encode)" if MV["per_diag"] else "op sum"},
            "unit_costs_s": C, "series": []}
     nets = [None] + list(NETS)
