@@ -1,0 +1,303 @@
+{
+  "security": "HEStd_128_classic",
+  "scaling_mod_size": 59,
+  "first_mod_size": 60,
+  "scaling_technique": "FLEXIBLEAUTO",
+  "mem_cap_gb": 48,
+  "rings": [
+    {
+      "ring_dim": 65536,
+      "depth": 20,
+      "slots": 32768,
+      "tokens_per_ct_d768": 42,
+      "omp_threads": "all (20)",
+      "by_level": [
+        {
+          "level": 0,
+          "levels_left": 20,
+          "add_s": 0.00979117676615715,
+          "mult_ct_pt_s": 0.009752189740538597,
+          "mult_ct_ct_relin_s": 0.10662084631621838,
+          "rotate_s": 0.1193025279790163,
+          "hoist_precompute_s": 0.11390686221420765,
+          "hoisted_rotate_s": 0.17310200817883015,
+          "ct_bytes_est": 23068672
+        },
+        {
+          "level": 10,
+          "levels_left": 10,
+          "add_s": 0.0023254062980413437,
+          "mult_ct_pt_s": 0.0026764459908008575,
+          "mult_ct_ct_relin_s": 0.04257473722100258,
+          "rotate_s": 0.03853524476289749,
+          "hoist_precompute_s": 0.04353339970111847,
+          "hoisted_rotate_s": 0.059540433809161186,
+          "ct_bytes_est": 12582912
+        },
+        {
+          "level": 18,
+          "levels_left": 2,
+          "add_s": 0.00035555101931095123,
+          "mult_ct_pt_s": 0.000603988766670227,
+          "mult_ct_ct_relin_s": 0.015240687876939774,
+          "rotate_s": 0.01462836004793644,
+          "hoist_precompute_s": 0.014135066419839859,
+          "hoisted_rotate_s": 0.019000094383955002,
+          "ct_bytes_est": 4194304
+        }
+      ],
+      "gelu": [
+        {
+          "degree": 15,
+          "seconds": 1.206938274204731,
+          "depth_used": 5,
+          "max_abs_error": 0.04536007419972999
+        },
+        {
+          "degree": 31,
+          "seconds": 1.785320308059454,
+          "depth_used": 6,
+          "max_abs_error": 9.231227456252874e-05
+        },
+        {
+          "degree": 63,
+          "seconds": 2.806515708565712,
+          "depth_used": 7,
+          "max_abs_error": 1.7137402608113916e-12
+        },
+        {
+          "degree": 119,
+          "seconds": 5.177451018244028,
+          "depth_used": 7,
+          "max_abs_error": 2.1860291354869332e-12
+        }
+      ],
+      "encode_s": 0.02919723466038704,
+      "encrypt_s": 0.10487121343612671,
+      "decrypt_s": 0.0547797866165638,
+      "peak_rss_gb": 1.0012435913085938
+    },
+    {
+      "ring_dim": 131072,
+      "depth": 43,
+      "slots": 65536,
+      "tokens_per_ct_d768": 85,
+      "omp_threads": "all (20)",
+      "by_level": [
+        {
+          "level": 0,
+          "levels_left": 43,
+          "add_s": 0.04116334021091461,
+          "mult_ct_pt_s": 0.0409566555172205,
+          "mult_ct_ct_relin_s": 0.5194008983671665,
+          "rotate_s": 0.5072180591523647,
+          "hoist_precompute_s": 0.5004048757255077,
+          "hoisted_rotate_s": 0.6270646881312132,
+          "ct_bytes_est": 94371840
+        },
+        {
+          "level": 21,
+          "levels_left": 22,
+          "add_s": 0.014642341062426567,
+          "mult_ct_pt_s": 0.014976778998970985,
+          "mult_ct_ct_relin_s": 0.21961114555597305,
+          "rotate_s": 0.19769866205751896,
+          "hoist_precompute_s": 0.185445636510849,
+          "hoisted_rotate_s": 0.2696598041802645,
+          "ct_bytes_est": 50331648
+        },
+        {
+          "level": 41,
+          "levels_left": 2,
+          "add_s": 0.0011352114379405975,
+          "mult_ct_pt_s": 0.001780673861503601,
+          "mult_ct_ct_relin_s": 0.061650652438402176,
+          "rotate_s": 0.05144491605460644,
+          "hoist_precompute_s": 0.04461038112640381,
+          "hoisted_rotate_s": 0.07026619836688042,
+          "ct_bytes_est": 8388608
+        }
+      ],
+      "gelu": [
+        {
+          "degree": 15,
+          "seconds": 6.661396723240614,
+          "depth_used": 5,
+          "max_abs_error": 0.045372860699227836
+        },
+        {
+          "degree": 31,
+          "seconds": 9.749821960926056,
+          "depth_used": 6,
+          "max_abs_error": 9.241096166072264e-05
+        },
+        {
+          "degree": 63,
+          "seconds": 15.485689152032137,
+          "depth_used": 7,
+          "max_abs_error": 3.75877107217093e-12
+        },
+        {
+          "degree": 119,
+          "seconds": 23.974188543856144,
+          "depth_used": 7,
+          "max_abs_error": 3.490541189421492e-12
+        }
+      ],
+      "encode_s": 0.09949804469943047,
+      "encrypt_s": 0.43658215925097466,
+      "decrypt_s": 0.22001919150352478,
+      "peak_rss_gb": 4.4137725830078125
+    }
+  ],
+  "bootstrap": [
+    {
+      "ring_dim": 65536,
+      "depth": 20,
+      "level_budget": [
+        2,
+        2
+      ],
+      "slots": 4096,
+      "bootstrap_depth": 18,
+      "setup_s": 9.911381144076586,
+      "bootstrap_s": 11.29756447672844,
+      "levels_left_after": 3,
+      "precision_bits": 13.628357054404058,
+      "peak_rss_gb": 17.449718475341797
+    },
+    {
+      "ring_dim": 65536,
+      "depth": 20,
+      "level_budget": [
+        2,
+        2
+      ],
+      "slots": 32768,
+      "bootstrap_depth": 18,
+      "setup_s": 19.262136161327362,
+      "bootstrap_s": 27.189327642321587,
+      "levels_left_after": 3,
+      "precision_bits": 9.542237217189502,
+      "peak_rss_gb": 31.59781265258789
+    },
+    {
+      "ring_dim": 65536,
+      "depth": 20,
+      "level_budget": [
+        3,
+        3
+      ],
+      "slots": 4096,
+      "bootstrap_depth": 20,
+      "setup_s": 7.103933468461037,
+      "bootstrap_s": 8.202953048050404,
+      "levels_left_after": 1,
+      "precision_bits": 40.85948972763178,
+      "peak_rss_gb": 10.753379821777344,
+      "invalid": "bootstrap depth >= total depth (20); result not meaningful -- see e0_microbench.py skip rule"
+    },
+    {
+      "ring_dim": 65536,
+      "depth": 20,
+      "level_budget": [
+        3,
+        3
+      ],
+      "slots": 32768,
+      "bootstrap_depth": 20,
+      "setup_s": 7.213101886212826,
+      "bootstrap_s": 13.301953911781311,
+      "levels_left_after": 1,
+      "precision_bits": 39.47069146514101,
+      "peak_rss_gb": 9.268409729003906,
+      "invalid": "bootstrap depth >= total depth (20); result not meaningful -- see e0_microbench.py skip rule"
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 65536,
+      "level_budget": [
+        4,
+        4
+      ],
+      "slots": 4096,
+      "invalid": "bootstrap depth >= total depth (20); result not meaningful -- see e0_microbench.py skip rule"
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 65536,
+      "level_budget": [
+        4,
+        4
+      ],
+      "slots": 32768,
+      "invalid": "bootstrap depth >= total depth (20); result not meaningful -- see e0_microbench.py skip rule"
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 131072,
+      "level_budget": [
+        2,
+        2
+      ],
+      "slots": 4096
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 131072,
+      "level_budget": [
+        2,
+        2
+      ],
+      "slots": 65536
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 131072,
+      "level_budget": [
+        3,
+        3
+      ],
+      "slots": 4096
+    },
+    {
+      "error": "child died with exit code -6 (likely bad_alloc at 48 GB cap)",
+      "ring_dim": 131072,
+      "level_budget": [
+        3,
+        3
+      ],
+      "slots": 65536
+    },
+    {
+      "ring_dim": 131072,
+      "depth": 43,
+      "level_budget": [
+        4,
+        4
+      ],
+      "slots": 4096,
+      "bootstrap_depth": 22,
+      "setup_s": 23.536091171205044,
+      "bootstrap_s": 37.09360606223345,
+      "levels_left_after": 22,
+      "precision_bits": 12.147960811252524,
+      "peak_rss_gb": 32.62238693237305
+    },
+    {
+      "ring_dim": 131072,
+      "depth": 43,
+      "level_budget": [
+        4,
+        4
+      ],
+      "slots": 65536,
+      "bootstrap_depth": 22,
+      "setup_s": 27.7991466447711,
+      "bootstrap_s": 67.98512126505375,
+      "levels_left_after": 22,
+      "precision_bits": 9.182551076297626,
+      "peak_rss_gb": 39.31083297729492
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+[fhe] scale=59 first=60: max total depth at N=2^16 = 20
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE -2
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 0
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 2
+[fhe]     live bootstrap failed: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.462:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 4
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] scale=50 first=55: max total depth at N=2^16 = 24
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 2
+[fhe]     live: setup=8.7s bootstrap=7.03s levels_after=3 precision=6.4 bits
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 4
+[fhe]     live: setup=13.4s bootstrap=8.81s levels_after=5 precision=6.4 bits
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 6
+[fhe]     live: setup=25.7s bootstrap=14.80s levels_after=7 precision=6.3 bits
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 8
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] scale=45 first=50: max total depth at N=2^16 = 27
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 5
+[fhe]     live: setup=9.8s bootstrap=8.03s levels_after=6 precision=1.7 bits
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 7
+[fhe]     live: setup=14.4s bootstrap=11.05s levels_after=8 precision=1.5 bits
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 9
+[fhe]     live: setup=29.5s bootstrap=18.63s levels_after=10 precision=1.6 bits
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 11
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] scale=40 first=45: max total depth at N=2^16 = 30
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 8
+[fhe]     live bootstrap failed: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.462:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 10
+[fhe]     live bootstrap failed: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.462:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 12
+[fhe]     live bootstrap failed: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.462:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 14
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] most levels after bootstrap: {'scaling_mod_size': 45, 'first_mod_size': 50, 'level_budget': [2, 2], 'levels_remaining_after_bootstrap': 10, 'precision_bits': 1.6286153361691078}
+[fhe] done
+EXIT=0

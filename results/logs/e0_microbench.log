@@ -1,0 +1,38 @@
+[e0] N=2^16 level 0: add_s=9.8ms mult_ct_pt_s=9.8ms mult_ct_ct_relin_s=106.6ms rotate_s=119.3ms hoist_precompute_s=113.9ms hoisted_rotate_s=173.1ms
+[e0] N=2^16 level 10: add_s=2.3ms mult_ct_pt_s=2.7ms mult_ct_ct_relin_s=42.6ms rotate_s=38.5ms hoist_precompute_s=43.5ms hoisted_rotate_s=59.5ms
+[e0] N=2^16 level 18: add_s=0.4ms mult_ct_pt_s=0.6ms mult_ct_ct_relin_s=15.2ms rotate_s=14.6ms hoist_precompute_s=14.1ms hoisted_rotate_s=19.0ms
+[e0] N=2^16 GELU deg 15: 1.21s depth 5 err 4.54e-02
+[e0] N=2^16 GELU deg 31: 1.79s depth 6 err 9.23e-05
+[e0] N=2^16 GELU deg 63: 2.81s depth 7 err 1.71e-12
+[e0] N=2^16 GELU deg 119: 5.18s depth 7 err 2.19e-12
+[e0] N=2^16 boot [2, 2] slots=4096: setup=9.9s boot=11.30s left=3 prec=13.6b rss=17.4GB
+[e0] N=2^16 boot [2, 2] slots=32768: setup=19.3s boot=27.19s left=3 prec=9.5b rss=31.6GB
+[e0] N=2^16 boot [3, 3] slots=4096: setup=7.1s boot=8.20s left=1 prec=40.9b rss=10.8GB
+[e0] N=2^16 boot [3, 3] slots=32768: setup=7.2s boot=13.30s left=1 prec=39.5b rss=9.3GB
+free(): invalid next size (fast)
+[e0] N=2^16 boot [4, 4] slots=4096: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+free(): invalid next size (fast)
+[e0] N=2^16 boot [4, 4] slots=32768: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[e0] N=2^17 level 0: add_s=41.2ms mult_ct_pt_s=41.0ms mult_ct_ct_relin_s=519.4ms rotate_s=507.2ms hoist_precompute_s=500.4ms hoisted_rotate_s=627.1ms
+[e0] N=2^17 level 21: add_s=14.6ms mult_ct_pt_s=15.0ms mult_ct_ct_relin_s=219.6ms rotate_s=197.7ms hoist_precompute_s=185.4ms hoisted_rotate_s=269.7ms
+[e0] N=2^17 level 41: add_s=1.1ms mult_ct_pt_s=1.8ms mult_ct_ct_relin_s=61.7ms rotate_s=51.4ms hoist_precompute_s=44.6ms hoisted_rotate_s=70.3ms
+[e0] N=2^17 GELU deg 15: 6.66s depth 5 err 4.54e-02
+[e0] N=2^17 GELU deg 31: 9.75s depth 6 err 9.24e-05
+[e0] N=2^17 GELU deg 63: 15.49s depth 7 err 3.76e-12
+[e0] N=2^17 GELU deg 119: 23.97s depth 7 err 3.49e-12
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[e0] N=2^17 boot [2, 2] slots=4096: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[e0] N=2^17 boot [2, 2] slots=65536: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[e0] N=2^17 boot [3, 3] slots=4096: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[e0] N=2^17 boot [3, 3] slots=65536: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[e0] N=2^17 boot [4, 4] slots=4096: setup=23.5s boot=37.09s left=22 prec=12.1b rss=32.6GB
+[e0] N=2^17 boot [4, 4] slots=65536: setup=27.8s boot=67.99s left=22 prec=9.2b rss=39.3GB
+[e0] done
+EXIT=0

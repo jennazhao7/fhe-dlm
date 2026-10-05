@@ -1,0 +1,250 @@
+{
+  "target_ring_dim": 65536,
+  "security": "HEStd_128_classic",
+  "scaling_technique": "FLEXIBLEAUTO",
+  "boot_slots": 4096,
+  "configs": [
+    {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": -2
+    },
+    {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 0
+    },
+    {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 2,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 8.408084869384766,
+      "bootstrap_seconds": 11.414807081222534,
+      "levels_remaining_after_bootstrap": 3,
+      "max_abs_error": 9.027890297474972e-05,
+      "precision_bits": 13.435251586727889
+    },
+    {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 4,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 2,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 4.456365585327148,
+      "bootstrap_seconds": 6.952191591262817,
+      "levels_remaining_after_bootstrap": 3,
+      "max_abs_error": 0.02101603358654336,
+      "precision_bits": 5.572365778561458
+    },
+    {
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 4,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 7.067190408706665,
+      "bootstrap_seconds": 9.334113597869873,
+      "levels_remaining_after_bootstrap": 5,
+      "max_abs_error": 0.019167205273232235,
+      "precision_bits": 5.705216193529126
+    },
+    {
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 6,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 9.891246557235718,
+      "bootstrap_seconds": 14.405325412750244,
+      "levels_remaining_after_bootstrap": 7,
+      "max_abs_error": 0.01853889924338903,
+      "precision_bits": 5.753300604023188
+    },
+    {
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 8,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 5,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 6.080396890640259,
+      "bootstrap_seconds": 8.214546918869019,
+      "levels_remaining_after_bootstrap": 6,
+      "max_abs_error": 0.5983706999341405,
+      "precision_bits": 0.7408885615311767
+    },
+    {
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 7,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 7.013479471206665,
+      "bootstrap_seconds": 10.646887063980103,
+      "levels_remaining_after_bootstrap": 8,
+      "max_abs_error": 0.6281353611678642,
+      "precision_bits": 0.6708526060850145
+    },
+    {
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 9,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 12.087972640991211,
+      "bootstrap_seconds": 17.212066411972046,
+      "levels_remaining_after_bootstrap": 10,
+      "max_abs_error": 0.6862518561646963,
+      "precision_bits": 0.5431899485823044
+    },
+    {
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 11,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 8,
+      "bootstrap_run_error": "RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 10,
+      "bootstrap_run_error": "RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 12,
+      "bootstrap_run_error": "RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 14,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    }
+  ],
+  "best": {
+    "scaling_mod_size": 45,
+    "first_mod_size": 50,
+    "level_budget": [
+      2,
+      2
+    ],
+    "levels_remaining_after_bootstrap": 10,
+    "precision_bits": 0.5431899485823044
+  }
+}

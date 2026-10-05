@@ -1,0 +1,92 @@
+[fhe] N=2^16 scale=59 first=60: max total depth = 20
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE -2
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 0
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 2
+[fhe]     live: setup=9.7s bootstrap=11.31s levels_after=3 precision=13.7 bits rss=17.4GB
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 4
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^16 scale=50 first=55: max total depth = 24
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 2
+[fhe]     live: setup=5.6s bootstrap=7.32s levels_after=3 precision=5.6 bits rss=8.7GB
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 4
+[fhe]     live: setup=8.1s bootstrap=9.10s levels_after=5 precision=5.3 bits rss=12.7GB
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 6
+[fhe]     live: setup=11.5s bootstrap=14.23s levels_after=7 precision=5.8 bits rss=20.9GB
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 8
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^16 scale=45 first=50: max total depth = 27
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 5
+[fhe]     live: setup=6.3s bootstrap=8.12s levels_after=6 precision=0.3 bits rss=9.5GB
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 7
+[fhe]     live: setup=8.6s bootstrap=10.73s levels_after=8 precision=0.5 bits rss=14.0GB
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 9
+[fhe]     live: setup=12.3s bootstrap=17.12s levels_after=10 precision=0.9 bits rss=23.0GB
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 11
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^16 scale=40 first=45: max total depth = 30
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 8
+[fhe]     live bootstrap failed: RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 10
+[fhe]     live bootstrap failed: RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 12
+[fhe]     live bootstrap failed: RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 14
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^17 scale=59 first=60: max total depth = 43
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 21
+[fhe]     live: setup=23.7s bootstrap=38.00s levels_after=22 precision=11.8 bits rss=32.2GB
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 23
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 25
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 27
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^17 scale=50 first=55: max total depth = 50
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 28
+[fhe]     live: setup=26.0s bootstrap=44.50s levels_after=29 precision=3.7 bits rss=36.4GB
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 30
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 32
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 34
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^17 scale=45 first=50: max total depth = 56
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 34
+[fhe]     live: setup=28.9s bootstrap=49.73s levels_after=35 precision=-0.8 bits rss=39.7GB
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 36
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 38
+terminate called after throwing an instance of 'std::bad_alloc'
+terminate called recursively
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 40
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^17 scale=40 first=45: max total depth = 64
+[fhe]   budget=[4, 4] bootstrap=22 -> USABLE 42
+[fhe]     live bootstrap failed: RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. 
+[fhe]   budget=[3, 3] bootstrap=20 -> USABLE 44
+terminate called recursively
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[2, 2] bootstrap=18 -> USABLE 46
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+[fhe]     live bootstrap failed: RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)
+[fhe]   budget=[1, 1] bootstrap=16 -> USABLE 48
+[fhe]     live bootstrap skipped (key material too large)
+[fhe] N=2^16 most levels at >= 10 bits: {'scaling_mod_size': 59, 'first_mod_size': 60, 'level_budget': [2, 2], 'levels_remaining_after_bootstrap': 3, 'precision_bits': 13.689209882990147, 'bootstrap_seconds': 11.309467792510986}
+[fhe] N=2^17 most levels at >= 10 bits: {'scaling_mod_size': 59, 'first_mod_size': 60, 'level_budget': [4, 4], 'levels_remaining_after_bootstrap': 22, 'precision_bits': 11.835510518963314, 'bootstrap_seconds': 37.99802303314209}
+[fhe] done
+EXIT=0

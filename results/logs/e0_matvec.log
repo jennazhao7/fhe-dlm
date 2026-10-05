@@ -1,0 +1,10 @@
+[mv] N=2^17 T=64 rot keys 16s
+[mv] level 21 1->1: total 130.9s (rot 18.1, encode 66.5, mult+add 46.3) err 2.1e-11
+[mv] level 21 1->3: total 376.6s (rot 35.3, encode 200.7, mult+add 140.6) err 2.1e-11
+[mv] level 21 3->1: total 381.0s (rot 36.3, encode 199.9, mult+add 144.9) err 2.5e-11
+[mv] level 32 1->1: total 72.5s (rot 7.0, encode 49.4, mult+add 16.1) err 2.1e-11
+[mv] level 32 1->3: total 208.8s (rot 13.6, encode 147.1, mult+add 48.1) err 2.2e-11
+[mv] level 32 3->1: total 240.2s (rot 15.8, encode 147.8, mult+add 76.6) err 2.6e-11
+[mv] LM head (extrapolated): [{'level': 21, 'blocks': 50, 'total_s': 6150.058378329501, 'compute_only_s': 2795.520737476647}, {'level': 32, 'blocks': 50, 'total_s': 3411.794449975714, 'compute_only_s': 970.3476337082684}]
+[mv] peak rss 30.3 GB; done
+EXIT=0

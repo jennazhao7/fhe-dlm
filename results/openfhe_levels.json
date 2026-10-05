@@ -1,0 +1,520 @@
+{
+  "target_ring_dims": [
+    65536,
+    131072
+  ],
+  "security": "HEStd_128_classic",
+  "scaling_technique": "FLEXIBLEAUTO",
+  "boot_slots": 4096,
+  "min_precision_bits": 10,
+  "configs": [
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": -2
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 0
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 2,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 9.66628885269165,
+      "bootstrap_seconds": 11.309467792510986,
+      "levels_remaining_after_bootstrap": 3,
+      "max_abs_error": 7.570720418437205e-05,
+      "precision_bits": 13.689209882990147,
+      "peak_rss_gb": 17.366573333740234
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 20,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 4,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 2,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 5.588749170303345,
+      "bootstrap_seconds": 7.318962574005127,
+      "levels_remaining_after_bootstrap": 3,
+      "max_abs_error": 0.02072721349325573,
+      "precision_bits": 5.592330012047763,
+      "peak_rss_gb": 8.691932678222656
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 4,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 8.060165643692017,
+      "bootstrap_seconds": 9.100112199783325,
+      "levels_remaining_after_bootstrap": 5,
+      "max_abs_error": 0.025706319951343426,
+      "precision_bits": 5.281733097220953,
+      "peak_rss_gb": 12.73193359375
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 6,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 11.474482536315918,
+      "bootstrap_seconds": 14.233587503433228,
+      "levels_remaining_after_bootstrap": 7,
+      "max_abs_error": 0.01763385891352076,
+      "precision_bits": 5.825507967742782,
+      "peak_rss_gb": 20.88577651977539
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 24,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 8,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 5,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 6.314092397689819,
+      "bootstrap_seconds": 8.116684913635254,
+      "levels_remaining_after_bootstrap": 6,
+      "max_abs_error": 0.7887985491679831,
+      "precision_bits": 0.34227119670865863,
+      "peak_rss_gb": 9.534343719482422
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 7,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 8.585235595703125,
+      "bootstrap_seconds": 10.730775117874146,
+      "levels_remaining_after_bootstrap": 8,
+      "max_abs_error": 0.7233295723892759,
+      "precision_bits": 0.4672749593087011,
+      "peak_rss_gb": 13.986370086669922
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 9,
+      "ring_dim": 65536,
+      "slots": 4096,
+      "setup_seconds": 12.266263484954834,
+      "bootstrap_seconds": 17.123991012573242,
+      "levels_remaining_after_bootstrap": 10,
+      "max_abs_error": 0.5343661527869916,
+      "precision_bits": 0.9040994657296408,
+      "peak_rss_gb": 22.951297760009766
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 27,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 11,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 8,
+      "bootstrap_run_error": "RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 10,
+      "bootstrap_run_error": "RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 12,
+      "bootstrap_run_error": "RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "target_ring_dim": 65536,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 30,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 14,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 43,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 21,
+      "ring_dim": 131072,
+      "slots": 4096,
+      "setup_seconds": 23.68854260444641,
+      "bootstrap_seconds": 37.99802303314209,
+      "levels_remaining_after_bootstrap": 22,
+      "max_abs_error": 0.0002736253435129399,
+      "precision_bits": 11.835510518963314,
+      "peak_rss_gb": 32.2376594543457
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 43,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 23,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 43,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 25,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 43,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 27,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 50,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 28,
+      "ring_dim": 131072,
+      "slots": 4096,
+      "setup_seconds": 25.97121810913086,
+      "bootstrap_seconds": 44.498112201690674,
+      "levels_remaining_after_bootstrap": 29,
+      "max_abs_error": 0.07793404080499378,
+      "precision_bits": 3.68160256914498,
+      "peak_rss_gb": 36.4314079284668
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 50,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 30,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 50,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 32,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 50,
+      "first_mod_size": 55,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 50,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 34,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 56,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 34,
+      "ring_dim": 131072,
+      "slots": 4096,
+      "setup_seconds": 28.919655084609985,
+      "bootstrap_seconds": 49.72517991065979,
+      "levels_remaining_after_bootstrap": 35,
+      "max_abs_error": 1.774633362396636,
+      "precision_bits": -0.8275209959478457,
+      "peak_rss_gb": 39.66355514526367
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 56,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 36,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 56,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 38,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 45,
+      "first_mod_size": 50,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 56,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 40,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        4,
+        4
+      ],
+      "max_total_depth_at_ring": 64,
+      "bootstrap_depth": 22,
+      "usable_levels_between_bootstraps": 42,
+      "bootstrap_run_error": "RuntimeError: RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/encoding/ckkspackedencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        3,
+        3
+      ],
+      "max_total_depth_at_ring": 64,
+      "bootstrap_depth": 20,
+      "usable_levels_between_bootstraps": 44,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        2,
+        2
+      ],
+      "max_total_depth_at_ring": 64,
+      "bootstrap_depth": 18,
+      "usable_levels_between_bootstraps": 46,
+      "bootstrap_run_error": "RuntimeError: child died with exit code -6 (likely bad_alloc at 48 GB cap)"
+    },
+    {
+      "target_ring_dim": 131072,
+      "scaling_mod_size": 40,
+      "first_mod_size": 45,
+      "level_budget": [
+        1,
+        1
+      ],
+      "max_total_depth_at_ring": 64,
+      "bootstrap_depth": 16,
+      "usable_levels_between_bootstraps": 48,
+      "bootstrap_run_error": "skipped: [1, 1] key material exceeds memory cap"
+    }
+  ],
+  "best": {
+    "65536": {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        2,
+        2
+      ],
+      "levels_remaining_after_bootstrap": 3,
+      "precision_bits": 13.689209882990147,
+      "bootstrap_seconds": 11.309467792510986
+    },
+    "131072": {
+      "scaling_mod_size": 59,
+      "first_mod_size": 60,
+      "level_budget": [
+        4,
+        4
+      ],
+      "levels_remaining_after_bootstrap": 22,
+      "precision_bits": 11.835510518963314,
+      "bootstrap_seconds": 37.99802303314209
+    }
+  }
+}
