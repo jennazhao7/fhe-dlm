@@ -22,7 +22,8 @@ yet**; everything below is E0 systems work.
    UNIFORM_TERNARY secret). Best 2^16 setting (59/60-bit moduli, level budget
    [2,2]) leaves **3 levels** after bootstrap at ~9.5 bits (full slots); a
    degree-15 GELU alone needs 5 levels. → **Use N = 2^17, budget [4,4]**:
-   max depth 43, **22 levels** after bootstrap, bootstrap 68 s on CPU
+   max depth 43, **21 usable levels** after bootstrap (OpenFHE reports 22;
+   off-by-one confirmed, §8), bootstrap 68 s on CPU
    (full slots), **9.2 bits** precision (full slots), 39 GB RSS.
 2. **C1 kill condition NOT triggered** (calibrated model, CPU): AR decode step
    **226 min/token**; DLM B=8,k=4 **88**; B=16,k=8 **45**; B=16,k=16 **30**.
@@ -211,8 +212,9 @@ count (likely the FLEXIBLEAUTO extra tower — unconfirmed; the model uses −1)
    Oct 2–23) and the AR control + AR-FIM training (P0, Oct 9–30) — neither has
    started. Verify the checkpoint names flagged "verify" in the plan
    (`kuleshov-group/mdlm-owt`, `bd3lm-owt-block_size{4,8,16}`) and licenses.
-6. Minor: confirm the `levels_left_after` off-by-one; explain the slow hoisted
-   rotation (try the C++ API before relying on hoisting in the model).
+6. Minor: ~~confirm the `levels_left_after` off-by-one~~ (done, §8); explain
+   the slow hoisted rotation (try the C++ API before relying on hoisting in
+   the model).
 
 ## 7. Gotchas
 
@@ -228,3 +230,61 @@ count (likely the FLEXIBLEAUTO extra tower — unconfirmed; the model uses −1)
   + `MakeCKKSPackedPlaintext(x, 1, level, None, slots)` for sparse slots.
 - Both SSH masters expire (tjws: 8 h ControlPersist; CRC: whenever the user's
   socket dies). Check before long command chains.
+
+## 8. Session 2026-10-05 (cloud agent, no access to tjws/CRC)
+
+This session ran in a cloud container (4 cores, 15 GB, no SSH to ND, no GPU,
+huggingface.co blocked), so nothing was run on tjws or CRC. Done instead:
+
+1. **FIDESlib on sm_75 compiles** (§6.1, first half). FIDESlib 2.1.3
+   (`593ad73`) + its patched OpenFHE (`fideslib-ref-v1.5.1.1`) build cleanly
+   with `-DFIDESLIB_ARCH=75`, CUDA 12.4.131, gcc 12.4. The binary holds sm_75
+   SASS only. Turing is not in FIDESlib's default arch list (starts at
+   sm_80), but the code has no sm_80-only features. **CUDA 12.0 does not
+   work** (nvcc 12.0 rejects its `std::source_location` defaults), so CRC
+   needs a CUDA ≥ 12.4 module or the conda-forge toolkit (see
+   `cluster/setup_fideslib.sh` header). Whether the kernels *run* correctly
+   on sm_75 is still unchecked.
+2. **GPU job ready, not submitted.** `gpu/fides_e0/` (C++ bench on the
+   FIDESlib API, same parameters as the CPU sweep: boot at 4096/65536 slots
+   [4,4]; 1024×1024 BSGS matvec at level 21, with encode / H2D / compute
+   timed separately; GPU memory after each phase). `cluster/setup_fideslib.sh`
+   (front end: fetch + build into `third_party/`), `cluster/job_gpu_fides.sh`
+   (GPU job template with the §2 directives; one process per run;
+   nvidia-smi sampling; writes `results/gpu_fides.json`). Both code paths
+   were validated on FIDESlib's OpenFHE CPU fallback at N=2^12: matvec error
+   3.6e-13; bootstrap 19.1 bits (256 slots) / 15.1 bits (2048 slots),
+   levels_left_after 22. Dry run: `FIDES_E0_CPU=1 FIDES_E0_LOGN=12 fides_e0 matvec`.
+   (The CPU fallback of `EvalMult(ct, pt)` has a FIDESlib bug — bad
+   `any_cast` to `ConstPlaintext` — that was patched only in the scratch copy
+   for the dry run. It does not touch the GPU path, so no patch is shipped.)
+3. **The 24 GB question, estimated** (to be confirmed by the job): one
+   key-switching key at N=2^17, depth 43, 59/60, dnum=3 is **354 MB**
+   (serialized); a fresh ciphertext is 88 MB. Sparse [4,4] bootstrap
+   (4096 slots) needs **63 rotation keys = 22 GB** before the C2S/S2C
+   plaintexts and working ciphertexts. Full-slot key count not measured (OOM
+   at 14 GB here); ≥ 63. The n1=n2=32 matvec needs 62 keys (= 22 GB) too.
+   → **Expect E5 not to fit on one 24 GB RTX 6000.** Shrinking keys by lower
+   dnum is not available: logQP is already ~3.5 kbit, at the 128-bit bound
+   for 2^17. Fallbacks to evaluate:
+   (a) FIDESlib multi-GPU (NCCL limb partitioning) over the node's 4 cards
+       — needs NCCL in the build and all four cards;
+   (b) keep keys in host memory and stream them over PCIe (~30 ms per key
+       at ~12 GB/s, roughly doubling a rotation);
+   (c) sparse-secret encapsulation (FIDESlib `SPARSE_ENCAPSULATED`):
+       shallower bootstrap → fewer towers → smaller keys;
+   (d) fewer BSGS keys in the matvec (n1·n2 split, reuse of giant steps).
+4. **`levels_left_after` off-by-one confirmed** (§6.6):
+   `scripts/e0_levels_offbyone.py` → `results/e0_levels_offbyone.json`.
+   Usable levels = `depth − GetLevel()` − 1 = `depth − bootstrap_depth`,
+   for budgets [2,2] and [4,4] and two depths. The cost model's −1 and
+   `USABLE = 21` in `e0_matvec_bench.py` are right; the TL;DR now says 21.
+5. **Checkpoint check** (§6.5) could not run here (huggingface.co blocked).
+   `cluster/check_checkpoints.sh` (front end) prints existence, license and
+   weight sizes for the four "verify" repos.
+
+Still open for you: sync `cluster/` to CRC (§6.4: rsync from this repo,
+`--exclude results/`), then `bash cluster/check_checkpoints.sh`,
+`bash cluster/setup_fideslib.sh`, `qstat -u jzhao7`,
+`qsub cluster/job_gpu_fides.sh`. §6.2, §6.3 and the hoisting question need
+tjws-class RAM (≥ 40 GB) and were not started.

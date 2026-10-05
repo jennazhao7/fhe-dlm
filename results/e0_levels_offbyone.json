@@ -1,0 +1,72 @@
+[
+  {
+    "budget": [
+      2,
+      2
+    ],
+    "depth": 21,
+    "levels_left_after": 4,
+    "usable_mults": 3,
+    "trace": [
+      "mult 1: err 3.3e-05 level 18",
+      "mult 2: err 3.5e-05 level 19",
+      "mult 3: err 3.5e-05 level 20",
+      "mult 4: edencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    ]
+  },
+  {
+    "budget": [
+      2,
+      2
+    ],
+    "depth": 26,
+    "levels_left_after": 9,
+    "usable_mults": 8,
+    "trace": [
+      "mult 1: err 2.7e-05 level 18",
+      "mult 2: err 3.1e-05 level 19",
+      "mult 3: err 3.2e-05 level 20",
+      "mult 4: err 2.9e-05 level 21",
+      "mult 5: err 3.1e-05 level 22",
+      "mult 6: err 2.9e-05 level 23",
+      "mult 7: err 3.4e-05 level 24",
+      "mult 8: err 3.0e-05 level 25",
+      "mult 9: edencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    ]
+  },
+  {
+    "budget": [
+      4,
+      4
+    ],
+    "depth": 25,
+    "levels_left_after": 4,
+    "usable_mults": 3,
+    "trace": [
+      "mult 1: err 3.3e-05 level 22",
+      "mult 2: err 3.6e-05 level 23",
+      "mult 3: err 2.8e-05 level 24",
+      "mult 4: edencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    ]
+  },
+  {
+    "budget": [
+      4,
+      4
+    ],
+    "depth": 30,
+    "levels_left_after": 9,
+    "usable_mults": 8,
+    "trace": [
+      "mult 1: err 3.5e-05 level 22",
+      "mult 2: err 3.7e-05 level 23",
+      "mult 3: err 3.3e-05 level 24",
+      "mult 4: err 3.9e-05 level 25",
+      "mult 5: err 3.6e-05 level 26",
+      "mult 6: err 3.7e-05 level 27",
+      "mult 7: err 3.4e-05 level 28",
+      "mult 8: err 3.4e-05 level 29",
+      "mult 9: edencoding.cpp:l.453:Decode(): The decryption failed because the approximation error is too high. Check the parameters. "
+    ]
+  }
+]
