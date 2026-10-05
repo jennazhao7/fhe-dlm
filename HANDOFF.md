@@ -41,7 +41,9 @@ yet**; everything below is E0 systems work.
 
 All compute is on two Notre Dame machines; the local Mac checkout
 `/Users/jiachenzhao/research/fhe-dlm` is the **source of truth** — edit there,
-rsync out. There is no git repo.
+rsync out. Git: private repo https://github.com/jennazhao7/fhe-dlm
+(`main`); tjws and CRC copies are plain rsync targets, not clones. `hf-cache/`
+and `third_party/` exist only on CRC and are git-ignored.
 
 ### tjws-03 (CPU dev box) — `tjws-03.cse.nd.edu` (NOT `tjws.cse.nd.edu`)
 - User `jzhao7`, password only. `~/.ssh/config` on the Mac has `Host tjws`
