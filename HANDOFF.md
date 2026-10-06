@@ -72,8 +72,10 @@ and `third_party/` exist only on CRC and are git-ignored.
   ssh -S "$HOME/.ssh/crc-dp-grpo.sock" -o BatchMode=yes jzhao7@crcfe01.crc.nd.edu 'cmd'
   rsync -a -e "ssh -S $HOME/.ssh/crc-dp-grpo.sock -o BatchMode=yes" … jzhao7@crcfe01.crc.nd.edu:…
   ```
-  If `ssh -S … -O check jzhao7@crcfe01.crc.nd.edu` fails, ask the user to
-  re-authenticate the socket. Every remote command prints
+  The socket has lived at `$HOME/.ssh/crc-dp-grpo.sock` and at
+  `/tmp/crc-dp-grpo.sock` — `-O check` both and use the live one. If neither
+  works, ask the user to re-authenticate it (they run
+  `ssh -o ControlMaster=yes -o ControlPath=/tmp/crc-dp-grpo.sock -o ControlPersist=8h … jzhao7@crcfe01.crc.nd.edu`). Every remote command prints
   `Loading CRC_default/1.1` — filter it.
 - Project: `/groups/tjung/jzhao7/fhe-dlm` (5 TB group fs; `~/fhe-dlm` on CRC
   symlinks to it; CRC home is only 100 GB, ~30 GB free). Has CRC-only
