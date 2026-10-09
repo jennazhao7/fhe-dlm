@@ -397,3 +397,21 @@ the decisive number).
   not the post-bootstrap window the model prices (~22→1). The ~2.6× gap to
   the model's ~360 s/layer is mostly that; to calibrate time, rerun with the
   input encrypted at the post-bootstrap level (21).
+
+### Job 1519942 (2026-10-09): 2-key matvec runs on the GPU
+
+- `fides_e0 matvec` now uses **2 rotation keys** (successive rotations by T for
+  baby steps, Horner over giant steps by 32T). **Fits: 7.9 GB peak**, max err
+  2.2e-11 (`results/crc/gpu_fides_1519942.json`).
+- **GPU compute 1.37 s** (rotate 0.34, mult+add 1.03) vs 64 s on the 20-core
+  CPU at level 21 → ~47×. **But total 134 s ≈ CPU**: host-side diagonal
+  encoding 92 s + H2D 41 s. Pre-encoding all 1024 diagonals ≈ 23 GB/matrix,
+  does not fit. **Next lever: encode diagonals on the GPU** (each diagonal is a
+  period-D broadcast of 1024 values → small NTT + broadcast kernel), so the
+  matvec cost becomes ~compute.
+- Bootstraps still OOM (exit codes now reported correctly): sparse 4096 slots
+  loads 34 keys (12.0 GB) + 120 plaintexts (5.9 GB) = 18.8 GB then OOMs in
+  EvalBootstrap; full slots needs 248 plaintexts = 12.3 GB before keys.
+  FIDESlib has no host-resident option for these; its multi-GPU path is
+  compiled out (CMake found no NCCL; the env's NCCL is the cu12 torch wheel,
+  FIDESlib is built with CUDA 13.2).

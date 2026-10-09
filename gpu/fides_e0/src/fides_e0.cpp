@@ -155,8 +155,14 @@ static int run_boot(uint32_t slots, uint32_t budget) {
 }
 
 // Mirrors scripts/e0_matvec_bench.py: interleaved slot = dim*T + token,
-// BSGS over the D diagonals, hoisted baby steps, diagonals encoded on the fly
-// (pre-encoding 1024 diagonals at level 21 is ~24 GB: does not fit either).
+// BSGS over the D diagonals, diagonals encoded on the fly (pre-encoding 1024
+// diagonals at level 21 is ~24 GB: does not fit either).
+//
+// Rotation keys: job 1519057 OOMed loading the 62 keys of a hoisted BSGS
+// (one per baby/giant step, ~354 MB each at N=2^17). Here baby steps are
+// successive rotations by T and the giant steps run Horner-style with
+// rotations by N1*T, so the matvec needs exactly 2 keys (~0.7 GB) for the
+// same 31 + 31 rotations. It gives up hoisting, which did not pay off on CPU.
 static int run_matvec() {
 	Json j;
 	j.ks("mode", "matvec").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
@@ -165,11 +171,9 @@ static int run_matvec() {
 	auto keys = cc->KeyGen();
 	cc->EvalMultKeyGen(keys.secretKey);
 	const uint32_t T = RING / 2 / D;
-	std::vector<int32_t> baby, rots;
-	for (uint32_t b = 1; b < N1; ++b) baby.push_back(int32_t(b * T));
-	rots = baby;
-	for (uint32_t g = 1; g < N2; ++g) rots.push_back(int32_t(g * N1 * T));
-	cc->EvalRotateKeyGen(keys.secretKey, rots);
+	const int32_t BABY = int32_t(T), GIANT = int32_t(N1 * T);
+	cc->EvalRotateKeyGen(keys.secretKey, { BABY, GIANT });
+	j.kv("rotation_keys", 2);
 	phase(j, "keygen", t0);
 	t0 = clk::now();
 	cc->LoadContext(keys.publicKey);
@@ -201,14 +205,16 @@ static int run_matvec() {
 	double rot_s = 0, enc_s = 0, load_s = 0, mult_s = 0;
 	auto total0 = clk::now();
 	t0 = clk::now();
-	auto pre = cc->EvalFastRotationPrecompute(ct);
-	std::vector<Ciphertext<DCRTPoly>> bab{ ct };
-	for (int32_t r : baby) bab.push_back(cc->EvalFastRotation(ct, r, 2 * RING, pre));
+	std::vector<Ciphertext<DCRTPoly>> bab{ ct };       // bab[b] = rot(x, b*T)
+	for (uint32_t b = 1; b < N1; ++b) bab.push_back(cc->EvalRotate(bab.back(), BABY));
 	cc->Synchronize();
 	rot_s += since(t0);
 
+	// Horner over the giant steps: out = sum_g rot(acc_g, g*N1*T)
+	//   = acc_0 + rot(acc_1 + rot(acc_2 + ...), N1*T), so g runs high to low.
 	Ciphertext<DCRTPoly> out;
-	for (uint32_t g = 0; g < N2; ++g) {
+	for (uint32_t gi = N2; gi-- > 0;) {
+		const uint32_t g = gi;
 		Ciphertext<DCRTPoly> acc;
 		for (uint32_t b = 0; b < N1; ++b) {
 			auto t1 = clk::now();
@@ -225,8 +231,7 @@ static int run_matvec() {
 			mult_s += since(t3);
 		}
 		t0 = clk::now();
-		if (g) acc = cc->EvalRotate(acc, int32_t(g * N1 * T));
-		out = out ? cc->EvalAdd(out, acc) : acc;
+		out = out ? cc->EvalAdd(cc->EvalRotate(out, GIANT), acc) : acc;
 		cc->Synchronize();
 		rot_s += since(t0);
 	}

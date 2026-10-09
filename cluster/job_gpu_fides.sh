@@ -17,7 +17,7 @@
 # Runs, each in its own process so an OOM in one does not hide the rest:
 #   1. boot  4096 slots   (sparse; the cheaper key set)
 #   2. boot 65536 slots   (full slots; 39 GB host RSS on CPU -- may not fit)
-#   3. matvec 1024x1024 at level 21 (rotation keys only, no bootstrap keys)
+#   3. matvec 1024x1024 at level 21 (2 rotation keys; runs first)
 # Key generation is on the host (OpenFHE), so the node also needs ~40 GB RAM.
 # Expectation (HANDOFF §8): one key-switching key at these parameters is
 # 354 MB. Sparse [4,4] bootstrap needs 63 rotation keys (= 22 GB) and the
@@ -46,16 +46,24 @@ nvidia-smi --query-gpu=timestamp,memory.used,memory.total,utilization.gpu \
 SMI=$!
 
 : > "$LOG.results"
+# FIDESlib's CUDA-failure path exits 0 (job 1519057 logged three OOMs as
+# "exit 0"), so success means "printed a RESULT line", not the exit code.
 run() {
   echo "=== fides_e0 $* ($(date))"
+  local before after why
+  before=$(grep -c '^RESULT ' "$LOG.results")
   "$BIN" "$@" 2> >(tee -a "$LOG.stderr" >&2) | tee -a "$LOG.results"
   local rc=${PIPESTATUS[0]}
   echo "=== exit $rc"
-  [ "$rc" -eq 0 ] || echo "RESULT {\"mode\": \"$*\", \"exit\": $rc}" >> "$LOG.results"
+  after=$(grep -c '^RESULT ' "$LOG.results")
+  if [ "$after" -eq "$before" ]; then
+    why=$(grep -hoE "Cuda failure.*|terminate called.*|what\(\):.*" "$LOG.stderr" "$LOG.results" | tail -1 | tr '"' "'")
+    echo "RESULT {\"mode\": \"$*\", \"exit\": $rc, \"failed\": true, \"error\": \"${why:-no RESULT line}\"}" >> "$LOG.results"
+  fi
 }
+run matvec            # 2 rotation keys (~0.7 GB): expected to fit
 run boot 4096 4
 run boot 65536 4
-run matvec
 kill $SMI
 
 python3 - "$LOG.results" "$LOG.smi.csv" "$OUT" <<'PY'

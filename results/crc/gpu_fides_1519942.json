@@ -1,0 +1,39 @@
+{
+  "runs": [
+    {
+      "mode": "matvec",
+      "ring": 131072,
+      "depth": 43,
+      "level": 21,
+      "D": 1024,
+      "rotation_keys": 2,
+      "keygen_s": 8.70654,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 4.4977,
+      "load_context_gpu_gb": 2.80164,
+      "total_s": 133.916,
+      "rotate_s": 0.341531,
+      "encode_s": 91.6617,
+      "h2d_s": 40.864,
+      "mult_add_s": 1.0274,
+      "compute_only_s": 1.36893,
+      "gpu_gb_peak_seen": 7.86023,
+      "max_abs_error": 2.15532e-11,
+      "levels_used": 0,
+      "host_peak_gb": 7.97124
+    },
+    {
+      "mode": "boot 4096 4",
+      "exit": 0,
+      "failed": true,
+      "error": "Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'"
+    },
+    {
+      "mode": "boot 65536 4",
+      "exit": 0,
+      "failed": true,
+      "error": "Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'"
+    }
+  ],
+  "nvidia_smi_peak_mib": 22677.0
+}
