@@ -1,0 +1,14 @@
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+Adding bootstrap precomputation to GPU for 4096 slots.
+Plaintexts loaded: 120 ~ 5940MB
+Rotation keys loaded: 34 ~ 12036MB
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+Adding bootstrap precomputation to GPU for 65536 slots.
+Plaintexts loaded: 248 ~ 12276MB
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'

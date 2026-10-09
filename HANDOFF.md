@@ -361,3 +361,29 @@ Next, in order: run `e0_layer_audit.py` at full size on tjws (timings +
 confirm 18 levels at d=768); have E1 report residual / GELU-input ranges of the
 real model (items 2a–c); measure spec-AR acceptance α early (item 3 makes it
 the decisive number).
+
+## 10. Session 2026-10-09: first GPU run on CRC (job 1519057)
+
+- FIDESlib 2.1.3 builds on CRC with `cuda/13.2.1` (nvcc 13.2 has compute_75;
+  CRC has no 12.4) + system gcc 11.5 + pip cmake < 4; ~15 min.
+  `results/crc/setup_fideslib.log`. The fhedlm env now lives in
+  `/groups/tjung/jzhao7/conda-envs/fhedlm`.
+- **All three runs OOM on one 24 GB RTX 6000** (nvidia-smi peak 22.7 GB;
+  `results/crc/fhedlm_gpu_fides.o1519057`). FIDESlib kernels do run on sm_75
+  (keygen + context load completed).
+  - boot 4096 slots [4,4]: load_context put **34 rotation keys (12.0 GB) +
+    120 C2S/S2C plaintexts (5.9 GB) = 18.8 GB** on the GPU, then OOM inside
+    EvalBootstrap (working buffers).
+  - boot 65536: OOM (more keys).
+  - matvec: OOM loading its **62 BSGS rotation keys** (~354 MB each).
+- **Bug:** every run logged `exit 0` and `results/gpu_fides.json` has no runs —
+  FIDESlib's CUDA-failure path apparently exits 0. Judge runs by the `.o` log.
+- Fixes to try next, cheapest first:
+  1. matvec with **2 keys** (rotate by T and by 32T) generating baby/giant
+     steps by successive rotation — same rotation count, no hoisting (which
+     did not help on CPU anyway); ~0.7 GB of keys instead of ~22 GB.
+  2. bootstrap: keep the 5.9 GB C2S/S2C plaintexts on the host and stream
+     them, or a sparse-slot setup with fewer plaintexts; check FIDESlib
+     options for host-resident precomputation.
+  3. FIDESlib multi-GPU (NCCL) over the node's 4 cards.
+  4. Sparse-secret encapsulation (shallower bootstrap, smaller keys).
