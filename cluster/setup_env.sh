@@ -12,10 +12,13 @@ ROOT=~/fhe-dlm
 export HF_HOME=$ROOT/hf-cache
 mkdir -p "$HF_HOME"
 
-if ! conda env list | grep -q "^fhedlm "; then
-  conda create -n fhedlm python=3.10 -y || exit 1
+# The env and every package cache live in group space, not the 100 GB $HOME.
+ENV=/groups/tjung/jzhao7/conda-envs/fhedlm
+export CONDA_PKGS_DIRS=/groups/tjung/jzhao7/conda-pkgs PIP_CACHE_DIR=/groups/tjung/jzhao7/pip-cache
+if [ ! -x "$ENV/bin/python" ]; then
+  conda create -p "$ENV" python=3.10 -y || exit 1
 fi
-conda activate fhedlm || exit 1
+conda activate "$ENV" || exit 1
 python -m pip install -q --upgrade pip
 # cu121 wheels: works on Turing sm_75 (jung queue) and Ampere A10 alike.
 python -m pip install -q torch --index-url https://download.pytorch.org/whl/cu121 || exit 1

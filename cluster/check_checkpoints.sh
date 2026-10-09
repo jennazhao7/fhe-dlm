@@ -4,7 +4,7 @@
 # weight files and total size -- nothing is downloaded.
 #   bash cluster/check_checkpoints.sh
 source ~/.bashrc
-conda activate fhedlm
+conda activate /groups/tjung/jzhao7/conda-envs/fhedlm
 python - <<'PY'
 from huggingface_hub import HfApi
 api = HfApi()

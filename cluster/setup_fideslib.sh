@@ -15,6 +15,9 @@
 #
 # Needs: CUDA >= 12.4 (12.0 fails: nvcc 12.0 rejects FIDESlib's
 # std::source_location defaults), gcc 11-13, CMake >= 3.25.2, OpenMP.
+# CRC (2026-10-08): cuda/12.1 is the default module and too old; cuda/13.2.1 has
+# nvcc 13.2 with compute_75, so it is the default here. The cmake/3.26.4
+# module does not load, so cmake comes from pip (pinned < 4) in the fhedlm env.
 # Override module names if CRC's differ (`module avail cuda gcc cmake`). If
 # CRC has no CUDA >= 12.4 module, a user-space one works (what the off-cluster
 # check used):  micromamba create -p $TP/cuda124 -c conda-forge cuda-nvcc=12.4 \
@@ -30,8 +33,8 @@ FIDES_REV="${FIDES_REV:-593ad73c4df1b9998a22fc64b47362760d4c5a01}"  # 2.1.3, 202
 OFHE_TAG="fideslib-ref-v1.5.1.1"                                     # what 2.1.3 patches
 JOBS="${JOBS:-8}"
 
-[ "${CUDA_MODULE:-}" = none ] || module load "${CUDA_MODULE:-cuda/12.4}" || true
-[ "${GCC_MODULE:-}" = none ] || module load "${GCC_MODULE:-gcc/12}" || true
+[ "${CUDA_MODULE:-}" = none ] || module load "${CUDA_MODULE:-cuda/13.2.1}" || true
+[ "${GCC_MODULE:-none}" = none ] || module load "$GCC_MODULE" || true   # CRC has gcc 11.5 (system) and gcc/15.2.0 only
 command -v nvcc >/dev/null || { echo "FATAL: no nvcc; set CUDA_MODULE"; exit 1; }
 nv=$(nvcc --version | grep -oE 'release [0-9]+\.[0-9]+' | awk '{print $2}')
 awk -v v="$nv" 'BEGIN{split(v,a,"."); exit !(a[1]>12 || (a[1]==12 && a[2]>=4))}' \
@@ -39,11 +42,11 @@ awk -v v="$nv" 'BEGIN{split(v,a,"."); exit !(a[1]>12 || (a[1]==12 && a[2]>=4))}'
 CUDA_PATH="$(dirname "$(dirname "$(readlink -f "$(command -v nvcc)")")")"
 # FIDESlib's CMakeLists hard-codes CMAKE_CXX_COMPILER=g++, so the g++ on PATH
 # must be one nvcc accepts.
-echo "nvcc $(nvcc --version | tail -1) at $CUDA_PATH; $(g++ --version | head -1); $(cmake --version | head -1)"
-cmake_ok=$(cmake --version | head -1 | awk '{split($3,v,"."); print (v[1]>3 || (v[1]==3 && v[2]>=25))}')
+echo "nvcc $(nvcc --version | tail -1) at $CUDA_PATH; $(g++ --version | head -1); $( (cmake --version 2>/dev/null || echo "cmake: none") | head -1)"
+cmake_ok=$( (cmake --version 2>/dev/null || true) | head -1 | awk '{split($3,v,"."); print (v[1]>3 || (v[1]==3 && v[2]>=25))}')
 if [ "$cmake_ok" != 1 ]; then
   echo "cmake < 3.25: installing a recent one into the fhedlm env"
-  conda activate fhedlm && python -m pip install -q "cmake>=3.25.2"
+  conda activate /groups/tjung/jzhao7/conda-envs/fhedlm && PIP_CACHE_DIR=/groups/tjung/jzhao7/pip-cache python -m pip install -q "cmake>=3.25.2,<4"
 fi
 
 mkdir -p "$TP" && cd "$TP"

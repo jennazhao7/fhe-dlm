@@ -11,12 +11,12 @@
 # -M/-m are file directives, always as a pair (see cluster/README.md).
 #   qsub cluster/job_step3_rounds.sh
 source ~/.bashrc
-conda activate fhedlm
+conda activate /groups/tjung/jzhao7/conda-envs/fhedlm
 set -uo pipefail
 export FHEDLM_ROOT=/groups/tjung/jzhao7/fhe-dlm
 cd "$FHEDLM_ROOT"
 source cluster/job_common.sh
-export FHEDLM_CONDA_ENV="$HOME/.conda/envs/fhedlm"
+export FHEDLM_CONDA_ENV="/groups/tjung/jzhao7/conda-envs/fhedlm"
 source cluster/env.sh
 export OMP_NUM_THREADS=${NSLOTS:-16} MKL_NUM_THREADS=${NSLOTS:-16}
 cd "$FHEDLM_ROOT/third_party/ELF"

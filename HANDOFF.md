@@ -84,7 +84,9 @@ and `third_party/` exist only on CRC and are git-ignored.
   `step4_poly*.json` (from before this handoff period — **not reviewed here**).
   tjws results are mirrored to `results/tjws/`. Sync code with
   `--exclude results/`.
-- Env: conda `fhedlm` at `/users/jzhao7/.conda/envs/fhedlm` — Python 3.10,
+- Env: conda `fhedlm` at `/groups/tjung/jzhao7/conda-envs/fhedlm` (moved out of
+  `$HOME` 2026-10-08; activate by path; package caches in
+  `/groups/tjung/jzhao7/{conda-pkgs,pip-cache}`) — Python 3.10,
   torch 2.5.1+cu121, transformers 4.44.2, openfhe-python 1.5.1.
   `cluster/setup_env.sh` built it (front-end only; compute nodes have no
   outbound network — prefetch with `cluster/prefetch.sh`).

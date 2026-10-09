@@ -31,7 +31,7 @@ export FHEDLM_ROOT=/groups/tjung/jzhao7/fhe-dlm
 cd "$FHEDLM_ROOT"
 source cluster/job_common.sh
 set +e
-[ "${CUDA_MODULE:-}" = none ] || module load "${CUDA_MODULE:-cuda/12.4}" 2>/dev/null
+[ "${CUDA_MODULE:-}" = none ] || module load "${CUDA_MODULE:-cuda/13.2.1}" 2>/dev/null
 export LD_LIBRARY_PATH="$FHEDLM_ROOT/third_party/fideslib/lib:$FHEDLM_ROOT/third_party/openfhe-fides/lib:${LD_LIBRARY_PATH:-}"
 export OMP_NUM_THREADS=${NSLOTS:-8}
 BIN="$FHEDLM_ROOT/gpu/fides_e0/build/fides_e0"
