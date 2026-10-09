@@ -387,3 +387,13 @@ the decisive number).
      options for host-resident precomputation.
   3. FIDESlib multi-GPU (NCCL) over the node's 4 cards.
   4. Sparse-secret encapsulation (shallower bootstrap, smaller keys).
+- **Full-size layer audit on tjws (2026-10-09)**, `--logn 17 --d 768 --dpad
+  1024 --hd 64 --B 8 --packed`, 2 layers, random weights:
+  `results/e0_layer_audit_full_packed.{json,log}`. **18 levels/layer
+  (attention 8 + FFN 10) = cost model**, GELU deg 31 = 7 levels; max err
+  1.4e-4; max |x/S| 0.54; max GELU input 4.0. 62.5 GB RSS, setup 42 s,
+  **run 1,868 s for 2 layers (934 s/layer)** — but the audit encrypts at the
+  full 43-level chain with no bootstrap, so every op runs on ~44→8 towers,
+  not the post-bootstrap window the model prices (~22→1). The ~2.6× gap to
+  the model's ~360 s/layer is mostly that; to calibrate time, rerun with the
+  input encrypted at the post-bootstrap level (21).
