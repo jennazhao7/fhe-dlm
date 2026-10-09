@@ -415,3 +415,26 @@ the decisive number).
   FIDESlib has no host-resident option for these; its multi-GPU path is
   compiled out (CMake found no NCCL; the env's NCCL is the cu12 torch wheel,
   FIDESlib is built with CUDA 13.2).
+
+### Job 1520180 (2026-10-09): GPU-side diagonal encoding — matvec 134 s → 3.7 s
+
+- `gpu/fides_e0/src/gpu_encode.{hpp,cu}` + `gpu_encode_host.cpp`, mode
+  `fides_e0 matvec_enc` (`qsub -v FIDES_RUNS="matvec_enc" cluster/job_gpu_fides.sh`).
+- Layout switched to **token-major** (`slot = token*D + dim`), so every diagonal
+  plaintext is **period-D** = OpenFHE sparse encoding with slots = D: only 2D
+  nonzero coefficients at stride N/(2D)=64. Host does OpenFHE's own size-D
+  `FFTSpecialInv` + rounding (0.21 s for all 2048), uploads 2D int64 per
+  plaintext (0.02 s total); a CUDA kernel scatters them mod each prime into a
+  scratch RNSPoly, FIDESlib's NTT converts, and the limbs are copied D2D into
+  the device plaintext behind a public handle (plaintext limbs are "constant",
+  without the NTT aux buffer, hence the scratch). No FIDESlib patch.
+- **Bit-exact vs OpenFHE's encode (0 residues differ).**
+- Rotations cross token boundaries in this layout: diagonal i splits by the
+  mask j < D−i into rot(x,i) and rot(x,i−D) = rot(rot(x,−D),i) halves → 2047
+  plaintext mults, two baby sets, 3 keys (+1, +32, −1024).
+- **Total 3.74 s** (GPU encode 1.23, mult+add 2.05, rotate 0.46) vs 134 s with
+  host encoding and 131 s on the 20-core CPU; max err 1.6e-10; 13.9 GB peak.
+- Not yet folded into `e0_cost_model.py`: per 1024-diagonal block the GPU
+  cost is now ~3.7 s at level 21 (vs ~74 s CPU in the packed model), so
+  matvec stops dominating and the **bootstrap (still OOM on one card)
+  becomes the E5 bottleneck**.

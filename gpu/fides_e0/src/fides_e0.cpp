@@ -34,6 +34,8 @@
 
 #include <fideslib.hpp>
 
+#include "gpu_encode.hpp"
+
 using namespace fideslib;
 
 static constexpr uint32_t DEPTH = 43;
@@ -256,11 +258,138 @@ static int run_matvec() {
 	return 0;
 }
 
+// Same 1024x1024 matvec, with diagonals encoded ON THE GPU (gpu_encode.hpp).
+// Layout is token-major, slot = token*D + dim, so every diagonal plaintext is
+// period-D and needs only 2D coefficients. Rotating by i then crosses token
+// boundaries for dims j >= D-i, so diagonal i splits by the mask j < D-i:
+//   y = sum_i (m_i.d_i) * rot(x, i) + ((1-m_i).d_i) * rot(x, i-D)
+// with rot(x, i-D) = rot(rot(x, -D), i). BSGS i = g*N1 + b as before (Horner
+// over g), on two baby-step sets: x and x' = rot(x, -D). Keys: +1, +N1, -D.
+// Cost vs run_matvec: ~2x plaintext mults (2047) and baby rotations (63) --
+// GPU work that took ~1.4 s -- in exchange for no host encode / big H2D.
+static int run_matvec_enc() {
+	Json j;
+	j.ks("mode", "matvec_enc").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	const uint32_t T = RING / 2 / D;
+	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
+	j.kv("rotation_keys", 3);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);
+	std::vector<double> X(T * D), W(D * D);  // X[t*D+d] -- already token-major
+	for (auto& v : X) v = U(rng);
+	for (auto& v : W) v = U(rng) / std::sqrt(double(D));
+	auto ptx = cc->MakeCKKSPackedPlaintext(X, 1, MV_LEVEL);
+	auto ct  = cc->Encrypt(keys.publicKey, ptx);
+
+	// Period-D plaintext for (diagonal i, half h), pre-rolled by +g*N1 for the
+	// Horner giant step: pt[j] = v[(j - g*N1) mod D], v[j] = W[j][(j+i)%D] on
+	// half 0 = {j < D-i}, half 1 = {j >= D-i}.
+	auto pt_vec = [&](uint32_t g, uint32_t b, int half) {
+		const uint32_t i = g * N1 + b, shift = g * N1;
+		std::vector<double> v(D, 0.0);
+		for (uint32_t jj = 0; jj < D; ++jj) {
+			const uint32_t src = (jj + D - shift) % D;
+			const bool lo      = src < D - i;
+			if (lo == (half == 0)) v[jj] = W[src * D + (src + i) % D];
+		}
+		return v;
+	};
+
+	// Reference plaintexts through the normal path: one is the buffer the GPU
+	// encoder overwrites (it fixes level + scaling factor), the other is the
+	// bit-exactness check.
+	auto ref = cc->MakeCKKSPackedPlaintext(pt_vec(0, 0, 0), 1, MV_LEVEL, nullptr, D);
+	cc->LoadPlaintext(ref);
+	auto buf = cc->MakeCKKSPackedPlaintext(pt_vec(0, 1, 0), 1, MV_LEVEL, nullptr, D);
+	cc->LoadPlaintext(buf);
+	auto* enc = e0::gpuenc_create(cc->gpu, cc->GetDevicePlaintext(ref->gpu), D);
+	const double sf = e0::gpuenc_scaling_factor(enc);
+
+	t0 = clk::now();
+	std::vector<std::vector<int64_t>> coeffs(2 * D);  // set index 2*i + half
+	for (uint32_t g = 0; g < N2; ++g)
+		for (uint32_t b = 0; b < N1; ++b)
+			for (int h = 0; h < 2; ++h) coeffs[2 * (g * N1 + b) + h] = e0::ckks_coeffs(pt_vec(g, b, h), RING, sf);
+	j.kv("host_fft_s", since(t0));
+	j.kv("upload_s", e0::gpuenc_upload(enc, coeffs));
+
+	// Bit-exactness: GPU-encode set (g=0,b=0,lo) into `buf`, compare with `ref`.
+	e0::gpuenc_encode(enc, 0, cc->GetDevicePlaintext(buf->gpu));
+	const uint64_t ndiff = e0::gpuenc_count_diff(enc, cc->GetDevicePlaintext(ref->gpu), cc->GetDevicePlaintext(buf->gpu));
+	j.kv("encode_check_residues_differing", ndiff);
+	std::cerr << "[fides_e0] GPU encode vs OpenFHE: " << ndiff << " residues differ" << std::endl;
+
+	double rot_s = 0, gpuenc_s = 0, mult_s = 0;
+	auto total0 = clk::now();
+	t0 = clk::now();
+	std::vector<Ciphertext<DCRTPoly>> bab{ ct }, babp{ cc->EvalRotate(ct, -int32_t(D)) };
+	for (uint32_t b = 1; b < N1; ++b) {
+		bab.push_back(cc->EvalRotate(bab.back(), 1));
+		babp.push_back(cc->EvalRotate(babp.back(), 1));
+	}
+	cc->Synchronize();
+	rot_s += since(t0);
+
+	auto& dev_buf = cc->GetDevicePlaintext(buf->gpu);
+	Ciphertext<DCRTPoly> out;
+	uint32_t n_mults = 0;
+	for (uint32_t g = N2; g-- > 0;) {
+		Ciphertext<DCRTPoly> acc;
+		for (uint32_t b = 0; b < N1; ++b)
+			for (int h = 0; h < 2; ++h) {
+				if (h == 1 && g == 0 && b == 0) continue;  // i = 0: no wrapped half
+				auto t1 = clk::now();
+				e0::gpuenc_encode(enc, 2 * (g * N1 + b) + h, dev_buf);
+				auto t2 = clk::now();
+				auto term = cc->EvalMult(h ? babp[b] : bab[b], buf);
+				acc       = acc ? cc->EvalAdd(acc, term) : term;
+				cc->Synchronize();
+				gpuenc_s += std::chrono::duration<double>(t2 - t1).count();
+				mult_s += since(t2);
+				++n_mults;
+			}
+		t0  = clk::now();
+		out = out ? cc->EvalAdd(cc->EvalRotate(out, int32_t(N1)), acc) : acc;
+		cc->Synchronize();
+		rot_s += since(t0);
+	}
+	double total = since(total0);
+	j.kv("total_s", total).kv("rotate_s", rot_s).kv("gpu_encode_s", gpuenc_s).kv("mult_add_s", mult_s);
+	j.kv("pt_mults", n_mults).kv("gpu_gb_peak_seen", gpu_used_gb());
+
+	Plaintext dec;
+	cc->Decrypt(keys.secretKey, out, &dec);
+	dec->SetLength(D * T);
+	auto got  = dec->GetRealPackedValue();
+	double err = 0;
+	for (uint32_t t = 0; t < T; ++t)
+		for (uint32_t o = 0; o < D; ++o) {
+			double want = 0;
+			for (uint32_t i = 0; i < D; ++i) want += W[o * D + i] * X[t * D + i];
+			err = std::max(err, std::abs(got[t * D + o] - want));
+		}
+	j.kv("max_abs_error", err).kv("host_peak_gb", host_peak_gb());
+	e0::gpuenc_destroy(enc);
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
 int main(int argc, char** argv) {
 	std::string mode = argc > 1 ? argv[1] : "";
 	try {
 		if (mode == "boot" && argc > 2) return run_boot(std::stoul(argv[2]), argc > 3 ? std::stoul(argv[3]) : 4);
 		if (mode == "matvec") return run_matvec();
+		if (mode == "matvec_enc") return run_matvec_enc();
 	} catch (const std::exception& e) {
 		std::cout << "RESULT {\"mode\": \"" << mode << "\", \"error\": \"" << e.what() << "\"}" << std::endl;
 		return 2;

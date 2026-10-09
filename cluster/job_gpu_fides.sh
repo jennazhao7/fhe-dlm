@@ -18,6 +18,7 @@
 #   1. boot  4096 slots   (sparse; the cheaper key set)
 #   2. boot 65536 slots   (full slots; 39 GB host RSS on CPU -- may not fit)
 #   3. matvec 1024x1024 at level 21 (2 rotation keys; runs first)
+#   matvec_enc: same matvec, diagonals encoded on the GPU (not in the default list)
 # Key generation is on the host (OpenFHE), so the node also needs ~40 GB RAM.
 # Expectation (HANDOFF §8): one key-switching key at these parameters is
 # 354 MB. Sparse [4,4] bootstrap needs 63 rotation keys (= 22 GB) and the
@@ -61,9 +62,13 @@ run() {
     echo "RESULT {\"mode\": \"$*\", \"exit\": $rc, \"failed\": true, \"error\": \"${why:-no RESULT line}\"}" >> "$LOG.results"
   fi
 }
-run matvec            # 2 rotation keys (~0.7 GB): expected to fit
-run boot 4096 4
-run boot 65536 4
+# Runs as "|"-separated fides_e0 argument lists; override with
+#   qsub -v FIDES_RUNS="matvec_enc" cluster/job_gpu_fides.sh
+IFS='|' read -ra RUNS <<< "${FIDES_RUNS:-matvec|boot 4096 4|boot 65536 4}"
+for r in "${RUNS[@]}"; do
+  read -ra args <<< "$r"
+  run "${args[@]}"
+done
 kill $SMI
 
 python3 - "$LOG.results" "$LOG.smi.csv" "$OUT" <<'PY'

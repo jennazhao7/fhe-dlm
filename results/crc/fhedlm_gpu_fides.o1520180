@@ -1,0 +1,69 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_gpu_fides (1520180)
+queue     : gpu
+started   : Fri Oct  9 12:41:16 PM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Fri Oct  9 12:41:16 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:06:00.0 Off |                    0 |
+| N/A   21C    P8             13W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+=== fides_e0 matvec_enc (Fri Oct  9 12:41:16 PM EDT 2026)
+[fides_e0] keygen: 8.56805 s, gpu used 0.162964 GB, host peak 2.40479 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+[fides_e0] load_context: 5.26723 s, gpu used 2.80164 GB, host peak 8.33211 GB
+[fides_e0] GPU encode vs OpenFHE: 0 residues differ
+RESULT {"mode": "matvec_enc", "ring": 131072, "depth": 43, "level": 21, "D": 1024, "rotation_keys": 3, "keygen_s": 8.56805, "keygen_gpu_gb": 0.162964, "load_context_s": 5.26723, "load_context_gpu_gb": 2.80164, "host_fft_s": 0.208811, "upload_s": 0.0229196, "encode_check_residues_differing": 0, "total_s": 3.74127, "rotate_s": 0.46459, "gpu_encode_s": 1.23083, "mult_add_s": 2.04511, "pt_mults": 2047, "gpu_gb_peak_seen": 13.8915, "max_abs_error": 1.55114e-10, "host_peak_gb": 8.33211}
+=== exit 0
+{
+  "runs": [
+    {
+      "mode": "matvec_enc",
+      "ring": 131072,
+      "depth": 43,
+      "level": 21,
+      "D": 1024,
+      "rotation_keys": 3,
+      "keygen_s": 8.56805,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 5.26723,
+      "load_context_gpu_gb": 2.80164,
+      "host_fft_s": 0.208811,
+      "upload_s": 0.0229196,
+      "encode_check_residues_differing": 0,
+      "total_s": 3.74127,
+      "rotate_s": 0.46459,
+      "gpu_encode_s": 1.23083,
+      "mult_add_s": 2.04511,
+      "pt_mults": 2047,
+      "gpu_gb_peak_seen": 13.8915,
+      "max_abs_error": 1.55114e-10,
+      "host_peak_gb": 8.33211
+    }
+  ],
+  "nvidia_smi_peak_mib": 14225.0
+}
+[gpu] done at Fri Oct  9 12:41:36 PM EDT 2026
+Loading CRC_default/1.1
