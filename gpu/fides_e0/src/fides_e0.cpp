@@ -19,6 +19,7 @@
 // FIDESlib rule: every key (mult, rotation, bootstrap) must be generated
 // BEFORE LoadContext, which uploads all of them to the device at once --
 // LoadContext is therefore where a 24 GB card either fits or does not.
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -49,10 +50,22 @@ static constexpr uint32_t MV_LEVEL = 21;  // post-bootstrap level, as in e0_matv
 using clk = std::chrono::steady_clock;
 static double since(clk::time_point t0) { return std::chrono::duration<double>(clk::now() - t0).count(); }
 
+// Max over visible devices: with FIDES_E0_GPUS > 1 each card holds a share,
+// and the question is whether the fullest one fits.
 static double gpu_used_gb() {
-	size_t free_b = 0, total_b = 0;
-	if (CPU_ONLY || cudaMemGetInfo(&free_b, &total_b) != cudaSuccess) return -1;
-	return double(total_b - free_b) / (1ull << 30);
+	if (CPU_ONLY) return -1;
+	int n = 0, cur = 0;
+	if (cudaGetDeviceCount(&n) != cudaSuccess) return -1;
+	cudaGetDevice(&cur);
+	double worst = 0;
+	for (int d = 0; d < n; ++d) {
+		size_t free_b = 0, total_b = 0;
+		cudaSetDevice(d);
+		if (cudaMemGetInfo(&free_b, &total_b) == cudaSuccess)
+			worst = std::max(worst, double(total_b - free_b) / (1ull << 30));
+	}
+	cudaSetDevice(cur);
+	return worst;
 }
 static double host_peak_gb() {
 	rusage u{};
@@ -89,7 +102,14 @@ static CryptoContext<DCRTPoly> make_context() {
 	p.SetScalingTechnique(FLEXIBLEAUTO);
 	p.SetKeySwitchTechnique(HYBRID);
 	p.SetMultiplicativeDepth(DEPTH);
-	if (!CPU_ONLY) p.SetDevices(std::vector<int>{ 0 });
+	// FIDES_E0_GPUS=n splits limbs and keys over devices 0..n-1 (needs the NCCL
+	// build, cluster/setup_fideslib_mgpu.sh); default is one device.
+	if (!CPU_ONLY) {
+		const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+		std::vector<int> devs;
+		for (int d = 0; d < ngpu; ++d) devs.push_back(d);
+		p.SetDevices(std::move(devs));
+	}
 	auto cc = GenCryptoContext(p);
 	cc->Enable(PKE);
 	cc->Enable(KEYSWITCH);
@@ -101,7 +121,7 @@ static CryptoContext<DCRTPoly> make_context() {
 
 static int run_boot(uint32_t slots, uint32_t budget) {
 	Json j;
-	j.ks("mode", "boot").kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	j.ks("mode", "boot").kv("gpus", std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
 	auto t0 = clk::now();
 	auto cc = make_context();
 	auto keys = cc->KeyGen();
