@@ -438,3 +438,26 @@ the decisive number).
   cost is now ~3.7 s at level 21 (vs ~74 s CPU in the packed model), so
   matvec stops dominating and the **bootstrap (still OOM on one card)
   becomes the E5 bottleneck**.
+
+### Job 1528196 (2026-10-11): bootstrap runs on 4 GPUs — full slots 1.1 s
+
+- Multi-GPU FIDESlib (`cluster/setup_fideslib_mgpu.sh`: NCCL 2.32.3 from the
+  `nvidia-nccl-cu13` wheel installed with `--target third_party/nccl-cu13`,
+  FIDESlib → `third_party/fideslib-mgpu`), bench `gpu/fides_e0/build-mgpu`
+  with `FIDES_E0_GPUS=4`, job `cluster/job_gpu_fides_mgpu.sh` (`-l gpu=4`,
+  whole qa-rtx6k-019 node). `results/crc/gpu_fides_mgpu_1528196.json`.
+- **Full slots (65536) [4,4]: 1.11 s / bootstrap** (1.106, 1.105, 1.123),
+  22 levels left, **8.5 bits** (CPU 68 s, 9.2 bits) → ~60×. Loads 61 rotation
+  keys (21.6 GB) + 248 plaintexts (12.3 GB) across 4 cards; **fullest card
+  18.0 GB of 24** after warm-up. Setup: boot keygen 27.5 s, load 73.6 s,
+  host RSS 42.5 GB.
+- Sparse (4096): 0.77 s, 11.6 bits, 11.0 GB fullest card.
+- Job wall time 3 min 18 s. CRC's front end hung twice around this job (login
+  banner, then nothing); a stale ControlMaster after a network change looks
+  the same — close it (`ssh -S … -O exit`) and log in again.
+- Open: (1) the 3.7 s matvec was measured on 1 GPU; rerun `matvec_enc` in the
+  4-GPU context (a real pass needs both in one context); (2) add a GPU column
+  to `e0_cost_model.py` / Fig. 1 — rough per pass (packed, B=8): ~55
+  1024-diagonal blocks × ~3.7 s + ~11 bootstraps × 1.1 s ≈ 4 min vs ~93 min
+  on CPU; (3) full-slot GPU bootstrap precision is 8.5 bits — the noise sweep
+  must cover ~2^-8.
