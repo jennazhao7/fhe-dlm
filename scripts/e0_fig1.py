@@ -52,15 +52,18 @@ ax.set_ylim(0, None)
 ax.set_xlabel("tokens committed per round, k")
 ax.set_ylabel("server minutes per committed token")
 PACKED = res["assumptions"].get("packed", False)
-ax.set_title(f"Encrypted cost per committed token (CPU OpenFHE, N=2^{C['ring'].bit_length() - 1}"
+BACKEND = "GPU FIDESlib" if res["assumptions"].get("backend", "").startswith("GPU") else "CPU OpenFHE"
+ax.set_title(f"Encrypted cost per committed token ({BACKEND}, N=2^{C['ring'].bit_length() - 1}"
              + (", packed)" if PACKED else ")"),
              fontsize=9, color=INK, loc="left")
 fig.text(0.01, 0.01, f"Model from measured op costs; L={res['assumptions']['L']}, "
          f"{res['assumptions']['layers']} layers, d padded to {res['assumptions']['d_pad']}, "
          f"GELU deg {res['assumptions']['gelu_degree']};\nmatvec {res['assumptions']['matvec']}. "
-         "Spec. AR: k = drafts verified per pass. Network adds <1% on CPU.",
+         "Spec. AR: k = drafts verified per pass. "
+         + ("\nGPU: bootstrap (4 GPUs) and matvec (1 GPU) measured, other ops scaled; network excluded."
+            if BACKEND.startswith("GPU") else "Network adds <1% on CPU."),
          fontsize=6.5, color=INK2)
-fig.tight_layout(rect=(0, 0.08, 1, 1))
+fig.tight_layout(rect=(0, 0.11 if BACKEND.startswith('GPU') else 0.08, 1, 1))
 for ext in ("png", "pdf"):
     fig.savefig(f"{dst}.{ext}", dpi=200, facecolor=SURFACE)
 

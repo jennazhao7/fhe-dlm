@@ -65,6 +65,15 @@ LAYER_AUDIT_JSON = "results/e0_layer_audit.json"   # None -> structural count be
 # a pass has B live tokens in T slots, so G = T/B groups each run a different
 # weight block in the same 1024-diagonal pass. FHEDLM_PACKED=1 to enable.
 PACKED = os.environ.get("FHEDLM_PACKED", "0") == "1"
+# FHEDLM_GPU=1: server costs from the CRC RTX 6000 runs (HANDOFF §10) instead
+# of the tjws CPU. Measured: full-slot [4,4] bootstrap on 4 GPUs (job 1528196)
+# and the GPU-encoded 1024x1024 matvec on 1 GPU (job 1520180, per 1024-diagonal
+# block, encode included). Not measured on GPU, so ESTIMATED by scaling the CPU
+# cost with the measured GPU/CPU rotation speedup: standalone rot/ptm/ctm/add,
+# GELU. Caveat: matvec (1 GPU) and bootstrap (4 GPUs) were separate contexts.
+GPU = os.environ.get("FHEDLM_GPU", "0") == "1"
+GPU_BOOT_JSON = "results/crc/gpu_fides_mgpu_1528196.json"
+GPU_MATVEC_JSON = "results/crc/gpu_fides_1520180.json"
 BUDGET = [4, 4]
 
 
@@ -100,7 +109,7 @@ def load_costs(bench_path):
     lv = ring["by_level"]
     gelu = next(g for g in ring["gelu"] if g["degree"] == GELU_DEGREE)
     ctm_ratio = interp(lv, "mult_ct_ct_relin_s", mid) / interp(lv, "mult_ct_ct_relin_s", 0)
-    return {
+    C = {
         "ring": RING, "slots": ring["slots"], "T": ring["slots"] // D_PAD,
         "depth": depth, "usable": usable, "op_level": mid,
         "rot": interp(lv, "rotate_s", mid), "ptm": interp(lv, "mult_ct_pt_s", mid),
@@ -110,6 +119,32 @@ def load_costs(bench_path):
         "encrypt": ring["encrypt_s"], "decrypt": ring["decrypt_s"],
         "matvec_per_diag": matvec_per_diag(mid),
     }
+    if GPU:
+        g = gpu_costs(lv, mid)
+        g["gelu"] = C["gelu"] / g["gpu_rot_speedup_vs_cpu"]   # estimate
+        C.update(g)
+    return C
+
+
+def gpu_costs(lv, mid):
+    """Override server-side unit costs with the CRC GPU measurements."""
+    boot = next(r for r in json.load(open(GPU_BOOT_JSON))["runs"]
+                if r.get("slots") == RING // 2 and "bootstrap_s" in r)
+    mv = json.load(open(GPU_MATVEC_JSON))
+    n_rot = 2 * 31 + 1 + 31                         # matvec_enc: two baby sets + giant steps
+    gpu_rot = mv["rotate_s"] / n_rot
+    speedup = interp(lv, "rotate_s", mid) / gpu_rot  # CPU rot at the op level / GPU rot
+    cpu = {"rot": interp(lv, "rotate_s", mid), "ptm": interp(lv, "mult_ct_pt_s", mid),
+           "ctm": interp(lv, "mult_ct_ct_relin_s", mid), "add": interp(lv, "add_s", mid)}
+    return {"rot": gpu_rot,
+            "ptm": mv["mult_add_s"] / mv["pt_mults"] / 2,   # measured mult+add pairs, split
+            "add": mv["mult_add_s"] / mv["pt_mults"] / 2,
+            "ctm": cpu["ctm"] / speedup,                    # estimate
+            "boot": sum(boot["bootstrap_s"]) / len(boot["bootstrap_s"]),
+            "boot_precision_bits": boot["precision_bits"],
+            "matvec_per_diag": mv["total_s"] / D_PAD,       # per 1024-diagonal block / 1024
+            "gpu_rot_speedup_vs_cpu": speedup,
+            "estimated": ["ctm", "gelu"]}
 
 
 MV = {"per_diag": None}       # set from load_costs; switches matvec to measured
@@ -264,12 +299,13 @@ def gen_spec(k, a, C):
 def main():
     bench = sys.argv[1] if len(sys.argv) > 1 else "results/e0_microbench.json"
     out_path = sys.argv[2] if len(sys.argv) > 2 else (
-        "results/e0_cost_model_packed.json" if PACKED else "results/e0_cost_model.json")
+        "results/e0_cost_model" + ("_packed" if PACKED else "") + ("_gpu" if GPU else "") + ".json")
     C = load_costs(bench)
     MV["per_diag"] = C["matvec_per_diag"]
     res = {"assumptions": {"layers": LAYERS, "d_pad": D_PAD, "vocab": VOCAB, "L": L_GEN,
                            "gelu_degree": GELU_DEGREE, "kv_pass": KV_PASS, "ring": RING,
                            "level_budget": BUDGET, "nets": NETS, "packed": PACKED,
+                           "backend": "GPU (CRC RTX 6000, FIDESlib)" if GPU else "CPU (tjws, OpenFHE)",
                            "matvec": "measured (compute+encode)" if MV["per_diag"] else "op sum"},
            "unit_costs_s": C, "series": []}
     nets = [None] + list(NETS)

@@ -1,0 +1,298 @@
+{
+  "assumptions": {
+    "layers": 12,
+    "d_pad": 1024,
+    "vocab": 50257,
+    "L": 256,
+    "gelu_degree": 31,
+    "kv_pass": true,
+    "ring": 131072,
+    "level_budget": [
+      4,
+      4
+    ],
+    "nets": {
+      "LAN": [
+        0.0005,
+        1000000000.0
+      ],
+      "WAN": [
+        0.04,
+        100000000.0
+      ],
+      "mobile": [
+        0.08,
+        20000000.0
+      ]
+    },
+    "packed": true,
+    "backend": "GPU (CRC RTX 6000, FIDESlib)",
+    "matvec": "measured (compute+encode)"
+  },
+  "unit_costs_s": {
+    "ring": 131072,
+    "slots": 65536,
+    "T": 64,
+    "depth": 43,
+    "usable": 21,
+    "op_level": 32.5,
+    "rot": 0.004942446808510638,
+    "ptm": 0.0004995383488031266,
+    "ctm": 0.005602921957252278,
+    "add": 0.0004995383488031266,
+    "gelu": 0.10517404131549397,
+    "gelu_depth": 6,
+    "boot": 1.1116366666666666,
+    "boot_precision_bits": 8.53439,
+    "encrypt": 0.43658215925097466,
+    "decrypt": 0.22001919150352478,
+    "matvec_per_diag": 0.003653583984375,
+    "gpu_rot_speedup_vs_cpu": 22.98512508222166,
+    "estimated": [
+      "ctm",
+      "gelu"
+    ]
+  },
+  "series": [
+    {
+      "name": "AR",
+      "family": "ar",
+      "B": 1,
+      "k": 1,
+      "passes_per_token": 1.0,
+      "s_per_token_server": 204.65104151082,
+      "s_per_token_LAN": 205.72110003707797,
+      "s_per_token_WAN": 207.497041893078,
+      "s_per_token_mobile": 215.254561253078
+    },
+    {
+      "name": "DLM B=4",
+      "family": "dlm",
+      "B": 4,
+      "k": 1,
+      "passes_per_token": 1.25,
+      "s_per_token_server": 284.5363856121792,
+      "s_per_token_LAN": 285.8739587700017,
+      "s_per_token_WAN": 288.0938860900017,
+      "s_per_token_mobile": 297.79078529000174
+    },
+    {
+      "name": "DLM B=4",
+      "family": "dlm",
+      "B": 4,
+      "k": 2,
+      "passes_per_token": 0.75,
+      "s_per_token_server": 170.72183136730752,
+      "s_per_token_LAN": 171.64277346575278,
+      "s_per_token_WAN": 173.0502273297528,
+      "s_per_token_mobile": 179.2039111697528
+    },
+    {
+      "name": "DLM B=4",
+      "family": "dlm",
+      "B": 4,
+      "k": 4,
+      "passes_per_token": 0.5,
+      "s_per_token_server": 113.81455424487169,
+      "s_per_token_LAN": 114.52718081362832,
+      "s_per_token_WAN": 115.52839794962833,
+      "s_per_token_mobile": 119.91047410962835
+    },
+    {
+      "name": "DLM B=8",
+      "family": "dlm",
+      "B": 8,
+      "k": 1,
+      "passes_per_token": 1.125,
+      "s_per_token_server": 287.01129394295924,
+      "s_per_token_LAN": 288.2151097849995,
+      "s_per_token_WAN": 290.21304437299955,
+      "s_per_token_mobile": 298.9402536529995
+    },
+    {
+      "name": "DLM B=8",
+      "family": "dlm",
+      "B": 8,
+      "k": 2,
+      "passes_per_token": 0.625,
+      "s_per_token_server": 159.45071885719958,
+      "s_per_token_LAN": 160.2379036398626,
+      "s_per_token_WAN": 161.4233647718626,
+      "s_per_token_mobile": 166.6073586918626
+    },
+    {
+      "name": "DLM B=8",
+      "family": "dlm",
+      "B": 8,
+      "k": 4,
+      "passes_per_token": 0.375,
+      "s_per_token_server": 95.67043131431974,
+      "s_per_token_LAN": 96.24930056729414,
+      "s_per_token_WAN": 97.02852497129415,
+      "s_per_token_mobile": 100.44091121129415
+    },
+    {
+      "name": "DLM B=8",
+      "family": "dlm",
+      "B": 8,
+      "k": 8,
+      "passes_per_token": 0.25,
+      "s_per_token_server": 63.78028754287983,
+      "s_per_token_LAN": 64.22539948007199,
+      "s_per_token_WAN": 64.78263115207199,
+      "s_per_token_mobile": 67.22532747207198
+    },
+    {
+      "name": "DLM B=16",
+      "family": "dlm",
+      "B": 16,
+      "k": 1,
+      "passes_per_token": 1.0625,
+      "s_per_token_server": 329.8701591615983,
+      "s_per_token_LAN": 331.0070963457474,
+      "s_per_token_WAN": 332.8940345677475,
+      "s_per_token_mobile": 341.1363988877474
+    },
+    {
+      "name": "DLM B=16",
+      "family": "dlm",
+      "B": 16,
+      "k": 2,
+      "passes_per_token": 0.5625,
+      "s_per_token_server": 174.63714308555203,
+      "s_per_token_LAN": 175.35744921032392,
+      "s_per_token_WAN": 176.43191397632393,
+      "s_per_token_mobile": 181.13106293632393
+    },
+    {
+      "name": "DLM B=16",
+      "family": "dlm",
+      "B": 16,
+      "k": 4,
+      "passes_per_token": 0.3125,
+      "s_per_token_server": 97.0206350475289,
+      "s_per_token_LAN": 97.53262564261219,
+      "s_per_token_WAN": 98.20085368061218,
+      "s_per_token_mobile": 101.12839496061218
+    },
+    {
+      "name": "DLM B=16",
+      "family": "dlm",
+      "B": 16,
+      "k": 8,
+      "passes_per_token": 0.1875,
+      "s_per_token_server": 58.21238102851734,
+      "s_per_token_LAN": 58.59061430781837,
+      "s_per_token_WAN": 59.036849613818376,
+      "s_per_token_mobile": 60.99470097381837
+    },
+    {
+      "name": "DLM B=16",
+      "family": "dlm",
+      "B": 16,
+      "k": 16,
+      "passes_per_token": 0.125,
+      "s_per_token_server": 38.808254019011564,
+      "s_per_token_LAN": 39.11960864042146,
+      "s_per_token_WAN": 39.454847580421465,
+      "s_per_token_mobile": 40.92785398042146
+    },
+    {
+      "name": "SpecAR a=0.6",
+      "family": "spec",
+      "B": 3,
+      "k": 2,
+      "passes_per_token": 0.5102040816326531,
+      "s_per_token_server": 112.15527108238963,
+      "s_per_token_LAN": 112.82203380369656,
+      "s_per_token_WAN": 113.80516482410471,
+      "s_per_token_mobile": 118.10547502818636,
+      "accept": 0.6
+    },
+    {
+      "name": "SpecAR a=0.6",
+      "family": "spec",
+      "B": 5,
+      "k": 4,
+      "passes_per_token": 0.43372657876474663,
+      "s_per_token_server": 102.15953211185308,
+      "s_per_token_LAN": 102.7263498312153,
+      "s_per_token_WAN": 103.56211353697519,
+      "s_per_token_mobile": 107.21782484856438,
+      "accept": 0.6
+    },
+    {
+      "name": "SpecAR a=0.6",
+      "family": "spec",
+      "B": 9,
+      "k": 8,
+      "passes_per_token": 0.4040721159465865,
+      "s_per_token_server": 106.63160112490694,
+      "s_per_token_LAN": 107.15966476322721,
+      "s_per_token_WAN": 107.93828619329855,
+      "s_per_token_mobile": 111.34405166234288,
+      "accept": 0.6
+    },
+    {
+      "name": "SpecAR a=0.8",
+      "family": "spec",
+      "B": 3,
+      "k": 2,
+      "passes_per_token": 0.4098360655737705,
+      "s_per_token_server": 90.07380149021814,
+      "s_per_token_LAN": 90.60939777454665,
+      "s_per_token_WAN": 91.39912597126796,
+      "s_per_token_mobile": 94.85347351225157,
+      "accept": 0.8
+    },
+    {
+      "name": "SpecAR a=0.8",
+      "family": "spec",
+      "B": 5,
+      "k": 4,
+      "passes_per_token": 0.2974773917182294,
+      "s_per_token_server": 70.10621275033307,
+      "s_per_token_LAN": 70.56541412505496,
+      "s_per_token_WAN": 71.18355184042858,
+      "s_per_token_mobile": 73.89050586232293,
+      "accept": 0.8
+    },
+    {
+      "name": "SpecAR a=0.8",
+      "family": "spec",
+      "B": 9,
+      "k": 8,
+      "passes_per_token": 0.2310049610255822,
+      "s_per_token_server": 61.004757027886434,
+      "s_per_token_LAN": 61.416049290698815,
+      "s_per_token_WAN": 61.93094241338913,
+      "s_per_token_mobile": 64.18804228618487,
+      "accept": 0.8
+    }
+  ],
+  "example_pass_B8_ctx128": {
+    "server_s": 250.37466321628352,
+    "by_op_s": {
+      "rot": 25.364637021276597,
+      "ptm": 0.7652927503663899,
+      "ctm": 4.840924571065968,
+      "add": 0.14386704445530046,
+      "gelu": 1.2620884957859277,
+      "boot": 12.228003333333334,
+      "matvec": 205.76985000000002
+    },
+    "depth_per_layer": 18,
+    "bytes_up": 19922944,
+    "bytes_down": 10485760,
+    "client_s": 1.5366781167685986,
+    "ops": {
+      "rot": 5132,
+      "mv_diag": 56320,
+      "ptm": 1532,
+      "ctm": 864,
+      "add": 288,
+      "gelu": 12,
+      "boot": 11
+    }
+  }
+}
