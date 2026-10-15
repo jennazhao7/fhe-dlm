@@ -461,3 +461,32 @@ the decisive number).
   1024-diagonal blocks × ~3.7 s + ~11 bootstraps × 1.1 s ≈ 4 min vs ~93 min
   on CPU; (3) full-slot GPU bootstrap precision is 8.5 bits — the noise sweep
   must cover ~2^-8.
+
+### 2026-10-15: E5 fits on 3 GPUs in one context; MDLM fails ~9-bit noise (outliers)
+
+**Job 1546459, `fides_e0 combo` on 3× RTX 6000** (`qsub -l gpu=3 -v
+FIDES_E0_GPUS=3,FIDES_RUNS="combo 4" cluster/job_gpu_fides_mgpu.sh`): full-slot
+bootstrap keys + matvec keys in one context (62 keys 21.9 GB + 248 plaintexts
+12.3 GB; 17.9 GB/card after load). GPU-encoded matvec **2.81 s** (bit-exact,
+err 3e-11; two-half variant so only 32 baby cts are live), bootstrap
+**0.96 s**, 8.4 bits, 22 levels left. **Peak 22.1 GB on the fullest card** —
+fits, ~2 GB headroom. `results/crc/gpu_combo_3gpu_1546459.json`.
+
+**Job 1546416, `scripts/plain_probe.py` on MDLM-OWT** (no-flash fp32 build;
+flash_attn rotary/omegaconf stubbed; WikiText-103 val, L=256, 256 seqs;
+`results/plain/{ranges,noise}.json`):
+- **Massive activation**: residual max jumps from 262 (layer 4) to **~21–23k
+  from layer 5 on, at masked positions only** (unmasked max ≤ 1k; p99.9 only
+  90–550). GELU inputs peak 131 (layers 5–6) but only 0.003–0.07% exceed 8.
+  LayerNorm 1/std differs masked vs unmasked early (L0 2.50 vs 3.27) and has a
+  10–28% CV across positions (supports H4 mask-aware constants).
+- **Noise with σ = 2^-b · max|block out|** after every block: NLL@15% mask
+  2.28 (clean) → 2.28 (b=16) → 6.8 (b=12) → 15.8 (b=10) → ~21 (b≈8.5);
+  gen-PPL 90 → 1.5e5 at b=10. **The checkpoint as-is cannot take the 8.4–9.2
+  bit bootstraps**, because the scale S is set by the one massive activation.
+- Next: quantify the outlier (which channel(s), how constant at masked
+  positions — masked positions are public in our protocol, so a near-constant
+  massive value could be subtracted/re-added as a plaintext constant at no level
+  cost) and rerun the noise probe with S excluding it; otherwise E1 must
+  suppress it (clipping / activation regularisation during the HE-friendly
+  fine-tune).

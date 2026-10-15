@@ -1,0 +1,36 @@
+[
+ {
+  "mode": "combo_matvec_enc",
+  "gpus": 3,
+  "level": 21,
+  "D": 1024,
+  "host_fft_s": 0.213376,
+  "upload_s": 0.0543773,
+  "encode_check_residues_differing": 0,
+  "total_s": 2.80771,
+  "rotate_s": 1.17037,
+  "gpu_encode_s": 0.840824,
+  "mult_add_s": 0.794975,
+  "pt_mults": 2047,
+  "gpu_gb_peak_seen": 22.0614,
+  "max_abs_error": 3.02896e-11,
+  "host_peak_gb": 42.4538
+ },
+ {
+  "mode": "combo_boot",
+  "gpus": 3,
+  "slots": 65536,
+  "level_budget": 4,
+  "gpu_gb_after_warmup": 22.0302,
+  "bootstrap_s": [
+   0.964127,
+   0.962424,
+   0.965613
+  ],
+  "gpu_gb_peak_seen": 22.0302,
+  "levels_left_after": 22,
+  "max_abs_error": 0.00291766,
+  "precision_bits": 8.42097,
+  "host_peak_gb": 42.7059
+ }
+]

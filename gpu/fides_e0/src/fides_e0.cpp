@@ -339,36 +339,40 @@ static void matvec_enc_body(auto& cc, auto& keys, Json& j) {
 	double rot_s = 0, gpuenc_s = 0, mult_s = 0;
 	auto total0 = clk::now();
 	t0 = clk::now();
-	std::vector<Ciphertext<DCRTPoly>> bab{ ct }, babp{ cc->EvalRotate(ct, -int32_t(D)) };
-	for (uint32_t b = 1; b < N1; ++b) {
-		bab.push_back(cc->EvalRotate(bab.back(), 1));
-		babp.push_back(cc->EvalRotate(babp.back(), 1));
-	}
-	cc->Synchronize();
-	rot_s += since(t0);
-
+	// One half at a time (h = 0: rot(x, i) terms, h = 1: rot(x, i - D) terms),
+	// each with its own Horner pass, so only 32 baby-step ciphertexts are live:
+	// job 1546415 OOMed with both sets (64 cts) on top of the full-slot
+	// bootstrap keys on 3 GPUs. Costs a second set of 31 giant rotations.
 	auto& dev_buf = cc->GetDevicePlaintext(buf->gpu);
 	Ciphertext<DCRTPoly> out;
 	uint32_t n_mults = 0;
-	for (uint32_t g = N2; g-- > 0;) {
-		Ciphertext<DCRTPoly> acc;
-		for (uint32_t b = 0; b < N1; ++b)
-			for (int h = 0; h < 2; ++h) {
+	for (int h = 0; h < 2; ++h) {
+		t0 = clk::now();
+		std::vector<Ciphertext<DCRTPoly>> bab{ h ? cc->EvalRotate(ct, -int32_t(D)) : ct };
+		for (uint32_t b = 1; b < N1; ++b) bab.push_back(cc->EvalRotate(bab.back(), 1));
+		cc->Synchronize();
+		rot_s += since(t0);
+		Ciphertext<DCRTPoly> half;
+		for (uint32_t g = N2; g-- > 0;) {
+			Ciphertext<DCRTPoly> acc;
+			for (uint32_t b = 0; b < N1; ++b) {
 				if (h == 1 && g == 0 && b == 0) continue;  // i = 0: no wrapped half
 				auto t1 = clk::now();
 				e0::gpuenc_encode(enc, 2 * (g * N1 + b) + h, dev_buf);
 				auto t2 = clk::now();
-				auto term = cc->EvalMult(h ? babp[b] : bab[b], buf);
+				auto term = cc->EvalMult(bab[b], buf);
 				acc       = acc ? cc->EvalAdd(acc, term) : term;
 				cc->Synchronize();
 				gpuenc_s += std::chrono::duration<double>(t2 - t1).count();
 				mult_s += since(t2);
 				++n_mults;
 			}
-		t0  = clk::now();
-		out = out ? cc->EvalAdd(cc->EvalRotate(out, int32_t(N1)), acc) : acc;
-		cc->Synchronize();
-		rot_s += since(t0);
+			t0   = clk::now();
+			half = half ? cc->EvalAdd(cc->EvalRotate(half, int32_t(N1)), acc) : acc;
+			cc->Synchronize();
+			rot_s += since(t0);
+		}
+		out = out ? cc->EvalAdd(out, half) : half;
 	}
 	double total = since(total0);
 	j.kv("total_s", total).kv("rotate_s", rot_s).kv("gpu_encode_s", gpuenc_s).kv("mult_add_s", mult_s);
