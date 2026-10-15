@@ -119,26 +119,10 @@ static CryptoContext<DCRTPoly> make_context() {
 	return cc;
 }
 
-static int run_boot(uint32_t slots, uint32_t budget) {
-	Json j;
-	j.ks("mode", "boot").kv("gpus", std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+// Bootstrap timing/precision on an already loaded context (bootstrap keys for
+// `slots` generated before LoadContext).
+static void boot_body(auto& cc, auto& keys, uint32_t slots, Json& j) {
 	auto t0 = clk::now();
-	auto cc = make_context();
-	auto keys = cc->KeyGen();
-	cc->EvalMultKeyGen(keys.secretKey);
-	phase(j, "keygen", t0);
-
-	t0 = clk::now();
-	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
-	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
-	phase(j, "boot_keygen", t0);
-	j.kv("host_peak_gb_after_keygen", host_peak_gb());
-
-	t0 = clk::now();
-	cc->LoadContext(keys.publicKey);  // uploads every key: the 24 GB question
-	cc->Synchronize();
-	phase(j, "load_context", t0);
-
 	std::mt19937_64 rng(0);
 	std::uniform_real_distribution<double> U(-1.0, 1.0);  // same input range as e0_microbench.py
 	std::vector<double> x(slots);
@@ -172,6 +156,29 @@ static int run_boot(uint32_t slots, uint32_t budget) {
 	for (uint32_t i = 0; i < slots; ++i) err = std::max(err, std::abs(got[i] - x[i]));
 	j.kv("max_abs_error", err).kv("precision_bits", err > 0 ? -std::log2(err) : 99.0);
 	j.kv("host_peak_gb", host_peak_gb());
+}
+
+static int run_boot(uint32_t slots, uint32_t budget) {
+	Json j;
+	j.ks("mode", "boot").kv("gpus", std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	phase(j, "keygen", t0);
+
+	t0 = clk::now();
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	phase(j, "boot_keygen", t0);
+	j.kv("host_peak_gb_after_keygen", host_peak_gb());
+
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);  // uploads every key: the 24 GB question
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	boot_body(cc, keys, slots, j);
 	std::cout << "RESULT " << j.str() << std::endl;
 	return 0;
 }
@@ -278,31 +285,11 @@ static int run_matvec() {
 	return 0;
 }
 
-// Same 1024x1024 matvec, with diagonals encoded ON THE GPU (gpu_encode.hpp).
-// Layout is token-major, slot = token*D + dim, so every diagonal plaintext is
-// period-D and needs only 2D coefficients. Rotating by i then crosses token
-// boundaries for dims j >= D-i, so diagonal i splits by the mask j < D-i:
-//   y = sum_i (m_i.d_i) * rot(x, i) + ((1-m_i).d_i) * rot(x, i-D)
-// with rot(x, i-D) = rot(rot(x, -D), i). BSGS i = g*N1 + b as before (Horner
-// over g), on two baby-step sets: x and x' = rot(x, -D). Keys: +1, +N1, -D.
-// Cost vs run_matvec: ~2x plaintext mults (2047) and baby rotations (63) --
-// GPU work that took ~1.4 s -- in exchange for no host encode / big H2D.
-static int run_matvec_enc() {
-	Json j;
-	j.ks("mode", "matvec_enc").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
+// GPU-encoded token-major matvec on an already loaded context with rotation
+// keys {+1, +N1, -D} (see run_matvec_enc).
+static void matvec_enc_body(auto& cc, auto& keys, Json& j) {
 	auto t0 = clk::now();
-	auto cc = make_context();
-	auto keys = cc->KeyGen();
-	cc->EvalMultKeyGen(keys.secretKey);
 	const uint32_t T = RING / 2 / D;
-	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
-	j.kv("rotation_keys", 3);
-	phase(j, "keygen", t0);
-	t0 = clk::now();
-	cc->LoadContext(keys.publicKey);
-	cc->Synchronize();
-	phase(j, "load_context", t0);
-
 	std::mt19937_64 rng(0);
 	std::uniform_real_distribution<double> U(-1.0, 1.0);
 	std::vector<double> X(T * D), W(D * D);  // X[t*D+d] -- already token-major
@@ -400,7 +387,70 @@ static int run_matvec_enc() {
 		}
 	j.kv("max_abs_error", err).kv("host_peak_gb", host_peak_gb());
 	e0::gpuenc_destroy(enc);
+}
+
+// Same 1024x1024 matvec, with diagonals encoded ON THE GPU (gpu_encode.hpp).
+// Layout is token-major, slot = token*D + dim, so every diagonal plaintext is
+// period-D and needs only 2D coefficients. Rotating by i then crosses token
+// boundaries for dims j >= D-i, so diagonal i splits by the mask j < D-i:
+//   y = sum_i (m_i.d_i) * rot(x, i) + ((1-m_i).d_i) * rot(x, i-D)
+// with rot(x, i-D) = rot(rot(x, -D), i). BSGS i = g*N1 + b as before (Horner
+// over g), on two baby-step sets: x and x' = rot(x, -D). Keys: +1, +N1, -D.
+// Cost vs run_matvec: ~2x plaintext mults (2047) and baby rotations (63) --
+// GPU work that took ~1.4 s -- in exchange for no host encode / big H2D.
+static int run_matvec_enc() {
+	Json j;
+	j.ks("mode", "matvec_enc").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
+	j.kv("rotation_keys", 3);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	matvec_enc_body(cc, keys, j);
 	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
+// E5's shape on the GPU: bootstrap keys (full slots) AND the matvec's rotation
+// keys in ONE context, loaded once, then the GPU-encoded matvec and the
+// bootstrap back to back -- what a real pass needs. Meant for FIDES_E0_GPUS>1.
+// Prints one RESULT line per part (setup, matvec_enc, boot).
+static int run_combo(uint32_t budget) {
+	const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+	const uint32_t slots = RING / 2;
+	Json js;
+	js.ks("mode", "combo_setup").kv("gpus", ngpu).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0   = clk::now();
+	auto cc   = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
+	phase(js, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(js, "load_context", t0);
+	js.kv("host_peak_gb", host_peak_gb());
+	std::cout << "RESULT " << js.str() << std::endl;
+
+	Json jm;
+	jm.ks("mode", "combo_matvec_enc").kv("gpus", ngpu).kv("level", MV_LEVEL).kv("D", D);
+	matvec_enc_body(cc, keys, jm);
+	std::cout << "RESULT " << jm.str() << std::endl;
+
+	Json jb;
+	jb.ks("mode", "combo_boot").kv("gpus", ngpu).kv("slots", slots).kv("level_budget", budget);
+	boot_body(cc, keys, slots, jb);
+	std::cout << "RESULT " << jb.str() << std::endl;
 	return 0;
 }
 
@@ -410,10 +460,11 @@ int main(int argc, char** argv) {
 		if (mode == "boot" && argc > 2) return run_boot(std::stoul(argv[2]), argc > 3 ? std::stoul(argv[3]) : 4);
 		if (mode == "matvec") return run_matvec();
 		if (mode == "matvec_enc") return run_matvec_enc();
+		if (mode == "combo") return run_combo(argc > 2 ? std::stoul(argv[2]) : 4);
 	} catch (const std::exception& e) {
 		std::cout << "RESULT {\"mode\": \"" << mode << "\", \"error\": \"" << e.what() << "\"}" << std::endl;
 		return 2;
 	}
-	std::cerr << "usage: fides_e0 boot <slots> [budget] | fides_e0 matvec" << std::endl;
+	std::cerr << "usage: fides_e0 boot <slots> [budget] | matvec | matvec_enc | combo [budget]" << std::endl;
 	return 1;
 }
