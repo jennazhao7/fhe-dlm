@@ -99,7 +99,11 @@ def blocks(m):
     return m.backbone.blocks
 
 
+CUR = {"mask": None}   # masked positions of the batch in flight (public in our protocol)
+
+
 def forward_logits(m, x):
+    CUR["mask"] = x == MASK
     t = torch.zeros(x.shape[0], device=x.device)
     logits = m(input_ids=x, timesteps=t)
     logits = logits[0] if isinstance(logits, tuple) else logits
@@ -286,6 +290,152 @@ def cmd_noise(a):
         json.dump(out, open(a.out, "w"), indent=1)
 
 
+# ---------------------------------------------------------------- outlier
+@torch.no_grad()
+def calibrate(m, data, ratio, bs, thresh, seed=3):
+    """Per-layer mean block output at masked and at unmasked positions (the
+    'public constants' a server could subtract), plus the channels whose
+    |value| ever exceeds `thresh`, with their per-class statistics."""
+    L = len(blocks(m)); d = m.config.hidden_dim
+    acc = {k: torch.zeros(L, d, dtype=torch.float64, device=DEV) for k in ("m_sum", "u_sum", "m_sq", "u_sq")}
+    big = torch.zeros(L, d, dtype=torch.float64, device=DEV)
+    cnt = {"m": 0, "u": 0}
+    mn = torch.full((L, d), float("inf"), device=DEV); mx = torch.full((L, d), -float("inf"), device=DEV)
+    spikes = [{"pos": [], "masked": [], "mask_rank": [], "n_masked_in_seq": [], "val": [], "n_seqs": 0}
+              for _ in range(L)]
+
+    def hook(i):
+        def h(mod, inp, outp):
+            mk = CUR["mask"]; x = outp.detach().double()
+            xm, xu = x[mk], x[~mk]
+            acc["m_sum"][i] += xm.sum(0); acc["m_sq"][i] += (xm * xm).sum(0)
+            acc["u_sum"][i] += xu.sum(0); acc["u_sq"][i] += (xu * xu).sum(0)
+            big[i] = torch.maximum(big[i], x.abs().amax((0, 1)))
+            if xm.numel():
+                mn[i] = torch.minimum(mn[i], xm.amin(0).float()); mx[i] = torch.maximum(mx[i], xm.amax(0).float())
+            if i == 0:
+                cnt["m"] += int(mk.sum()); cnt["u"] += int((~mk).sum())
+            # where do the spikes sit? sequence index, and rank among masked positions
+            sp = x.abs().amax(-1) > thresh                        # (b, L)
+            if sp.any():
+                b_idx, pos = torch.nonzero(sp, as_tuple=True)
+                rank = (mk.long().cumsum(-1) - 1)[b_idx, pos]     # 0 = first masked token
+                spikes[i]["pos"] += pos.tolist(); spikes[i]["masked"] += mk[b_idx, pos].tolist()
+                spikes[i]["mask_rank"] += rank.tolist()
+                spikes[i]["n_masked_in_seq"] += mk.sum(-1)[b_idx].tolist()
+                spikes[i]["val"] += x[b_idx, pos].abs().amax(-1).tolist()
+            spikes[i]["n_seqs"] += x.shape[0]
+        return h
+
+    hs = [b.register_forward_hook(hook(i)) for i, b in enumerate(blocks(m))]
+    g = torch.Generator().manual_seed(seed)
+    for st in range(0, len(data), bs):
+        x = data[st:st + bs].to(DEV)
+        forward_logits(m, mask_batch(x, ratio, g)[0])
+    for h in hs:
+        h.remove()
+    mean_m = acc["m_sum"] / max(cnt["m"], 1); mean_u = acc["u_sum"] / max(cnt["u"], 1)
+    std_m = (acc["m_sq"] / max(cnt["m"], 1) - mean_m ** 2).clamp_min(0).sqrt()
+    std_u = (acc["u_sq"] / max(cnt["u"], 1) - mean_u ** 2).clamp_min(0).sqrt()
+    report = {}
+    for i in range(L):
+        chans = torch.nonzero(big[i] > thresh).flatten().tolist()
+        report[f"L{i}"] = {"channels_over_thresh": [
+            {"ch": c, "max_abs": float(big[i, c]),
+             "masked_mean": float(mean_m[i, c]), "masked_std": float(std_m[i, c]),
+             "masked_min": float(mn[i, c]), "masked_max": float(mx[i, c]),
+             "unmasked_mean": float(mean_u[i, c]), "unmasked_std": float(std_u[i, c])} for c in chans]}
+    for i in range(L):
+        sp = spikes[i]
+        if not sp["pos"]:
+            continue
+        from collections import Counter
+        n = len(sp["pos"])
+        report[f"L{i}"]["spikes"] = {
+            "n_spike_tokens": n, "per_seq": n / sp["n_seqs"],
+            "frac_masked": sum(sp["masked"]) / n,
+            "top_positions": Counter(sp["pos"]).most_common(8),
+            "top_mask_ranks": Counter(sp["mask_rank"]).most_common(8),
+            "val_min": min(sp["val"]), "val_median": sorted(sp["val"])[n // 2], "val_max": max(sp["val"])}
+    return {"mean_masked": mean_m.float(), "mean_unmasked": mean_u.float(),
+            "outlier": big > thresh, "report": report}
+
+
+class NoiseV:
+    """Bootstrap noise with the outlier handled:
+      offset  subtract the calibrated public constant (masked / unmasked mean
+              per layer), take S = max|x - c|, add noise, add c back;
+      oracle  outlier channels untouched, S and noise over the other channels."""
+
+    def __init__(self, m, bits, mode, cal):
+        self.bits, self.mode, self.cal, self.hooks, self.S = bits, mode, cal, [], []
+        if bits is None:
+            return
+        for i, b in enumerate(blocks(m)):
+            self.hooks.append(b.register_forward_hook(self.make(i)))
+
+    def make(self, i):
+        def h(mod, inp, outp):
+            if self.mode == "offset":
+                mk = CUR["mask"][..., None]
+                c = torch.where(mk, self.cal["mean_masked"][i], self.cal["mean_unmasked"][i])
+                r = outp - c
+                S = r.detach().abs().amax()
+                self.S.append(float(S))
+                return c + r + torch.randn_like(r) * (S * 2.0 ** -self.bits)
+            keep = ~self.cal["outlier"][i]                      # oracle
+            S = outp.detach()[..., keep].abs().amax()
+            self.S.append(float(S))
+            return outp + torch.randn_like(outp) * (S * 2.0 ** -self.bits) * keep
+        return h
+
+    def remove(self):
+        for h in self.hooks:
+            h.remove()
+
+
+def cmd_outlier(a):
+    m = load_model(DEV)
+    data = load_chunks(a.L, a.n)
+    calib, evalset = data[: a.n // 2], data[a.n // 2:]          # calibrate and evaluate on disjoint text
+    cal = calibrate(m, calib, 0.5, a.bs, a.thresh)
+    out = {"model": MDLM, "L": a.L, "n_calib": int(len(calib)), "n_eval": int(len(evalset)),
+           "thresh": a.thresh, "outliers": cal["report"], "runs": []}
+    for k, v in cal["report"].items():
+        if "spikes" in v:
+            sp = v["spikes"]
+            print(f"[spikes] {k}: {sp['n_spike_tokens']} tokens ({sp['per_seq']:.2f}/seq, "
+                  f"{sp['frac_masked']*100:.0f}% masked) pos {sp['top_positions'][:5]} "
+                  f"mask-rank {sp['top_mask_ranks'][:5]} |x| {sp['val_min']:.0f}..{sp['val_median']:.0f}..{sp['val_max']:.0f}",
+                  flush=True)
+        if v["channels_over_thresh"]:
+            print(f"[outlier] {k}: " + "; ".join(
+                f"ch{c['ch']} masked {c['masked_mean']:.0f}±{c['masked_std']:.1f} "
+                f"[{c['masked_min']:.0f},{c['masked_max']:.0f}] unmasked {c['unmasked_mean']:.1f}±{c['unmasked_std']:.1f}"
+                for c in v["channels_over_thresh"]), flush=True)
+    judge = None
+    if a.gen:
+        from transformers import AutoModelForCausalLM
+        judge = AutoModelForCausalLM.from_pretrained(snapshot("openai-community/gpt2-large")).to(DEV).eval()
+    for mode in ("offset", "oracle"):
+        for bits in a.bits:
+            b = None if bits <= 0 else bits
+            nz = NoiseV(m, b, mode, cal)
+            r = {"mode": mode, "bits": b}
+            for ratio in (0.15, 0.5, 0.9):
+                r[f"nll_mask{ratio}"] = masked_nll(m, evalset, ratio, a.bs, seed=7)
+            if nz.S:
+                r["S_median"] = sorted(nz.S)[len(nz.S) // 2]; r["S_max"] = max(nz.S)
+            if a.gen and b is not None and b in a.gen_bits:
+                xs = sample(m, a.gen_n, a.L, a.steps, seed=11)
+                r["gen_ppl_gpt2_large"] = gen_ppl(judge, xs)
+                r["gen_unigram_entropy"] = unigram_entropy(xs)
+            nz.remove()
+            out["runs"].append(r)
+            print("[outlier] " + json.dumps(r), flush=True)
+            json.dump(out, open(a.out, "w"), indent=1)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -297,14 +447,21 @@ def main():
     n.add_argument("--gen-bits", type=float, nargs="+", default=[10, 9, 8, 7, 6])
     n.add_argument("--gen-n", type=int, default=32)
     n.add_argument("--steps", type=int, default=128)
-    for p in (r, n):
+    o = sub.add_parser("outlier")
+    o.add_argument("--thresh", type=float, default=1000.0)
+    o.add_argument("--bits", type=float, nargs="+", default=[0, 16, 12, 10, 9, 8, 7, 6])
+    o.add_argument("--gen", action="store_true")
+    o.add_argument("--gen-bits", type=float, nargs="+", default=[9, 8])
+    o.add_argument("--gen-n", type=int, default=32)
+    o.add_argument("--steps", type=int, default=128)
+    for p in (r, n, o):
         p.add_argument("--L", type=int, default=256)
         p.add_argument("--n", type=int, default=256)
         p.add_argument("--bs", type=int, default=16)
         p.add_argument("--out", required=True)
     a = ap.parse_args()
     torch.manual_seed(0)
-    {"ranges": cmd_ranges, "noise": cmd_noise}[a.cmd](a)
+    {"ranges": cmd_ranges, "noise": cmd_noise, "outlier": cmd_outlier}[a.cmd](a)
 
 
 if __name__ == "__main__":

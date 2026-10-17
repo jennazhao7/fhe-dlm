@@ -490,3 +490,25 @@ flash_attn rotary/omegaconf stubbed; WikiText-103 val, L=256, 256 seqs;
   cost) and rerun the noise probe with S excluding it; otherwise E1 must
   suppress it (clipping / activation regularisation during the HE-friendly
   fine-tune).
+
+### 2026-10-17: the outlier is a position-0 attention sink; ~9 bits still costs 10× gen-PPL
+
+Job 1574220 (`plain_probe.py outlier --gen`, `results/plain/outlier.json`):
+- **All massive-activation tokens in layers 5–10 are sequence position 0, and
+  only when position 0 is masked** (65/65 spike tokens; 0.51/seq = P(pos 0
+  masked)); |x| 4k–23k, channels 682 (from L5), then 218/313/344/12/277/684.
+  With position 0 unmasked there is no spike. → Keep position 0 unmasked (BOS /
+  prompt token) in the encrypted protocol; it is public anyway.
+- Subtracting a per-layer public constant (masked/unmasked mean) does nothing
+  (spike is present half the time): NLL@15% 23.6 at 2^-9.
+- **Oracle (outlier channels untouched, S over the rest ≈ 400–900):** 2^-10
+  NLL@15% 2.33 (clean 2.29), 2^-9 2.56 / gen-PPL 929 (clean 90), 2^-8 3.88 /
+  3,476, 2^-7 11.1. → Even without the sink, 8.4–9-bit bootstraps cost ~10×+
+  gen-PPL; E5 needs ≳10 bits of effective precision or a model trained to
+  tolerate the noise.
+- Options for E1/E5: (a) noise-aware HE-friendly fine-tune (inject 2^-8..2^-9
+  bootstrap-style noise during KD); (b) OpenFHE/FIDESlib iterative
+  (two-pass) bootstrapping (~2× precision, extra levels/time); (c) smaller S at
+  bootstrap points (per-channel scaling folded into weights, bootstrap after a
+  norm); (d) all of the above. Next measurement: rerun the noise probe with
+  position 0 forced unmasked (the realistic setting) to get the real S.

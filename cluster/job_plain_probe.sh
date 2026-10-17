@@ -11,6 +11,8 @@
 # Plaintext probes on MDLM-OWT (scripts/plain_probe.py), one GPU:
 #   ranges  E1 activation ranges by mask ratio  -> results/plain/ranges.json
 #   noise   bootstrap-noise tolerance at 2^-b   -> results/plain/noise.json
+#   outlier massive-activation stats + noise with the outlier handled (offset / oracle)
+#           -> results/plain/outlier.json   (qsub -v PROBES=outlier ...)
 # Checkpoints/data are prefetched into hf-cache on the front end; compute nodes
 # have no network, so everything runs offline.
 #
@@ -31,6 +33,7 @@ for p in ${PROBES:-ranges noise}; do
   case $p in
     ranges) "$PY" scripts/plain_probe.py ranges --out results/plain/ranges.json ;;
     noise)  "$PY" scripts/plain_probe.py noise --gen --out results/plain/noise.json ;;
+    outlier) "$PY" scripts/plain_probe.py outlier --gen --out results/plain/outlier.json ;;
   esac
   echo "=== $p exit $? ($(date))"
 done
