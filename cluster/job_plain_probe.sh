@@ -13,6 +13,11 @@
 #   noise   bootstrap-noise tolerance at 2^-b   -> results/plain/noise.json
 #   outlier massive-activation stats + noise with the outlier handled (offset / oracle)
 #           -> results/plain/outlier.json   (qsub -v PROBES=outlier ...)
+#   noise2sink / noise2pin0  rerun at the bootstrap's RMS-matched precision
+#           (1 pass ~ b=11, 2 passes ~ b=19) with gen-PPL at EVERY level, with
+#           the position-0 sink as-is vs position 0 never masked (--pin0)
+#           -> results/plain/noise2_{sink,pin0}.json
+#           qsub -v PROBES="noise2sink noise2pin0" cluster/job_plain_probe.sh
 # Checkpoints/data are prefetched into hf-cache on the front end; compute nodes
 # have no network, so everything runs offline.
 #
@@ -34,6 +39,11 @@ for p in ${PROBES:-ranges noise}; do
     ranges) "$PY" scripts/plain_probe.py ranges --out results/plain/ranges.json ;;
     noise)  "$PY" scripts/plain_probe.py noise --gen --out results/plain/noise.json ;;
     outlier) "$PY" scripts/plain_probe.py outlier --gen --out results/plain/outlier.json ;;
+    noise2sink|noise2pin0)
+      PIN=""; [ "$p" = noise2pin0 ] && PIN="--pin0"
+      "$PY" scripts/plain_probe.py noise --gen $PIN --gen-n 64 \
+        --bits 0 9 10 11 12 13 16 19 --gen-bits 9 10 11 12 13 16 19 \
+        --out "results/plain/${p/noise2/noise2_}.json" ;;
   esac
   echo "=== $p exit $? ($(date))"
 done

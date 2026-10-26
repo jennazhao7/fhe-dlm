@@ -8,14 +8,28 @@
           Chebyshev interval [-8, 8]; so far that was only checked on random
           weights (results/e0_layer_audit_full_packed.json).
   noise   Does the model survive the bootstrap precision the GPU delivers?
-          Full-slot [4,4] bootstraps at N=2^17 give 8.5 bits (FIDESlib) /
-          9.2 bits (OpenFHE CPU). Bootstrap error is absolute w.r.t. the
+          `bits` sets a Gaussian SIGMA (an RMS), so compare it with the
+          bootstrap's RMS error, not its max: full-slot [4,4] at N=2^17,
+          measured over all 65536 slots (results/crc/e0_iterboot.json,
+          results/crc/gpu_iterboot_1629908.json), is 8.4-8.5 bits max / 10.96 bits RMS for one
+          pass and 16.4 max / 18.9 RMS for two passes -> b ~ 11 and b ~ 19.
+          (The earlier "8.5 / 9.2 bits" were max-error figures, ~2.5 bits more
+          pessimistic than the matching sigma.) Bootstrap error is absolute w.r.t. the
           residual-stream scale S, so after every block (one bootstrap per
           layer in the E5 schedule; 12 here, conservative vs ~11) we add
           N(0, (2^-b * S)^2) with S = max|x| of that block output. Metrics:
           masked-token NLL at mask ratios {0.15, 0.5, 0.9}, and a small
           unconditional generation test (gen-PPL under GPT-2 Large + unigram
           entropy, the plan's guard against low-entropy samples).
+          --pin0 keeps a CONTENT token at position 0. The ~2e4 attention sink
+          (block 9, position 0) forms whenever position 0 holds [MASK] *or*
+          <|endoftext|> while other positions carry content; with a content
+          token there it never appears, and with no content anywhere it does
+          not form either (results/plain/sink_pos.json). So NLL never masks
+          position 0, and sampling decodes position 0 FIRST, from the
+          all-masked state (no sink yet), with <|endoftext|> excluded -- the
+          client commits it in the first pass. Unlike `outlier --oracle` this
+          is deployable: S stays a plain max over everything.
 
 Model: kuleshov-group/mdlm-no_flashattn-fp32-owt (the flash-attn build cannot
 run on the sm_75 RTX 6000s). Its code still imports flash_attn for one rotary
@@ -33,6 +47,8 @@ import torch
 import torch.nn.functional as F
 
 MASK = 50257
+BOS = 50256                                  # <|endoftext|>, GPT-2's BOS/EOS
+PIN0 = False                                 # noise --pin0: content token at position 0 (see docstring)
 DEV = os.environ.get("PROBE_DEV", "cuda")   # PROBE_DEV=cpu for a front-end smoke test
 MDLM = "kuleshov-group/mdlm-no_flashattn-fp32-owt"
 
@@ -113,6 +129,8 @@ def forward_logits(m, x):
 
 def mask_batch(x, ratio, g):
     m = torch.rand(x.shape, generator=g, device="cpu").to(x.device) < ratio
+    if PIN0:
+        m[:, 0] = False          # same random draw for every other position: paired with the unpinned run
     return torch.where(m, torch.full_like(x, MASK), x), m
 
 
@@ -200,7 +218,7 @@ class Noise:
     """Adds N(0, (2^-bits * max|x|)^2) to every block output (bootstrap error)."""
 
     def __init__(self, m, bits):
-        self.bits, self.hooks = bits, []
+        self.bits, self.hooks, self.S = bits, [], []
         if bits is None:
             return
         for b in blocks(m):
@@ -208,6 +226,7 @@ class Noise:
 
     def hook(self, mod, inp, outp):
         S = outp.detach().abs().amax()
+        self.S.append(float(S))
         return outp + torch.randn_like(outp) * (S * 2.0 ** -self.bits)
 
     def remove(self):
@@ -234,6 +253,14 @@ def sample(m, n, L, steps, seed):
     is revealed with prob (t - s) / t, drawing from p(x0 | x_t)."""
     g = torch.Generator(device=DEV).manual_seed(seed)
     x = torch.full((n, L), MASK, device=DEV)
+    if PIN0:
+        # Pinning <|endoftext|> here triggers the sink as badly as [MASK] does
+        # (sink_pos.json: 1.9e4-2.4e4). The all-masked state has none, so draw
+        # position 0 from it first, excluding <|endoftext|>; once it is a
+        # content token the reveal step below never touches it.
+        lg = forward_logits(m, x)[:, 0].float()
+        lg[:, BOS] = -float("inf")
+        x[:, 0] = torch.multinomial(lg.softmax(-1), 1, generator=g)[:, 0]
     for k in range(steps, 0, -1):
         t, s_ = k / steps, (k - 1) / steps
         probs = forward_logits(m, x).float().softmax(-1)
@@ -264,6 +291,8 @@ def unigram_entropy(x):
 
 
 def cmd_noise(a):
+    global PIN0
+    PIN0 = a.pin0
     m = load_model(DEV)
     data = load_chunks(a.L, a.n)
     judge = None
@@ -271,7 +300,8 @@ def cmd_noise(a):
         from transformers import AutoModelForCausalLM
         judge = AutoModelForCausalLM.from_pretrained(snapshot("openai-community/gpt2-large")).to(DEV).eval()
     out = {"model": MDLM, "L": a.L, "n_seqs": int(len(data)), "noise_at": "every block output",
-           "sigma": "2^-bits * max|block output|", "runs": []}
+           "sigma": "2^-bits * max|block output|  (Gaussian; compare with bootstrap RMS bits)",
+           "pin0": bool(a.pin0), "gen_n": a.gen_n, "steps": a.steps, "runs": []}
     for bits in a.bits:
         b = None if bits <= 0 else bits
         nz = Noise(m, b)
@@ -283,6 +313,8 @@ def cmd_noise(a):
             xs = sample(m, a.gen_n, a.L, a.steps, seed=11)
             r["gen_ppl_gpt2_large"] = gen_ppl(judge, xs)
             r["gen_unigram_entropy"] = unigram_entropy(xs)
+        if nz.S:
+            r["S_median"] = sorted(nz.S)[len(nz.S) // 2]; r["S_max"] = max(nz.S)
         nz.remove()
         r["seconds"] = time.time() - t0
         out["runs"].append(r)
@@ -447,6 +479,8 @@ def main():
     n.add_argument("--gen-bits", type=float, nargs="+", default=[10, 9, 8, 7, 6])
     n.add_argument("--gen-n", type=int, default=32)
     n.add_argument("--steps", type=int, default=128)
+    n.add_argument("--pin0", action="store_true",
+                   help="content token at position 0: never masked in NLL, decoded first when sampling")
     o = sub.add_parser("outlier")
     o.add_argument("--thresh", type=float, default=1000.0)
     o.add_argument("--bits", type=float, nargs="+", default=[0, 16, 12, 10, 9, 8, 7, 6])

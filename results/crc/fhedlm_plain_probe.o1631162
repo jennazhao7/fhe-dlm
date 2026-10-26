@@ -1,0 +1,74 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_plain_probe (1631162)
+queue     : gpu
+started   : Mon Oct 26 01:54:45 PM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Mon Oct 26 13:54:45 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.91.07              Driver Version: 595.91.07      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:2F:00.0 Off |                    0 |
+| N/A   21C    P8             13W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+=== noise2sink (Mon Oct 26 01:54:45 PM EDT 2026)
+/groups/tjung/jzhao7/conda-envs/fhedlm/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Using the latest cached version of the dataset since Salesforce/wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-103-raw-v1' at /groups/tjung/jzhao7/fhe-dlm/hf-cache/datasets/Salesforce___wikitext/wikitext-103-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Oct 15 12:35:47 2026).
+Token indices sequence length is longer than the specified maximum sequence length for this model (247289 > 1024). Running this sequence through the model will result in indexing errors
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:411: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(dtype=self.precision):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:139: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:303: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+[noise] {"bits": null, "nll_mask0.15": 2.2763348620450947, "nll_mask0.5": 3.938205157097805, "nll_mask0.9": 7.146295625678173, "gen_ppl_gpt2_large": 115.76761001105167, "gen_unigram_entropy": 4.652343928813934, "seconds": 99.29424142837524}
+[noise] {"bits": 9.0, "nll_mask0.15": 20.51172990011867, "nll_mask0.5": 27.284683730380735, "nll_mask0.9": 26.92958100564579, "gen_ppl_gpt2_large": 409077.0256490747, "gen_unigram_entropy": 5.163765512406826, "S_median": 19755.494140625, "S_max": 23949.822265625, "seconds": 79.49102830886841}
+[noise] {"bits": 10.0, "nll_mask0.15": 14.85823593255538, "nll_mask0.5": 20.82597998126207, "nll_mask0.9": 20.738887632031805, "gen_ppl_gpt2_large": 157870.3766781667, "gen_unigram_entropy": 5.023881025612354, "S_median": 20065.103515625, "S_max": 23583.01171875, "seconds": 79.94394135475159}
+[noise] {"bits": 11.0, "nll_mask0.15": 11.500485660601266, "nll_mask0.5": 15.597784678102297, "nll_mask0.9": 15.640668909052762, "gen_ppl_gpt2_large": 32596.469905570226, "gen_unigram_entropy": 5.122216492891312, "S_median": 20266.505859375, "S_max": 23605.849609375, "seconds": 79.9795708656311}
+[noise] {"bits": 12.0, "nll_mask0.15": 6.697120376780063, "nll_mask0.5": 10.333811161713314, "nll_mask0.9": 11.053621496812587, "gen_ppl_gpt2_large": 5162.264135647452, "gen_unigram_entropy": 5.103757493197918, "S_median": 20546.423828125, "S_max": 23654.31640625, "seconds": 79.98279309272766}
+[noise] {"bits": 13.0, "nll_mask0.15": 3.2858771014636075, "nll_mask0.5": 6.012618285575243, "nll_mask0.9": 8.087183278637974, "gen_ppl_gpt2_large": 2209.222958357014, "gen_unigram_entropy": 5.040473110973835, "S_median": 20980.095703125, "S_max": 24325.6953125, "seconds": 79.95972418785095}
+[noise] {"bits": 16.0, "nll_mask0.15": 2.285708119066456, "nll_mask0.5": 3.955171886495662, "nll_mask0.9": 7.154232468433166, "gen_ppl_gpt2_large": 116.01587486489251, "gen_unigram_entropy": 4.653903603553772, "S_median": 20964.609375, "S_max": 24409.08203125, "seconds": 79.93598508834839}
+[noise] {"bits": 19.0, "nll_mask0.15": 2.2763271360759494, "nll_mask0.5": 3.938174995952569, "nll_mask0.9": 7.1465430528593465, "gen_ppl_gpt2_large": 112.30723884448129, "gen_unigram_entropy": 4.648191757500172, "S_median": 20979.45703125, "S_max": 24327.60546875, "seconds": 79.93288111686707}
+=== noise2sink exit 0 (Mon Oct 26 02:09:21 PM EDT 2026)
+=== noise2pin0 (Mon Oct 26 02:09:21 PM EDT 2026)
+/groups/tjung/jzhao7/conda-envs/fhedlm/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Using the latest cached version of the dataset since Salesforce/wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-103-raw-v1' at /groups/tjung/jzhao7/fhe-dlm/hf-cache/datasets/Salesforce___wikitext/wikitext-103-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Oct 15 12:35:47 2026).
+Token indices sequence length is longer than the specified maximum sequence length for this model (247289 > 1024). Running this sequence through the model will result in indexing errors
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:411: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(dtype=self.precision):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:139: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:303: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+[noise] {"bits": null, "nll_mask0.15": 2.1522033908392584, "nll_mask0.5": 3.83582666222995, "nll_mask0.9": 7.055303051657675, "gen_ppl_gpt2_large": 119.59158148512073, "gen_unigram_entropy": 4.490048993378878, "seconds": 87.24909257888794}
+[noise] {"bits": 9.0, "nll_mask0.15": 2.27600562626968, "nll_mask0.5": 3.9950562086942973, "nll_mask0.9": 7.116164816000647, "gen_ppl_gpt2_large": 2122.4773267408364, "gen_unigram_entropy": 5.081304952502251, "S_median": 181.68231201171875, "S_max": 16912.650390625, "seconds": 80.5130684375763}
+[noise] {"bits": 10.0, "nll_mask0.15": 2.1823729972781236, "nll_mask0.5": 3.8708741631868575, "nll_mask0.9": 8.112941961968362, "gen_ppl_gpt2_large": 269.1782432574384, "gen_unigram_entropy": 4.758343860507011, "S_median": 185.0006103515625, "S_max": 19389.845703125, "seconds": 80.47313165664673}
+[noise] {"bits": 11.0, "nll_mask0.15": 2.1577762446832147, "nll_mask0.5": 3.84648041693755, "nll_mask0.9": 7.472383742575353, "gen_ppl_gpt2_large": 190.6798551472973, "gen_unigram_entropy": 4.7531279399991035, "S_median": 188.4177703857422, "S_max": 17137.412109375, "seconds": 80.46559596061707}
+[noise] {"bits": 12.0, "nll_mask0.15": 2.1521798075244414, "nll_mask0.5": 3.838092780710477, "nll_mask0.9": 7.21843673945232, "gen_ppl_gpt2_large": 185.9751799732539, "gen_unigram_entropy": 4.708827894181013, "S_median": 201.14007568359375, "S_max": 18395.232421875, "seconds": 80.44143915176392}
+[noise] {"bits": 13.0, "nll_mask0.15": 2.152822074677025, "nll_mask0.5": 3.8359277626254076, "nll_mask0.9": 7.091402806261382, "gen_ppl_gpt2_large": 118.55135294825382, "gen_unigram_entropy": 4.560910798609257, "S_median": 184.02401733398438, "S_max": 18551.953125, "seconds": 80.44175148010254}
+[noise] {"bits": 16.0, "nll_mask0.15": 2.152158840444864, "nll_mask0.5": 3.835847384204584, "nll_mask0.9": 7.055630306548581, "gen_ppl_gpt2_large": 116.95807165809612, "gen_unigram_entropy": 4.503379408270121, "S_median": 189.12979125976562, "S_max": 18504.3125, "seconds": 80.43471384048462}
+[noise] {"bits": 19.0, "nll_mask0.15": 2.1522039984009966, "nll_mask0.5": 3.8358181570539944, "nll_mask0.9": 7.055265522884508, "gen_ppl_gpt2_large": 117.02273543397281, "gen_unigram_entropy": 4.4712408892810345, "S_median": 190.0311279296875, "S_max": 18536.708984375, "seconds": 80.41452503204346}
+=== noise2pin0 exit 0 (Mon Oct 26 02:21:03 PM EDT 2026)
+Loading CRC_default/1.1

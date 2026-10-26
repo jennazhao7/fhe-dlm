@@ -24,7 +24,8 @@ yet**; everything below is E0 systems work.
    degree-15 GELU alone needs 5 levels. → **Use N = 2^17, budget [4,4]**:
    max depth 43, **21 usable levels** after bootstrap (OpenFHE reports 22;
    off-by-one confirmed, §8), bootstrap 68 s on CPU
-   (full slots), **9.2 bits** precision (full slots), 39 GB RSS.
+   (full slots), **9.2 bits** precision (full slots; that was a sample --
+   over all 65536 slots the max-error is 8.4, RMS 11.0, §11), 39 GB RSS.
 2. **C1 kill condition NOT triggered** (calibrated model, CPU): AR decode step
    **226 min/token**; DLM B=8,k=4 **88**; B=16,k=8 **45**; B=16,k=16 **30**.
 3. **Speculative AR is the real competitor**: client-drafted spec-AR at
@@ -37,6 +38,14 @@ yet**; everything below is E0 systems work.
    FIDESlib builds on the RTX 6000 (sm_75) or that 2^17 bootstrap keys fit in
    24 GB (they used 39 GB RSS on CPU).
 5. Network (RTT + transfer) is < 1% of wall-clock while the server is on CPU.
+6. **Bootstrap precision: solved by two-pass bootstrapping (§11).** Full slots
+   on 4 GPUs: 16.4 bits max / 18.9 RMS in 2.23 s (one pass: 8.5 / 11.0 in
+   1.14 s), one extra level (20 usable), no extra memory. MDLM-OWT is clean at
+   that noise (gen-PPL 112 vs 116 clean) even with its position-0 sink.
+   FIDESlib's GPU `EvalBootstrap` silently ignores `numIterations`; the second
+   pass is composed in `fides_e0 iterboot`. The sink forms when position 0
+   holds [MASK] **or** `<|endoftext|>` amid content -- §10's "keep position 0
+   unmasked (BOS)" is wrong; decode a content token at position 0 first.
 
 ## 2. Machines and access
 
@@ -512,3 +521,99 @@ Job 1574220 (`plain_probe.py outlier --gen`, `results/plain/outlier.json`):
   bootstrap points (per-channel scaling folded into weights, bootstrap after a
   norm); (d) all of the above. Next measurement: rerun the noise probe with
   position 0 forced unmasked (the realistic setting) to get the real S.
+
+## 11. Session 2026-10-26: two-pass bootstrapping; noise probe at the bootstraps' real precision
+
+### Two-pass (Meta-BTS) bootstrap at the E5 set (2^17, [4,4], 59/60, depth 43)
+
+Error over **every** slot (max and RMS); usable = depth − level − 1 (§8).
+
+| config | time | max bits | RMS bits | usable levels |
+|---|---:|---:|---:|---:|
+| GPU×4, full slots, 1 pass | 1.14 s | 8.53 | 10.96 | 21 |
+| **GPU×4, full slots, 2 passes (composed)** | **2.23 s** | **16.40** | **18.94** | **20** |
+| CPU OpenFHE, full, 1 pass | 62.7 s | 8.41 | 10.96 | 21 |
+| CPU OpenFHE, full, 2 passes (built-in) | 124.3 s | 16.46 | 18.96 | 20 |
+| CPU OpenFHE, full, 2 passes (composed) | 134.4 s | 16.40 | 18.96 | 20 |
+| CPU OpenFHE, 4096 slots, 1 / 2 passes | 40.2 / 77.1 s | 11.77 / 22.39 | 13.48 / 24.48 | 21 / 20 |
+
+- **FIDESlib's GPU `EvalBootstrap` silently ignores `numIterations` and
+  `precision`**: `third_party/FIDESlib/api/CryptoContext.cpp` forwards them
+  only on the CPU fallback; the GPU path calls `CKKS::Bootstrap(ct, slots,
+  prescaled)`. Asking it for 2 passes runs 1.
+- So the second pass is composed in `fides_e0 iterboot <slots> [budget]
+  [precision]`: b1 = Boot(ct); diff = ct − b1; diff ×2^p by p self-adds;
+  b2 = Boot(diff); out = b1 + b2·2^−p, with p = floor(1-pass max bits).
+  `scripts/e0_iterboot.py --manual` is its CPU twin and matches OpenFHE's
+  built-in run in the same key set (job 1629907: 16.40 vs 16.52 max, 18.96 vs
+  18.96 RMS); the GPU matches the CPU built-in to 0.06 / 0.02 bits.
+- OpenFHE supports only 1 or 2 iterations (`ckksrns-fhe.cpp:451`).
+- Cost to E5: one level (21 → 20; a layer is 18, so still one bootstrap per
+  layer) and ≈ +1.1 s per bootstrap (≈ +12 s on a ~4 min pass). Same 18.0 GB
+  per card.
+- Open: the GPU **4096-slot** `iterboot` run read 99 bits (error exactly 0 --
+  probably a NaN decrypt). Unexplained; full slots are unaffected. The error
+  loops in `fides_e0` (`boot_body` included) use `std::max` and are NaN-blind.
+- Jobs: CPU 1629894 (built-in), 1629907 (+ composed); GPU 1629908
+  (`cluster/job_iterboot.sh`, `cluster/job_gpu_iterboot.sh` -- its own script so
+  it cannot overwrite `results/gpu_fides_mgpu.json`). Files:
+  `results/crc/e0_iterboot{,_manual}.json`, `gpu_iterboot_1629908.json`, `.o` logs.
+
+### The noise probe was calibrated ~2.5 bits too pessimistically
+
+`plain_probe.py noise` adds N(0, (2^−b·S)²): `b` sets a Gaussian **σ** (an RMS),
+but it was compared with the bootstraps' **max-error** bits. Bootstrap error is
+near-Gaussian (max − RMS = 2.5 bits over 65,536 slots vs ≈2.1 expected), so
+**one pass ≈ b 11 and two passes ≈ b 19**, not 8.5–9.
+
+### The sink trigger (corrects §10, 2026-10-17)
+
+`scripts/probe_sink_pos.py` → `results/plain/sink_pos.json` (CPU, 4 seqs,
+L ∈ {256, 64}): the ~2e4 spike (block 9, position 0) forms when position 0
+holds a **non-content token -- [MASK] or `<|endoftext|>`** -- while other
+positions carry content (19.5k–24.0k). A content token at position 0 → no
+spike (≤ 1.1k); no content anywhere (all masked) → none either. Pinning
+`<|endoftext|>` at 0 is as bad as masking it.
+
+`plain_probe.py noise --pin0` therefore keeps a **content** token at position
+0: NLL never masks it; sampling decodes it **first**, from the all-masked state
+(no sink yet), with `<|endoftext|>` excluded. In the protocol the client
+commits position 0 in pass 1; with a prompt, don't prepend BOS.
+
+### Noise probe at the real precision (job 1631162)
+
+256 WikiText-103 seqs, L = 256, gen-PPL under GPT-2 Large at every level,
+n = 64 samples, one seed. `results/plain/noise2_{sink,pin0}.json`.
+
+| b | sink gen-PPL | sink NLL@15% | pin0 gen-PPL | pin0 NLL@15% |
+|---:|---:|---:|---:|---:|
+| clean | 115.8 | 2.276 | 119.6 | 2.152 |
+| 9 | 409,077 | 20.51 | 2,122 | 2.276 |
+| 10 | 157,870 | 14.86 | 269.2 | 2.182 |
+| **11** (≈ 1 pass) | **32,597** | 11.50 | **190.7** | 2.158 |
+| 12 | 5,162 | 6.70 | 186.0 | 2.152 |
+| 13 | 2,209 | 3.29 | 118.6 | 2.153 |
+| 16 | 116.0 | 2.286 | 117.0 | 2.152 |
+| **19** (≈ 2 passes) | **112.3** | 2.276 | **117.0** | 2.152 |
+
+(Clean NLL differs between conditions because pin0 never scores position 0.)
+
+- **Two passes are clean in both conditions, sink included** → bootstrap noise
+  does not need noise-aware training if E5 uses two-pass bootstrapping.
+- **One pass**: the sink breaks it; pin0 keeps NLL clean but gen-PPL is 1.6×
+  (190.7 vs 119.6), clean again by b = 13.
+- pin0 dropped S_median from ~20,000 to ~185, but **S_max is still 17–18k**:
+  something still spikes occasionally. Not attributed yet (hypothesis: an
+  `<|endoftext|>` sampled mid-sequence during generation). Probably what leaves
+  one-pass pin0 at 1.6×.
+- Caveats: S is each batch's own max (a real S is a fixed public bound ≥ the
+  max → slightly optimistic); noise after all 12 blocks vs ~11 bootstraps
+  (slightly pessimistic); one generation seed, n = 64 (the clean-level runs
+  spread ~3%).
+
+### Next
+
+1. Attribute the remaining pin0 spikes (phase, position, token). If they are
+   mid-sequence `<|endoftext|>`, handling them may make one pass enough.
+2. Fold two-pass into the cost model (bootstrap ≈ 2.23 s on 4 GPUs, 20 usable).
+3. Make the `fides_e0` error loops NaN-aware; find the 4096-slot GPU anomaly.

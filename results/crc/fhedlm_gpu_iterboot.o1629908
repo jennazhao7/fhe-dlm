@@ -1,0 +1,131 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_gpu_iterboot (1629908)
+queue     : gpu
+started   : Mon Oct 26 10:06:06 AM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Mon Oct 26 10:06:06 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.91.07              Driver Version: 595.91.07      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:06:00.0 Off |                    0 |
+| N/A   21C    P8             13W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  Quadro RTX 6000                Off |   00000000:2F:00.0 Off |                    0 |
+| N/A   20C    P8             12W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  Quadro RTX 6000                Off |   00000000:86:00.0 Off |                    0 |
+| N/A   20C    P8             11W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  Quadro RTX 6000                Off |   00000000:D8:00.0 Off |                    0 |
+| N/A   20C    P8             12W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+FIDES_E0_GPUS=4 CUDA_VISIBLE_DEVICES=unset NCCL=/groups/tjung/jzhao7/fhe-dlm/third_party/nccl-cu13/nvidia/nccl/lib
+=== fides_e0 iterboot 4096 4 (Mon Oct 26 10:06:06 AM EDT 2026)
+[fides_e0] keygen: 21.9028 s, gpu used 0.162964 GB, host peak 20.8464 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 1: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 2: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 3: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU P2P? 1
+Adding bootstrap precomputation to GPU for 4096 slots.
+Plaintexts loaded: 120 ~ 5940MB
+Rotation keys loaded: 34 ~ 12036MB
+[fides_e0] load_context: 62.6987 s, gpu used 8.88562 GB, host peak 27.1387 GB
+RESULT {"mode": "iterboot", "gpus": 4, "ring": 131072, "depth": 43, "slots": 4096, "level_budget": 4, "keygen_s": 21.9028, "keygen_gpu_gb": 0.162964, "load_context_s": 62.6987, "load_context_gpu_gb": 8.88562, "pass1_s": 0.752625, "pass1_max_err_bits": 99, "pass1_rms_err_bits": 99, "pass1_usable_levels": 21, "precision_arg": -2147483648, "pass2_manual_s": 1.52423, "pass2_max_err_bits": 99, "pass2_rms_err_bits": 99, "pass2_usable_levels": 20, "gpu_gb_peak_seen": 11.0302, "host_peak_gb": 27.4752}
+=== exit 0
+=== fides_e0 iterboot 65536 4 (Mon Oct 26 10:07:41 AM EDT 2026)
+[fides_e0] keygen: 33.9663 s, gpu used 0.162964 GB, host peak 36.3951 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 1: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 2: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 3: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU P2P? 1
+Adding bootstrap precomputation to GPU for 65536 slots.
+Plaintexts loaded: 248 ~ 12276MB
+Rotation keys loaded: 61 ~ 21594MB
+[fides_e0] load_context: 86.7413 s, gpu used 14.8856 GB, host peak 42.6629 GB
+RESULT {"mode": "iterboot", "gpus": 4, "ring": 131072, "depth": 43, "slots": 65536, "level_budget": 4, "keygen_s": 33.9663, "keygen_gpu_gb": 0.162964, "load_context_s": 86.7413, "load_context_gpu_gb": 14.8856, "pass1_s": 1.1427, "pass1_max_err_bits": 8.52531, "pass1_rms_err_bits": 10.9561, "pass1_usable_levels": 21, "precision_arg": 8, "pass2_manual_s": 2.23145, "pass2_max_err_bits": 16.3991, "pass2_rms_err_bits": 18.9443, "pass2_usable_levels": 20, "gpu_gb_peak_seen": 18.0302, "host_peak_gb": 43.0212}
+=== exit 0
+{
+  "runs": [
+    {
+      "mode": "iterboot",
+      "gpus": 4,
+      "ring": 131072,
+      "depth": 43,
+      "slots": 4096,
+      "level_budget": 4,
+      "keygen_s": 21.9028,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 62.6987,
+      "load_context_gpu_gb": 8.88562,
+      "pass1_s": 0.752625,
+      "pass1_max_err_bits": 99,
+      "pass1_rms_err_bits": 99,
+      "pass1_usable_levels": 21,
+      "precision_arg": -2147483648,
+      "pass2_manual_s": 1.52423,
+      "pass2_max_err_bits": 99,
+      "pass2_rms_err_bits": 99,
+      "pass2_usable_levels": 20,
+      "gpu_gb_peak_seen": 11.0302,
+      "host_peak_gb": 27.4752
+    },
+    {
+      "mode": "iterboot",
+      "gpus": 4,
+      "ring": 131072,
+      "depth": 43,
+      "slots": 65536,
+      "level_budget": 4,
+      "keygen_s": 33.9663,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 86.7413,
+      "load_context_gpu_gb": 14.8856,
+      "pass1_s": 1.1427,
+      "pass1_max_err_bits": 8.52531,
+      "pass1_rms_err_bits": 10.9561,
+      "pass1_usable_levels": 21,
+      "precision_arg": 8,
+      "pass2_manual_s": 2.23145,
+      "pass2_max_err_bits": 16.3991,
+      "pass2_rms_err_bits": 18.9443,
+      "pass2_usable_levels": 20,
+      "gpu_gb_peak_seen": 18.0302,
+      "host_peak_gb": 43.0212
+    }
+  ],
+  "nvidia_smi_peak_mib": 18463.0
+}
+[gpu] done at Mon Oct 26 10:09:54 AM EDT 2026
+Loading CRC_default/1.1

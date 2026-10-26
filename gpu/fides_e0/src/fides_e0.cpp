@@ -458,6 +458,87 @@ static int run_combo(uint32_t budget) {
 	return 0;
 }
 
+// Two-pass (Meta-BTS) bootstrap composed from single bootstraps.
+// FIDESlib's EvalBootstrap takes numIterations/precision, but its GPU path
+// drops them (third_party/FIDESlib/api/CryptoContext.cpp calls
+// CKKS::Bootstrap(ct, slots, prescaled)); only the CPU fallback forwards them.
+// So the iteration is built here from ops the GPU path does implement -- the
+// same sequence as scripts/e0_iterboot.py --manual, which checks it against
+// OpenFHE's built-in numIterations=2 on CPU:
+//   b1   = Boot(ct)               m + e1
+//   diff = ct - b1                -e1        (EvalSub level-matches b1 down to ct)
+//   diff *= 2^p by p self-adds    -e1 2^p    (|.| < 1 because p = floor(bits(e1)))
+//   b2   = Boot(diff)             -e1 2^p + e2
+//   out  = b1 + b2 * 2^-p         m + e2 2^-p   (costs one extra level)
+// Precision is measured over EVERY slot (max and RMS), not a sample.
+//   fides_e0 iterboot <slots> [budget] [precision; 0 = floor of measured 1-pass bits]
+static int run_iterboot(uint32_t slots, uint32_t budget, int precision_arg) {
+	const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+	Json j;
+	j.ks("mode", "iterboot").kv("gpus", ngpu).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0   = clk::now();
+	auto cc   = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);  // residual stream is normalised to |x/S| < 1
+	std::vector<double> x(slots);
+	for (auto& v : x) v = U(rng);
+	auto pt = cc->MakeCKKSPackedPlaintext(x, 1, DEPTH - 1, nullptr, slots);
+	auto ct = cc->Encrypt(keys.publicKey, pt);
+
+	// By value: FIDESlib's Decrypt takes a non-const Ciphertext& (it may upload
+	// or sync device state); Ciphertext is a shared_ptr, so the copy is cheap.
+	auto measure = [&](auto c, const std::string& tag) {
+		Plaintext dec;
+		cc->Decrypt(keys.secretKey, c, &dec);
+		dec->SetLength(slots);
+		auto got  = dec->GetRealPackedValue();
+		double mx = 0, ss = 0;
+		for (uint32_t i = 0; i < slots; ++i) {
+			const double e = std::abs(got[i] - x[i]);
+			mx = std::max(mx, e);
+			ss += e * e;
+		}
+		const double rms = std::sqrt(ss / slots);
+		j.kv(tag + "_max_err_bits", mx > 0 ? -std::log2(mx) : 99.0)
+		    .kv(tag + "_rms_err_bits", rms > 0 ? -std::log2(rms) : 99.0)
+		    .kv(tag + "_usable_levels", int(DEPTH) - int(c->GetLevel()) - 1);  // e0_levels_offbyone.json
+		return mx;
+	};
+
+	auto b1 = cc->EvalBootstrap(ct);  // warm-up: first-touch allocations, lazy uploads
+	cc->Synchronize();
+	t0 = clk::now();
+	b1 = cc->EvalBootstrap(ct);
+	cc->Synchronize();
+	j.kv("pass1_s", since(t0));
+	const double e1 = measure(b1, "pass1");
+	const int p     = precision_arg > 0 ? precision_arg : int(std::floor(-std::log2(e1)));
+	j.kv("precision_arg", p);
+
+	t0        = clk::now();
+	auto c1   = cc->EvalBootstrap(ct);
+	auto diff = cc->EvalSub(ct, c1);
+	for (int i = 0; i < p; ++i) diff = cc->EvalAdd(diff, diff);
+	auto c2  = cc->EvalBootstrap(diff);
+	auto out = cc->EvalAdd(c1, cc->EvalMult(c2, std::ldexp(1.0, -p)));
+	cc->Synchronize();
+	j.kv("pass2_manual_s", since(t0));
+	measure(out, "pass2");
+	j.kv("gpu_gb_peak_seen", gpu_used_gb()).kv("host_peak_gb", host_peak_gb());
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
 int main(int argc, char** argv) {
 	std::string mode = argc > 1 ? argv[1] : "";
 	try {
@@ -465,10 +546,12 @@ int main(int argc, char** argv) {
 		if (mode == "matvec") return run_matvec();
 		if (mode == "matvec_enc") return run_matvec_enc();
 		if (mode == "combo") return run_combo(argc > 2 ? std::stoul(argv[2]) : 4);
+		if (mode == "iterboot" && argc > 2)
+			return run_iterboot(std::stoul(argv[2]), argc > 3 ? std::stoul(argv[3]) : 4, argc > 4 ? std::stoi(argv[4]) : 0);
 	} catch (const std::exception& e) {
 		std::cout << "RESULT {\"mode\": \"" << mode << "\", \"error\": \"" << e.what() << "\"}" << std::endl;
 		return 2;
 	}
-	std::cerr << "usage: fides_e0 boot <slots> [budget] | matvec | matvec_enc | combo [budget]" << std::endl;
+	std::cerr << "usage: fides_e0 boot <slots> [budget] | matvec | matvec_enc | combo [budget] | iterboot <slots> [budget] [precision]" << std::endl;
 	return 1;
 }
