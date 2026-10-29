@@ -46,6 +46,15 @@ yet**; everything below is E0 systems work.
    pass is composed in `fides_e0 iterboot`. The sink forms when position 0
    holds [MASK] **or** `<|endoftext|>` amid content -- §10's "keep position 0
    unmasked (BOS)" is wrong; decode a content token at position 0 first.
+7. **The bottleneck is now quality, not systems (§11 Next, 2026-10-27).**
+   Zero-shot, the frozen MDLM does not survive any E5 op (fixed norms blow
+   the residual stream to 1e10; (q·k)² attention NLL 8 vs 3.8; deg-31 GELU
+   diverges on 0.04% of inputs beyond ±8), so E1 is a KD fine-tune.
+   E2: at matched entropy, ordering does not matter; the window width does.
+   MDLM whole-sequence passes hold up to k = 8-16 (gen-PPL 42-94), while BD3
+   B = 16 is ~9× worse at k = 8. Spec-AR α with 2/4-layer drafts is
+   0.39-0.45 on its own samples (≤ 1.8 tokens/pass), far below the
+   cost model's 0.6-0.8.
 
 ## 2. Machines and access
 
@@ -611,9 +620,216 @@ n = 64 samples, one seed. `results/plain/noise2_{sink,pin0}.json`.
   (slightly pessimistic); one generation seed, n = 64 (the clean-level runs
   spread ~3%).
 
-### Next
+### Next (re-prioritised 2026-10-27)
 
-1. Attribute the remaining pin0 spikes (phase, position, token). If they are
-   mid-sequence `<|endoftext|>`, handling them may make one pass enough.
-2. Fold two-pass into the cost model (bootstrap ≈ 2.23 s on 4 GPUs, 20 usable).
-3. Make the `fides_e0` error loops NaN-aware; find the 4096-slot GPU anomaly.
+Bootstrap precision was the last E0 systems blocker, and it is solved. Nothing
+left in E0 blocks the paper. The critical path is now quality, and **no quality
+experiment has run yet**. Two unknowns decide the project:
+
+- **C4/E4** -- does the DLM keep quality at k ≥ 8 against spec-AR (§9.3)? That
+  needs spec-AR α and the E2 ordering curves.
+- **E1** -- can MDLM be converted to the E5 circuit (fixed-constant norms,
+  (q·k)²/Z attention, Chebyshev GELU)? The noise probe above keeps exact
+  LayerNorm, softmax and GELU, so "clean at two-pass noise" does **not** mean
+  "works encrypted".
+
+In order (jobs submitted 2026-10-27, `cluster/job_plain_probe.sh`, one GPU each):
+
+1. **E1 zero-shot op swap** (`scripts/approx_probe.py approx`, job 1640480 after
+   e2ent -- 1636812/1640363 stalled on qa-rtx6k-019 GPU `2F:00.0`, which hangs at
+   CUDA init; the job script now checks CUDA for 180 s and aborts,
+   `results/plain/approx.json`). Each E5 op is swapped into the frozen MDLM
+   (pin0), alone and together, with constants calibrated on a disjoint split:
+   - norms with c per layer / per (layer, mask) / per (layer, mask, position);
+   - attention (q·k)²/Z with Z per (layer, head [, query mask]), plus two
+     diagnostics: row-normalised (q·k)² and exp/Z;
+   - GELU deg 31 at R = 8 and 16, and deg 31/63/127 on the power-of-2
+     interval that covers the calibrated input max.
+
+   Each run reports NLL@{15,50,90}%, KL to exact, gen-PPL and the final
+   residual max. A CPU smoke run (L = 64, 8 calibration seqs) already shows:
+   - fixed-constant norms **blow up the residual stream** (max 1e6–3.5e9, NLL
+     1e5+), and with the final norm left exact it is still NLL 11 vs 3.2;
+   - deg-31 GELU diverges at R = 8 (inputs reach ~55–131); at R = 64 only
+     deg 127 is near-exact;
+   - (q·k)² attention alone gives NLL 8–13.
+
+   So zero-shot conversion fails; E1 must *train* into the circuit. This run
+   says which ops cost the most. Next is an E1 KD fine-tune pilot (MDLM →
+   fixed norms + power attention + bounded GELU inputs). Needs a training
+   budget: it shares the 4 jung_gpu cards with E5.
+   - **Result** (job 1645944, `results/plain/approx.json`, full size, L =
+     256, 128 calibration seqs). Exact NLL at 15 / 50 / 90% masking is
+     2.15 / 3.84 / 7.06; gen-PPL 120. Final-norm input max is already 1.85e4
+     in the exact model (the position-255 sink).
+
+     | op swapped in (alone) | NLL@50% | KL@50% | gen-PPL |
+     |---|---|---|---|
+     | GELU deg 31, R = 8 | 9.4e3 | 9.4e3 | NaN |
+     | GELU deg 31, R = 16 | 51 | 47 | 6e4 (entropy 0.03) |
+     | GELU deg 31 / 63 / 127, R = 128 | 8.8 / 8.9 / 8.1 | 4.6-5.4 | 520-770 |
+     | norm c per layer / mask / (mask, pos) | 2e6-1e7 | -- | 2e4-3e4 |
+     | norm c per (mask, pos), final norm exact | 10.5 | 7.0 | 6 (entropy 0.72) |
+     | attn (q·k)² row-normalised (ideal Z) | 8.0 | 4.6 | 4.6e3 |
+     | attn (q·k)²/Z, Z per (layer, head [, mask]) | 12.5 / 10.4 | 9.0 / 6.9 | 1.5e4 |
+     | full E5 circuit, GELU deg 63 / 127 | 1e4 | 1e4 | NaN |
+
+     - **GELU: range, not degree.** Inputs reach 67, but only 0.04% exceed
+       8 and 0.017% exceed 16. Deg 31 on [-8, 8] is accurate (max error
+       1.3e-4) and those few outliers make it diverge. On [-128, 128] even
+       deg 127 has error 0.38. The fix is bounded GELU inputs (train with a
+       clamp or penalty to |x| ≤ 8), not a higher degree.
+     - **Norms: per-token σ, not per position.** c varies only 2-8% over
+       positions (CV), yet any fixed c blows the residual stream up to
+       1e9-1e10. The massive-activation tokens have σ far from the
+       population, and a fixed c cannot follow them. This is the worst op.
+       Options: KD-train with fixed-scale norms; or keep an encrypted
+       inverse-sqrt (Newton / polynomial, +depth) for the 25 norms; or
+       remove the sink by training, so σ is tight.
+     - **Attention: the shape costs most, not Z.** Even the ideal
+       row-normalised (q·k)² gives NLL 8.0 vs 3.8. A public Z costs another
+       2.5-4.5 nats. It has to be trained.
+   - **Verdict:** every E5 op breaks the frozen MDLM by itself. E1 is a
+     training project. Priority: norms > attention shape > GELU range. The
+     KD pilot should introduce them one at a time in that order, measuring
+     NLL after each.
+2. **Remaining pin0 spikes** (`approx_probe.py spikes`, same job after approx;
+   the first attempt, 1636812, stalled 6.5 h in the per-event hook and was
+   cancelled -- the hook now syncs once per forward,
+   `results/plain/spikes.json`). Records, per spike, the step, block, position
+   and token there ([MASK] / `<|endoftext|>` / content). Then gen-PPL at
+   b ∈ {clean, 11, 12, 13} with and without ever sampling `<|endoftext|>`:
+   does one bootstrap pass become enough? This matters for E1 too, since the
+   spikes set the norm and GELU input ranges.
+   - **Result** (job 1640480). With pin0 the sink has **moved to the last
+     position**: every spike above 2000 is a [MASK] at position 255, in
+     blocks 5-11, up to 1.85e4 (NLL) / 1.56e4 (gen). It fires only when
+     almost everything is masked: 43 events in generation, all at the
+     first steps (255 of 256 masked), and 2 in the NLL pass at 90% masking.
+     Never `<|endoftext|>`, never content.
+   - Never sampling `<|endoftext|>` does not help. gen-PPL clean 120 / 123;
+     b = 11: 156 / 176; b = 12: 164 / 141; b = 13: 140 / 117, with / without
+     EOS (n = 64, one seed, ±15% noise). S_max stays at 1.5e4 because of the
+     position-255 spike.
+   - So one bootstrap pass is still not enough. The trigger is public (step
+     index / mask count / position), so E1 can treat it: decode position 255
+     early too, or give the near-all-masked first steps their own scale.
+3. **E2 ordering ablation on the frozen teachers** (`scripts/e2_order.py`,
+   job 1636813, `results/plain/e2_order.json`, resumable).
+   - Models: BD3-LM B = 4/8/16 (SDPA sampling path), plus MDLM global as
+     reference.
+   - Grid: k ∈ {1, 2, 4, 8, 16} ≤ B; order ∈ {random, confidence, margin,
+     entropy, l2r}; top-p 1.0 and 0.9.
+   - Metrics: gen-PPL (GPT-2 Large) and unigram entropy; n = 64, L = 256.
+   - **Result** (job 1636813; BD3-LM complete, MDLM top-p 0.9 hit OOM in the
+     nucleus sort and resumes in job 1640364). gen-PPL, T = 1, one seed:
+
+     | k (tokens/pass) | 1 | 2 | 4 | 8 | 16 |
+     |---|---|---|---|---|---|
+     | BD3 B16 random | 108 | 235 | 801 | 2523 | 5028 (all) |
+     | BD3 B16 confidence | 3.8 | 7.6 | 12.5 | 145 | -- |
+     | BD3 B8 random | 96 | 399 | 1740 | 3803 (all) | |
+     | BD3 B4 random | 87 | 706 | 3040 (all) | | |
+     | MDLM global random | 85 | 95 | 110 | 151 | 229 |
+     | MDLM global confidence | 1.4 | 1.5 | 1.7 | 2.6 | 5.4 |
+
+     With top-p 0.9 every number drops about 2.5-3× (B16 random 40 → 995 at
+     k = 8), with the same shape.
+   - **In-block parallel commits break BD3-LM fast.** With k = 2, gen-PPL is
+     ×8 (B4), ×4 (B8) and ×2.2 (B16) of k = 1. MDLM global degrades only ×1.1
+     at k = 2 and ×1.8 at k = 8: its k picks are spread over 256 positions and
+     nearly independent, while BD3's k picks are neighbours.
+   - **Confidence ordering wins gen-PPL by collapsing entropy.** Unigram
+     entropy is 2.3-3.4 for BD3 confidence and 1.2-1.7 for MDLM confidence,
+     against 4.5-5.0 for random. That is repetition, not quality.
+     Margin/entropy/l2r are no better than random at k ≥ 2 (l2r is worst).
+   - **So no frozen BD3-LM (B ≤ 16) configuration keeps quality at k ≥ 8 with
+     healthy entropy.** C4/E4 needs either a wide live window (MDLM-style,
+     whole-sequence pass cost) or an ordering that does not collapse entropy.
+   - **Entropy-matched follow-up** (`e2_order.py --sweep`, job 1640480, held
+     until 1640364 finishes; `results/plain/e2_entropy.json`, resumable).
+     - Models and k: BD3 B16 k ∈ {2, 4, 8}, B8 k ∈ {2, 4}, MDLM global
+       k ∈ {4, 8, 16}.
+     - Sweeps: confidence with Gumbel choice temperature τ ∈ {0.25, 0.5, 1, 2,
+       4} (log p + τ·Gumbel, MaskGIT-style); confidence at sampling T ∈ {1.25,
+       1.5}; random at T ∈ {0.7, 0.8, 0.9}.
+     - Plus a real-text reference: WikiText-103 validation chunks, gen-PPL
+       and entropy. The models are OWT-trained, so the reference is
+       approximate.
+     - Read it as gen-PPL vs entropy: does any order beat random at the
+       reference entropy for k ≥ 8?
+   - **Result** (job 1640480). Reference text: gen-PPL 27, entropy 4.64.
+     GPT-2 small samples at T = 1: 106.5 / 4.91.
+     - **At matched entropy, confidence ordering ≈ random.**
+       - BD3 B16, k = 4: confidence τ = 4 gives 136 @ 4.26, and random
+         interpolated to 4.26 gives about 130.
+       - BD3 B16, k = 8: confidence τ = 4 gives 599 @ 4.26; random T = 0.9
+         gives 511 @ 4.26.
+       - MDLM, k = 8 / 16: confidence τ = 4 gives 24.6 @ 4.12 / 37.4 @ 4.22;
+         random T = 0.8 gives 26.7 @ 4.12 / 42.1 @ 4.19. That is a 5-10% edge.
+
+       Confidence's low gen-PPL in the first table was entropy. Choosing
+       *which* k tokens to commit is not the lever.
+     - **The lever is the window width.** Near reference entropy (4.4-4.6):
+       - MDLM global random T = 0.9 gives 42 / 59 / 94 at k = 4 / 8 / 16.
+       - BD3 B16 gives 223 @ 4.54 at k = 4 and 511 @ 4.26 at k = 8.
+       - At k = 8 that is 9× worse, at lower entropy.
+
+       Committing k picks spread over 256 positions is nearly free; k picks
+       out of 16 neighbours is not.
+     - **Consequence for C4/E4.** A DLM at k ≥ 8 needs a live window much
+       larger than k. Either use MDLM-style whole-sequence passes (cost ∝ L
+       per pass, no KV reuse) or train BD3 with a large B (64-256) — no such
+       checkpoint exists. The cost model must price tokens per pass *and*
+       the cost per pass of the window size together.
+     - Caveats: one seed, n = 64, L = 256; WikiText reference for
+       OWT-trained models; entropy matching by interpolation between sweep
+       points.
+4. **Spec-AR α** (`scripts/spec_alpha.py`, job 1640364 -- 1636814 crashed on a
+   CPU/GPU device mismatch in gen_ppl, fixed;
+   `results/plain/spec_alpha.json`; drafts saved to `ckpt/drafts/`).
+   - Target is GPT-2 small, a stand-in: the matched `kuleshov-group/owt-ar`
+     (619 MB pickled `.bin`) was not downloaded -- needs the user's OK.
+   - Drafts are the first 2 / 4 blocks plus the tied head, KD 3000 × 16 × 256
+     on WikiText-103 train.
+   - α = 1 − TV, exact, along the target's samples and along text; tokens per
+     verify pass by i.i.d. formula and by per-position walk.
+   - **First result** (job 1640364). T = 1, α = Σ min(p, q):
+
+     | draft | KD KL end | α_gen | α_text | tok/pass k=4 (gen / text) | k=8 |
+     |---|---|---|---|---|---|
+     | 2L, step 0 | -- | 0.17 | 0.12 | | |
+     | 2L, 3000 steps | 1.20 | 0.35* | 0.52 | 1.52* / 1.98 | 2.06 (text) |
+     | 4L, 3000 steps | 0.89 | 0.42* | 0.59 | 1.68* / 2.24 | 2.39 (text) |
+
+     \* α_gen is biased low: HF `generate` stopped at `<|endoftext|>` and
+     padded with it (4/16 samples, ~36 pad tokens each); target gen-PPL 301
+     is inflated for the same reason. `sample_target` is now a plain
+     ancestral loop. The saved drafts are re-measured with `--load-dir`
+     (probe `alpha2`, job 1640480 → `spec_alpha2.json`). A toy CPU run gave
+     α_gen 0.44 for 2L. α_text is teacher-forced and unaffected.
+   - Even α_text = 0.59 is well under the cost model's α ∈ {0.6, 0.8} (§9.3),
+     so spec-AR commits ≈ 2.2-2.4 tokens per verify pass at k = 4-8, not
+     3.4-4. Caveats: short KD (KL still falling), GPT-2 small rather than the
+     matched OWT AR, T = 1 (α rises at lower temperature / top-p). This moves
+     the C4 bar in the DLM's favour; re-price §9.3 once `alpha2` lands.
+   - **Corrected (`spec_alpha2.json`, job 1640480).** Target samples are now
+     gen-PPL 106.5, entropy 4.91, 0.28 EOS per sequence.
+     - α_gen: 0.385 (2L), 0.445 (4L). α_text is unchanged: 0.52 / 0.59.
+     - Tokens per verify pass along the target's own samples (walk):
+
+       | draft | k = 4 | k = 8 |
+       |---|---|---|
+       | 2L | 1.60 | 1.62 |
+       | 4L | 1.76 | 1.80 |
+
+       Along text: 1.98-2.24 at k = 4 and 2.06-2.39 at k = 8.
+     - Spec-AR at T = 1 therefore commits ≤ 2.4 tokens per encrypted pass
+       with these drafts, against the 3.4-4 the cost model assumed at
+       α = 0.8.
+5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
+   date. jung_gpu is the only GPU pool, and the user's other jobs use it.
+
+Demoted (not blocking): fold two-pass into the cost model (bootstrap ≈ 2.23 s
+on 4 GPUs, 20 usable; ≈ +12 s/pass); make the `fides_e0` error loops
+NaN-aware and find the 4096-slot GPU anomaly (E5 uses full slots).
