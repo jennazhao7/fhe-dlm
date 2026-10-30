@@ -828,7 +828,7 @@ In order (jobs submitted 2026-10-27, `cluster/job_plain_probe.sh`, one GPU each)
        with these drafts, against the 3.4-4 the cost model assumed at
        α = 0.8.
 **E1 KD pilot -- design (2026-10-29, `scripts/e1_kd.py`, probe `e1pilot`;
-not running: 1655431 and 1655468 (2026-10-30) were both
+running as 1656829 with `-l gpu=2`; 1655431 and 1655468 were
 given qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check).**
 
 The pilot asks one question: can training recover what the zero-shot swap

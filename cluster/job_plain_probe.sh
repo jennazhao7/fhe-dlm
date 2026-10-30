@@ -36,6 +36,7 @@
 #   e1pilot E1 KD pilot: MDLM -> E5 circuit, stages norms / attention / GELU /
 #           bootstrap noise, eval after each -> results/plain/e1_pilot.json,
 #           ckpt/e1_pilot/stage{A,B,C,D}.pt (scripts/e1_kd.py; resumes by stage)
+#           qsub -l gpu=2 -v PROBES=e1pilot cluster/job_plain_probe.sh  (see the card check below)
 #           for p in approx spikes e2order alpha; do qsub -v PROBES=$p cluster/job_plain_probe.sh; done
 # Checkpoints/data are prefetched into hf-cache on the front end; compute nodes
 # have no network, so everything runs offline.
@@ -54,11 +55,20 @@ export PYTHONNOUSERSITE=1 OMP_NUM_THREADS=${NSLOTS:-8}
 mkdir -p results/plain results/logs
 # 1636812 and 1640363 both landed on qa-rtx6k-019 GPU 00000000:2F:00.0 and sat
 # for hours at ~500 MB RSS with no output (CUDA init never returned); the other
-# three cards were fine. Fail fast instead of burning the h_rt.
-if ! timeout 180 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))"; then
-  echo "=== CUDA sanity check failed or timed out on $(nvidia-smi --query-gpu=pci.bus_id --format=csv,noheader) -- aborting"
-  exit 1
-fi
+# three cards were fine. Fail fast instead of burning the h_rt. 1655431 and
+# 1655468 were handed that card again (the only free one), so the e1pilot is
+# submitted with `qsub -l gpu=2 ...`: SGE exposes the assigned cards as 0..n-1
+# (CUDA_VISIBLE_DEVICES unset), and the first that passes is used.
+GOOD=""
+for i in $(seq 0 $(( $(nvidia-smi -L | wc -l) - 1 ))); do
+  bus=$(nvidia-smi -i "$i" --query-gpu=pci.bus_id --format=csv,noheader)
+  if CUDA_VISIBLE_DEVICES=$i timeout 180 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))"; then
+    echo "=== using card $i ($bus)"; GOOD=$i; break
+  fi
+  echo "=== CUDA sanity check failed or timed out on card $i ($bus)"
+done
+if [ -z "$GOOD" ]; then echo "=== no working card -- aborting"; exit 1; fi
+export CUDA_VISIBLE_DEVICES=$GOOD
 for p in ${PROBES:-ranges noise}; do
   echo "=== $p ($(date))"
   case $p in
