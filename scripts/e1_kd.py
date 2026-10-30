@@ -34,7 +34,7 @@ from the pin0 sampler, residual-stream max, fraction of GELU inputs outside
     python scripts/e1_kd.py --out results/plain/e1_pilot.json --ckpt-dir ckpt/e1_pilot
 Resumes from the last finished stage in --ckpt-dir.
 """
-import argparse, json, math, os, sys, time
+import argparse, gc, json, math, os, sys, time
 
 import torch
 import torch.nn as nn
@@ -319,6 +319,13 @@ def train_stage(student, teacher, ids, stage, a, log):
         if st % a.log_every == 0 or st == steps - 1:
             log({"stage": stage, "step": st, "lam": min(1.0, (st + 1) / ramp), "kl": stats["kl"],
                  "gelu_pen": stats["pen"], "grad_norm": float(gn), "s_per_step": (time.time() - t0) / (st + 1)})
+    # Job 1656829 OOMed in the stage-A eval sampler (3 GB logits) with 12 GB still allocated: grads,
+    # AdamW state kept alive by the opt<->LambdaLR cycle, and the last step's GELU penalty graph.
+    student.zero_grad(set_to_none=True)
+    for g_ in ops(student, "gelu"):
+        g_.pen = None
+    del opt, sched
+    gc.collect(); torch.cuda.empty_cache()
 
 
 NOISE_BITS = 11
@@ -390,15 +397,16 @@ def main():
         log({"resumed_after": done[-1]})
     student.eval()                                   # dropout is 0 anyway; no train-mode paths
     for stage in a.stages:
-        if stage in done:
+        if stage in out["stages"]:
             continue
         t0 = time.time()
-        train_stage(student, teacher, ids, stage, a, log)
+        if stage not in done:                        # checkpoint before eval: an eval crash keeps the training
+            train_stage(student, teacher, ids, stage, a, log)
+            torch.save(student.state_dict(), os.path.join(a.ckpt_dir, f"stage{stage}.pt"))
         set_stage(student, stage, 1.0, train=False)
         r = evaluate(student, teacher, judge, evalset, a, noise_bits=(None, 11, 16) if stage >= "C" else (None,))
         r["train_seconds"] = time.time() - t0
         out["stages"][stage] = r; log({"eval": stage, **r})
-        torch.save(student.state_dict(), os.path.join(a.ckpt_dir, f"stage{stage}.pt"))
         json.dump(out, open(a.out, "w"), indent=1)
         if not r["nll_mask0.5"] < a.abort_nll:       # NaN counts as failed
             log({"abort": stage, "nll_mask0.5": r["nll_mask0.5"], "limit": a.abort_nll})

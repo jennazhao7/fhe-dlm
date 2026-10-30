@@ -828,8 +828,10 @@ In order (jobs submitted 2026-10-27, `cluster/job_plain_probe.sh`, one GPU each)
        with these drafts, against the 3.4-4 the cost model assumed at
        α = 0.8.
 **E1 KD pilot -- design (2026-10-29, `scripts/e1_kd.py`, probe `e1pilot`;
-running as 1656829 with `-l gpu=2`; 1655431 and 1655468 were
-given qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check).**
+running as 1657662 with `-l gpu=2`; 1655431 and 1655468 were
+given qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check; 1656829
+trained stage A (KL 0.06 at 3000 steps, 1.245 s/step) then OOMed in the
+eval sampler before saving -- now freed before eval, checkpoint saved first).**
 
 The pilot asks one question: can training recover what the zero-shot swap
 lost, and at what cost? It converts MDLM one op at a time, in the order the

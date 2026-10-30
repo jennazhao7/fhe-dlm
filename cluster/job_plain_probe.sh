@@ -86,7 +86,7 @@ for p in ${PROBES:-ranges noise}; do
     e2ent)  "$PY" scripts/e2_order.py --sweep --out results/plain/e2_entropy.json ;;
     alpha)  "$PY" scripts/spec_alpha.py --save-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha.json ;;
     alpha2) "$PY" scripts/spec_alpha.py --load-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha2.json ;;
-    e1pilot) "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot" --out results/plain/e1_pilot.json ;;
+    e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot" --out results/plain/e1_pilot.json ;;
   esac
   echo "=== $p exit $? ($(date))"
 done
