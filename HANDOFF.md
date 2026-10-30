@@ -827,6 +827,63 @@ In order (jobs submitted 2026-10-27, `cluster/job_plain_probe.sh`, one GPU each)
      - Spec-AR at T = 1 therefore commits ≤ 2.4 tokens per encrypted pass
        with these drafts, against the 3.4-4 the cost model assumed at
        α = 0.8.
+**E1 KD pilot -- design (2026-10-29, `scripts/e1_kd.py`, probe `e1pilot`;
+not running: 1655431 and 1655468 (2026-10-30) were both
+given qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check).**
+
+The pilot asks one question: can training recover what the zero-shot swap
+lost, and at what cost? It converts MDLM one op at a time, in the order the
+damage ranked, and evaluates after each stage:
+
+| stage | op (student) | steps (ramp) | public constants (init) |
+|---|---|---|---|
+| A | LayerNorm → c[norm, query mask]·(x − mean)·w | 3000 (1000) | c = Σσ/Σσ² per (norm, mask) |
+| B | softmax → (s + b)²/Z | 3000 (1000) | b per (layer, head) from {0,1,2,4,8} by KL to softmax; Z = mean row sum per (head, query mask) |
+| C | GELU → Chebyshev 31 on [-8, 8] + hinge² penalty on \|u\| > 6 | 2000 (500) | -- |
+| D | + N(0, (2^-11·S)²) after every block | 1000 | S = block-output max |
+
+- **Blending.** Each op is blended in, out = (1 − λ)·exact + λ·E5, with λ
+  0 → 1 over the ramp. Earlier stages' ops stay at λ = 1.
+- **Shifted square for attention.** It is (s + b)², not s²: MPCFormer's
+  2Quad. The pure square up-weights very negative scores, which may be most
+  of the "shape" cost in approx.json. Adding b is free in CKKS, so the depth
+  is unchanged.
+- **GELU training vs evaluation.** Training evaluates the polynomial on
+  clamp(u, ±8). Evaluation does not clamp (CKKS cannot), so the out-of-range
+  fraction it reports is the real risk.
+- **Loss and masks.** The loss is KL(teacher ‖ student) on masked positions,
+  with pin0 masks (ratio ~ U(0, 1), position 0 never masked, 1 row in 8
+  fully masked). All weights are trained. Constants train at lr 1e-3, the
+  rest at 1e-4 with AdamW, grad-clip 1, bs 16×2, L 256.
+- **Data.** 9000 steps ≈ 74M tokens of WikiText-103 train. That is a domain
+  shift from OWT; KD from the OWT teacher limits it, and the full E1 should
+  use an OWT shard (download needs the user's OK).
+- **Eval per stage.** The same eval as approx.json: NLL / KL @ 15/50/90%,
+  pin0 gen-PPL + entropy, residual max, GELU input max and out-of-range
+  fraction. From C on it also runs at noise b = 11 and 16.
+- **Bookkeeping.** Checkpoints `ckpt/e1_pilot/stage{A..D}.pt` (680 MB each);
+  the run resumes by stage. It aborts if NLL@50% after a stage exceeds 20.
+  The CPU smoke test passed: all stages, resume, abort, and the NaN guard.
+- **Budget.** Estimated ≈ 1.3 s/step on one RTX 6000 in fp32, so ≈ 3.5 h of
+  training + ≈ 1 h of eval, i.e. one 8 h job on one card. Check s_per_step
+  in the first log lines.
+- **Read-out / go criteria for full E1.**
+  - After C, NLL@50% within +0.3 nats of exact (3.84), and gen-PPL within
+    1.5× of exact (120) at entropy ±0.2.
+  - After D (b = 11), the same → one bootstrap pass suffices (≈ 1.1 s
+    instead of 2.2 s per bootstrap).
+  - If A alone stays > +1 nat, fixed-constant norms are not trainable at
+    this budget. Fallbacks: per-layer sequential norm removal (one norm per
+    ramp, as in LN-free GPT-2 fine-tuning) or an encrypted inverse sqrt for
+    some norms (+depth; re-run the level audit).
+- **Known risks.**
+  - The smoke run's 2-step ramp diverged at λ = 1 (KL 7e4, grad-norm 3e8):
+    the switch has to be gradual, and the abort rule is there for that.
+  - The position-255 sink must be trained away for D to pass. Watch
+    resid_max.
+  - The final norm cannot stay exact unless the client applies the LM head,
+    which would hand it the (tied) embedding.
+
 5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
    date. jung_gpu is the only GPU pool, and the user's other jobs use it.
 
