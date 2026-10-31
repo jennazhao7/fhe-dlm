@@ -22,7 +22,10 @@ and evaluating after each stage:
                 = one bootstrap pass RMS. If D holds, E5 needs only one pass.
 
 Objective: KL(teacher || student) on masked positions, T = 1, teacher = the
-frozen exact MDLM. Masks follow the pin0 protocol: per-row ratio ~ U(0, 1),
+frozen exact MDLM, plus from A on a squared hinge on every block output beyond
+--res-bound (100), relative to the bound: with no norm left to bound it, the
+residual stream otherwise grows (v1 pilot: 1.9e4 -> 7.7e7 in A, then B's
+(s + b)^2 overflowed). Masks follow the pin0 protocol: per-row ratio ~ U(0, 1),
 position 0 never masked, 1 row in 8 fully masked. Constants (c, b, Z) are
 calibrated on the exact model, then trained (they stay public constants).
 Data: WikiText-103 train (cached; MDLM was trained on OpenWebText, which is
@@ -32,11 +35,14 @@ from the pin0 sampler, residual-stream max, fraction of GELU inputs outside
 [-8, 8], with every introduced op at lam = 1 and GELU unclamped.
 
     python scripts/e1_kd.py --out results/plain/e1_pilot.json --ckpt-dir ckpt/e1_pilot
-Resumes from the last finished stage in --ckpt-dir.
+Resumes from the last finished stage in --ckpt-dir. Stops after a stage with
+NLL > --abort-nll at any ratio, non-finite generation, > 5% skipped steps, or
+block outputs >= --abort-resid (1e3).
 """
 import argparse, gc, json, math, os, sys, time
 
 import torch
+import torch.utils.checkpoint
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -47,7 +53,7 @@ import spec_alpha             # noqa: E402  (train_tokens)
 
 STAGES = ("A", "B", "C", "D")
 # what the attention function / block hooks read; None = exact (the teacher never sets it)
-S = {"attn": None, "collect": None, "noise_bits": None}
+S = {"attn": None, "collect": None, "noise_bits": None, "res_pen": None}
 
 
 # ---------------------------------------------------------------- E5 ops
@@ -110,9 +116,25 @@ class PolyGELU(nn.Module):
         if self.penalty:
             self.pen = F.relu(u.abs() - self.R0).pow(2).sum() / (u.numel() / u.shape[-1])   # per token
         if self.lam > 0:
-            yp = ap.cheb_eval(self.c, t.clamp(-1, 1) if self.clamp else t)
+            tt = t.clamp(-1, 1) if self.clamp else t
+            # recompute in backward: keeping the 31-term recurrence for 12 layers OOMed stage C (job 1657662)
+            yp = (torch.utils.checkpoint.checkpoint(ap.cheb_eval, self.c, tt, use_reentrant=False)
+                  if torch.is_grad_enabled() else ap.cheb_eval(self.c, tt))
             y = yp if self.lam >= 1 else (1 - self.lam) * y + self.lam * yp
         return y
+
+
+RES_BOUND = 100.0
+
+
+def resid_hook(mod, inp, out):
+    """Training only: hinge^2 on block outputs beyond RES_BOUND, per token. Without a norm nothing
+    bounds the residual stream: stage A of job 1657662 grew it from 1.9e4 to 7.7e7, and stage B's
+    (s + b)^2 then overflowed."""
+    if S["res_pen"] is not None:
+        S["res_pen"].append((F.relu(out.abs() / RES_BOUND - 1).pow(2).sum() / (out.numel() / out.shape[-1]),
+                             out.detach().abs().amax()))
+    return None
 
 
 def noise_hook(mod, inp, out):
@@ -142,7 +164,7 @@ def pin0_masks(x, g, full_frac=1 / 8):
 
 
 @torch.no_grad()
-def calibrate(m, cal, bs, grid=(0.0, 1.0, 2.0, 4.0, 8.0)):
+def calibrate(m, cal, bs, grid=(0.0, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0)):   # 1657662: layers 7-11 picked 8
     """On the exact model: norm c = sum(sigma) / sum(sigma^2) per (norm, mask);
     per (layer, head) the shift b in `grid` whose row-normalised (s + b)^2 is
     closest (KL) to softmax, and Z = mean row sum of (s + b)^2 per query mask."""
@@ -206,6 +228,7 @@ def convert(m, cal):
         b.mlp[1] = PolyGELU()
         b.register_forward_pre_hook(lambda mod, inp: S.__setitem__("attn", mod.pow_attn))
         b.register_forward_hook(lambda mod, inp, out: S.__setitem__("attn", None))
+        b.register_forward_hook(resid_hook)
         b.register_forward_hook(noise_hook)
     ol = m.backbone.output_layer
     ol.norm_final = FixedNorm(ol.norm_final, cal["norm_c"][j])
@@ -243,9 +266,9 @@ def evaluate(student, teacher, judge, evalset, a, noise_bits=(None,), gen=True):
     out = {}
     for g_ in ops(student, "gelu"):
         g_.oor = [0, 0]; g_.umax = 0.0
-    resid = {"max": 0.0}
-    hk = pp.blocks(student)[-1].register_forward_hook(
-        lambda mod, inp, o: resid.__setitem__("max", max(resid["max"], float(o.abs().max()))))
+    resid = {"max": 0.0}                             # over every block output (job 1657662: last block only)
+    hks = [b.register_forward_hook(lambda mod, inp, o: resid.__setitem__("max", max(resid["max"], float(o.abs().max()))))
+           for b in pp.blocks(student)]
     for nb in noise_bits:
         S["noise_bits"] = nb
         tag = "" if nb is None else f"_b{nb:g}"
@@ -273,7 +296,8 @@ def evaluate(student, teacher, judge, evalset, a, noise_bits=(None,), gen=True):
                 out[f"gen_error{tag}"] = str(e)[:200]
             pp.forward_logits = exact_fwd
     S["noise_bits"] = None
-    hk.remove()
+    for hk in hks:
+        hk.remove()
     o, n = sum(g_.oor[0] for g_ in ops(student, "gelu")), sum(g_.oor[1] for g_ in ops(student, "gelu"))
     out["gelu_frac_outside"] = o / max(n, 1)
     out["gelu_in_max"] = max(g_.umax for g_ in ops(student, "gelu"))
@@ -292,10 +316,12 @@ def train_stage(student, teacher, ids, stage, a, log):
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / a.warmup))
     g = torch.Generator().manual_seed(100 + STAGES.index(stage))
     t0 = time.time()
+    skipped = 0
     for st in range(steps):
         set_stage(student, stage, min(1.0, (st + 1) / ramp), train=True)
         opt.zero_grad(set_to_none=True)
-        stats = {"kl": 0.0, "pen": 0.0}
+        lam = min(1.0, (st + 1) / ramp)
+        stats = {"kl": 0.0, "pen": 0.0, "res_pen": 0.0, "res_max": 0.0}
         for _ in range(a.accum):
             idx = torch.randint(0, len(ids) - a.L, (a.bs,), generator=g)
             x = torch.stack([ids[i:i + a.L] for i in idx]).to(pp.DEV)
@@ -304,9 +330,15 @@ def train_stage(student, teacher, ids, stage, a, log):
             with torch.no_grad():
                 lt = fwd(teacher, xm).log_softmax(-1)[mk]
             S["noise_bits"] = nb
+            S["res_pen"] = []
             ls = fwd(student, xm).log_softmax(-1)[mk]
+            rp, S["res_pen"] = S["res_pen"], None
             loss = (lt.exp() * (lt - ls)).sum(-1).mean()
             stats["kl"] += float(loss) / a.accum
+            rpen = sum(r[0] for r in rp)
+            loss = loss + a.res_pen * (lam if stage == "A" else 1.0) * rpen
+            stats["res_pen"] += float(rpen) / a.accum
+            stats["res_max"] = max(stats["res_max"], float(max(r[1] for r in rp)))
             if stage in ("C", "D"):
                 pen = sum(g_.pen for g_ in ops(student, "gelu"))
                 loss = loss + a.gelu_pen * pen
@@ -314,11 +346,13 @@ def train_stage(student, teacher, ids, stage, a, log):
             (loss / a.accum).backward()
         gn = torch.nn.utils.clip_grad_norm_(params, 1.0)
         if not torch.isfinite(gn):
+            skipped += 1
             log({"stage": stage, "step": st, "skip": "non-finite grad"}); continue
         opt.step(); sched.step()
         if st % a.log_every == 0 or st == steps - 1:
-            log({"stage": stage, "step": st, "lam": min(1.0, (st + 1) / ramp), "kl": stats["kl"],
-                 "gelu_pen": stats["pen"], "grad_norm": float(gn), "s_per_step": (time.time() - t0) / (st + 1)})
+            log({"stage": stage, "step": st, "lam": lam, "kl": stats["kl"], "gelu_pen": stats["pen"],
+                 "res_pen": stats["res_pen"], "res_max": stats["res_max"],
+                 "grad_norm": float(gn), "s_per_step": (time.time() - t0) / (st + 1)})
     # Job 1656829 OOMed in the stage-A eval sampler (3 GB logits) with 12 GB still allocated: grads,
     # AdamW state kept alive by the opt<->LambdaLR cycle, and the last step's GELU penalty graph.
     student.zero_grad(set_to_none=True)
@@ -326,13 +360,29 @@ def train_stage(student, teacher, ids, stage, a, log):
         g_.pen = None
     del opt, sched
     gc.collect(); torch.cuda.empty_cache()
+    return skipped / steps
 
 
 NOISE_BITS = 11
 
 
+def failed(r, a):
+    """Why a stage's eval should stop the run, or None. Job 1657662 went on past a stage B with
+    NLL@90% 1e20 and 65% skipped steps because only NLL@50% was checked."""
+    nll = {k: v for k, v in r.items() if k.startswith("nll")}
+    if not all(math.isfinite(v) and v < a.abort_nll for v in nll.values()):
+        return f"NLL above {a.abort_nll} or non-finite"
+    if any(k.startswith("gen_error") for k in r):
+        return "non-finite logits in generation"
+    if r.get("skip_frac", 0.0) > a.abort_skip:
+        return f"{r['skip_frac']:.1%} of steps skipped"
+    if not r["resid_max"] < a.abort_resid:
+        return f"resid_max {r['resid_max']:.3g} >= {a.abort_resid:g}"
+    return None
+
+
 def main():
-    global NOISE_BITS
+    global NOISE_BITS, RES_BOUND
     ap_ = argparse.ArgumentParser()
     ap_.add_argument("--L", type=int, default=256)
     ap_.add_argument("--bs", type=int, default=16)
@@ -351,12 +401,16 @@ def main():
     ap_.add_argument("--gen-steps", type=int, default=128)
     ap_.add_argument("--log-every", type=int, default=50)
     ap_.add_argument("--stages", nargs="+", default=list(STAGES))
+    ap_.add_argument("--res-bound", type=float, default=100.0, help="residual-stream bound for the hinge")
+    ap_.add_argument("--res-pen", type=float, default=1e-3)
     ap_.add_argument("--abort-nll", type=float, default=20.0,
-                     help="stop after a stage whose NLL@50%% exceeds this (exact: 3.84)")
+                     help="stop after a stage with NLL above this at any mask ratio (exact @50%%: 3.84)")
+    ap_.add_argument("--abort-skip", type=float, default=0.05, help="... or this fraction of steps skipped")
+    ap_.add_argument("--abort-resid", type=float, default=1e3, help="... or block outputs reaching this")
     ap_.add_argument("--ckpt-dir", required=True)
     ap_.add_argument("--out", required=True)
     a = ap_.parse_args()
-    NOISE_BITS = a.noise_bits
+    NOISE_BITS, RES_BOUND = a.noise_bits, a.res_bound
     torch.manual_seed(0)
     os.makedirs(a.ckpt_dir, exist_ok=True)
 
@@ -400,16 +454,20 @@ def main():
         if stage in out["stages"]:
             continue
         t0 = time.time()
+        skip = None
         if stage not in done:                        # checkpoint before eval: an eval crash keeps the training
-            train_stage(student, teacher, ids, stage, a, log)
+            skip = train_stage(student, teacher, ids, stage, a, log)
             torch.save(student.state_dict(), os.path.join(a.ckpt_dir, f"stage{stage}.pt"))
         set_stage(student, stage, 1.0, train=False)
         r = evaluate(student, teacher, judge, evalset, a, noise_bits=(None, 11, 16) if stage >= "C" else (None,))
         r["train_seconds"] = time.time() - t0
+        if skip is not None:
+            r["skip_frac"] = skip
         out["stages"][stage] = r; log({"eval": stage, **r})
         json.dump(out, open(a.out, "w"), indent=1)
-        if not r["nll_mask0.5"] < a.abort_nll:       # NaN counts as failed
-            log({"abort": stage, "nll_mask0.5": r["nll_mask0.5"], "limit": a.abort_nll})
+        why = failed(r, a)
+        if why:
+            log({"abort": stage, "why": why})
             json.dump(out, open(a.out, "w"), indent=1)
             break
 

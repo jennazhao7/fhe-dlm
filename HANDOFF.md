@@ -908,14 +908,16 @@ damage ranked, and evaluates after each stage:
 - **C OOMed on its first training step.** Autograd keeps the 31-term
   Chebyshev intermediates for every layer (~18 GB at bs 16).
 - **The abort rule missed B.** It checks only NLL@50% (4.8 < 20).
-- **Fix plan (not run yet):**
-  - Stage A: add a hinge² range penalty on the residual stream / norm
-    outputs, so the bound is learned together with the norm swap.
+- **Fix, running as job 1660384 (v2 → `results/plain/e1_pilot2.json`,
+  `ckpt/e1_pilot2/`; v1 files kept). `resid_max` is now the max over every
+  block output, not just the last block:**
+  - From stage A on: hinge² on every block output beyond 100, relative to
+    the bound, weight 1e-3, ramped with A's λ.
   - Stage B: extend the shift grid to {0..32}.
   - Stage C: gradient checkpointing around the polynomial.
-  - Abort on any non-finite eval, NLL > limit at any ratio, or > 5% skipped
-    steps.
-  - Rerun from scratch (stage A must change).
+  - Abort on NLL > 20 at any ratio, non-finite generation, > 5% skipped
+    steps, or block outputs ≥ 1e3.
+  - Rerun from scratch (stage A changed).
 
 5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
    date. jung_gpu is the only GPU pool, and the user's other jobs use it.

@@ -34,8 +34,9 @@
 #   alpha2  re-measure the saved drafts with the EOS-padding fix (no
 #           distillation)               -> results/plain/spec_alpha2.json
 #   e1pilot E1 KD pilot: MDLM -> E5 circuit, stages norms / attention / GELU /
-#           bootstrap noise, eval after each -> results/plain/e1_pilot.json,
-#           ckpt/e1_pilot/stage{A,B,C,D}.pt (scripts/e1_kd.py; resumes by stage)
+#           bootstrap noise, eval after each -> results/plain/e1_pilot2.json,
+#           ckpt/e1_pilot2/stage{A,B,C,D}.pt (scripts/e1_kd.py; resumes by stage;
+#           v1 without the residual bound: e1_pilot.json, ckpt/e1_pilot)
 #           qsub -l gpu=2 -v PROBES=e1pilot cluster/job_plain_probe.sh  (see the card check below)
 #           for p in approx spikes e2order alpha; do qsub -v PROBES=$p cluster/job_plain_probe.sh; done
 # Checkpoints/data are prefetched into hf-cache on the front end; compute nodes
@@ -86,7 +87,7 @@ for p in ${PROBES:-ranges noise}; do
     e2ent)  "$PY" scripts/e2_order.py --sweep --out results/plain/e2_entropy.json ;;
     alpha)  "$PY" scripts/spec_alpha.py --save-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha.json ;;
     alpha2) "$PY" scripts/spec_alpha.py --load-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha2.json ;;
-    e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot" --out results/plain/e1_pilot.json ;;
+    e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot2" --out results/plain/e1_pilot2.json ;;
   esac
   echo "=== $p exit $? ($(date))"
 done
