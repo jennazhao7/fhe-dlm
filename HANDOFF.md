@@ -828,10 +828,10 @@ In order (jobs submitted 2026-10-27, `cluster/job_plain_probe.sh`, one GPU each)
        with these drafts, against the 3.4-4 the cost model assumed at
        α = 0.8.
 **E1 KD pilot -- design (2026-10-29, `scripts/e1_kd.py`, probe `e1pilot`;
-running as 1657662 with `-l gpu=2`; 1655431 and 1655468 were
-given qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check; 1656829
-trained stage A (KL 0.06 at 3000 steps, 1.245 s/step) then OOMed in the
-eval sampler before saving -- now freed before eval, checkpoint saved first).**
+job 1657662 ran A and B, results below; 1655431 and 1655468 were given
+qa-rtx6k-019 GPU 2F:00.0 and aborted at the CUDA check, so it runs with
+`-l gpu=2`; 1656829 trained stage A then OOMed in the eval sampler before
+saving -- now freed before eval, checkpoint saved first).**
 
 The pilot asks one question: can training recover what the zero-shot swap
 lost, and at what cost? It converts MDLM one op at a time, in the order the
@@ -885,6 +885,37 @@ damage ranked, and evaluates after each stage:
     resid_max.
   - The final norm cannot stay exact unless the client applies the LM head,
     which would hand it the (tied) embedding.
+
+**E1 pilot result, job 1657662 (2026-10-30; `results/plain/e1_pilot.json`,
+`ckpt/e1_pilot/stage{A,B}.pt`).**
+
+| | NLL @15/50/90% | KL @50% | gen-PPL (entropy) | resid max | GELU in max |
+|---|---|---|---|---|---|
+| exact | 2.15 / 3.84 / 7.06 | 0 | 120 (4.49) | 1.9e4 | 99 |
+| A (norms) | 2.15 / 3.81 / 7.00 | 0.076 | 162 (4.45) | 7.7e7 | 4.7e5 |
+| B (+ (s+b)²/Z) | 38 / 4.8 / 1e20 | 1.5 | non-finite | 2.2e29 | 2.0e27 |
+
+- **A works on accuracy, fails on range.** NLL matches exact (the eval is
+  WikiText, the training domain, so slightly flattering) and gen-PPL is 1.35×
+  at matched entropy. But with no norm to bound it, the residual stream grew
+  from 1.9e4 to 7.7e7 and GELU inputs to 4.7e5. That range alone rules out
+  CKKS: at 2^-11 relative noise the absolute error would be ~4e4.
+- **B diverges because of A's range.** (s + b)² on q·k computed from a 7.7e7
+  residual overflows. 1936 of 3000 steps had non-finite gradients and were
+  skipped, every step from ~2000 on. Calibration also hit the top of the
+  shift grid: layers 7-11 still improve at b = 8, so the grid {0..8} is too
+  narrow.
+- **C OOMed on its first training step.** Autograd keeps the 31-term
+  Chebyshev intermediates for every layer (~18 GB at bs 16).
+- **The abort rule missed B.** It checks only NLL@50% (4.8 < 20).
+- **Fix plan (not run yet):**
+  - Stage A: add a hinge² range penalty on the residual stream / norm
+    outputs, so the bound is learned together with the norm swap.
+  - Stage B: extend the shift grid to {0..32}.
+  - Stage C: gradient checkpointing around the polynomial.
+  - Abort on any non-finite eval, NLL > limit at any ratio, or > 5% skipped
+    steps.
+  - Rerun from scratch (stage A must change).
 
 5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
    date. jung_gpu is the only GPU pool, and the user's other jobs use it.
