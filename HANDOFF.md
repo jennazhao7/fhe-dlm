@@ -918,6 +918,27 @@ damage ranked, and evaluates after each stage:
   - Abort on NLL > 20 at any ratio, non-finite generation, > 5% skipped
     steps, or block outputs ≥ 1e3.
   - Rerun from scratch (stage A changed).
+- **v2 result (job 1660384): stage A only.** NLL 2.14 / 3.81 / 7.00 and
+  gen-PPL 129 (entropy 4.43): 1.08× exact, against v1's 1.35×. Training
+  held block outputs at ≤ 366, but the eval saw 1.6e8, so the run stopped
+  on the range rule.
+- **Where the 1.6e8 comes from (job 1662891, `scripts/e1_resid_where.py`,
+  `results/plain/e1_resid_where.json`).** The eval's generation was
+  replayed exactly: 64 samples, seed 11.
+  - Every eval chunk stays ≤ 409.
+  - 62 of the 64 samples stay ≤ 904.
+  - Two samples blow up, and each time all 256 positions go > 1e3, so the
+    outlier spreads through attention:
+    - Sample 22 drew `<|endoftext|>` at position 255. That reproduces the
+      known EOS sink (≤ 3.3e6).
+    - Sample 45 fell into a degenerate repetition (" M M M ..."), which
+      peaks at 1.6e8.
+  - Batched, single-sample and CPU runs agree to 5 digits, so the cause is
+    the input, not GPU numerics.
+  - Both contexts are absent from training. `spec_alpha.train_tokens`
+    joins WikiText rows with no `<|endoftext|>` (MDLM's OWT packing has
+    them between documents), and nothing in WikiText is degenerate
+    self-generated text.
 
 5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
    date. jung_gpu is the only GPU pool, and the user's other jobs use it.
