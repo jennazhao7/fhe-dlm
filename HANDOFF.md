@@ -939,6 +939,17 @@ damage ranked, and evaluates after each stage:
     joins WikiText rows with no `<|endoftext|>` (MDLM's OWT packing has
     them between documents), and nothing in WikiText is degenerate
     self-generated text.
+- **v3, running as job 1700233 (2026-11-07, probe `e1pilot3` →
+  `results/plain/e1_pilot3.json`, `ckpt/e1_pilot3/`).**
+  - **Data.** `<|endoftext|>` before every WikiText article (`e1_kd.train_tokens`).
+  - **Own samples.** 1/4 of each micro-batch comes from a pool of 64 of the
+    student's own pin0 samples. The pool is refreshed every 500 steps,
+    unclamped as in eval, and re-masked with the pin0 masks.
+  - **Attention constants.** b and Z are re-calibrated on the stage-A
+    student before B, instead of on the exact model.
+  - **Schedule.** Starts from v2's `stageA.pt` with 1000 more A steps
+    (ramp 1), then B 3000 / C 2000 / D 1000 as before.
+  - **Eval.** It now reports `resid_max_nll` and `resid_max_gen` separately.
 
 5. Then: estimate GPU-hours for E1 / E3 / AR control against the Jan 5 ARR
    date. jung_gpu is the only GPU pool, and the user's other jobs use it.

@@ -37,6 +37,9 @@
 #           bootstrap noise, eval after each -> results/plain/e1_pilot2.json,
 #           ckpt/e1_pilot2/stage{A,B,C,D}.pt (scripts/e1_kd.py; resumes by stage;
 #           v1 without the residual bound: e1_pilot.json, ckpt/e1_pilot)
+#   e1pilot3 v3: EOS between articles + 1/4 of each batch from the student's own samples,
+#           attention re-calibrated before B; starts from v2's stageA.pt with 1000 more A
+#           steps -> results/plain/e1_pilot3.json, ckpt/e1_pilot3/ (qsub -l gpu=2)
 #   e1where replay the v2 stage-A eval's generation on the GPU and locate the
 #           1.6e8 residual spike -> results/plain/e1_resid_where.json
 #           (scripts/e1_resid_where.py; ~15 min; qsub -l gpu=2 like e1pilot)
@@ -91,6 +94,9 @@ for p in ${PROBES:-ranges noise}; do
     alpha)  "$PY" scripts/spec_alpha.py --save-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha.json ;;
     alpha2) "$PY" scripts/spec_alpha.py --load-dir "$FHEDLM_ROOT/ckpt/drafts" --out results/plain/spec_alpha2.json ;;
     e1where) "$PY" scripts/e1_resid_where.py --ckpt "$FHEDLM_ROOT/ckpt/e1_pilot2/stageA.pt" --stage A --out results/plain/e1_resid_where.json ;;
+    e1pilot3) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py \
+        --init "$FHEDLM_ROOT/ckpt/e1_pilot2/stageA.pt" --steps 1000 3000 2000 1000 --ramp 1 1000 500 1 \
+        --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot3" --out results/plain/e1_pilot3.json ;;
     e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot2" --out results/plain/e1_pilot2.json ;;
   esac
   echo "=== $p exit $? ($(date))"

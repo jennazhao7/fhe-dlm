@@ -34,12 +34,17 @@ not -- the full E1 run should use OWT). Eval matches approx.json: NLL / KL at
 from the pin0 sampler, residual-stream max, fraction of GELU inputs outside
 [-8, 8], with every introduced op at lam = 1 and GELU unclamped.
 
+v3 adds what v2's spike (results/plain/e1_resid_where.json) showed was missing from training:
+<|endoftext|> between WikiText articles, and a quarter of every micro-batch from a pool of the
+student's own samples (re-masked), refreshed every 500 steps. It re-calibrates the attention
+constants on the stage-A student before B, and can start from a previous run's checkpoint (--init).
+
     python scripts/e1_kd.py --out results/plain/e1_pilot.json --ckpt-dir ckpt/e1_pilot
 Resumes from the last finished stage in --ckpt-dir. Stops after a stage with
 NLL > --abort-nll at any ratio, non-finite generation, > 5% skipped steps, or
 block outputs >= --abort-resid (1e3).
 """
-import argparse, gc, json, math, os, sys, time
+import argparse, gc, itertools, json, math, os, re, sys, time
 
 import torch
 import torch.utils.checkpoint
@@ -49,7 +54,6 @@ import torch.nn.functional as F
 sys.path.insert(0, os.path.dirname(__file__))
 import plain_probe as pp      # noqa: E402  (loader, data, sampler, judge)
 import approx_probe as ap     # noqa: E402  (cheb_fit / cheb_eval, non-finite guard)
-import spec_alpha             # noqa: E402  (train_tokens)
 
 STAGES = ("A", "B", "C", "D")
 # what the attention function / block hooks read; None = exact (the teacher never sets it)
@@ -260,18 +264,62 @@ def set_stage(m, stage, lam, train):
     S["noise_bits"] = NOISE_BITS if (k == 3 and train) else None
 
 
+# ---------------------------------------------------------------- data
+ARTICLE = re.compile(r"^ = [^=].* = \n$")             # WikiText top-level title line
+
+
+def train_tokens(n_rows):
+    """WikiText-103 train with <|endoftext|> before every article, as in MDLM's OWT packing.
+    v2 used spec_alpha.train_tokens, which has no EOS at all; the stage-A student then hit 3.3e6 on
+    a generated sample with <|endoftext|> at position 255 (results/plain/e1_resid_where.json)."""
+    from datasets import load_dataset
+    from transformers import AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(pp.snapshot("openai-community/gpt2"))
+    ds = load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="train")
+    text = [t for t in ds[:n_rows]["text"] if t.strip()]
+    ids, n_doc = [], 0
+    for i in range(0, len(text), 10_000):
+        chunk = text[i:i + 10_000]
+        for t, x in zip(chunk, tok(chunk).input_ids):
+            if ARTICLE.match(t):
+                ids.append(pp.BOS); n_doc += 1
+            ids += x
+    return torch.tensor(ids), n_doc
+
+
+@torch.no_grad()
+def sample_pool(student, stage, lam, a, seed):
+    """The student's own pin0 samples at its current state, unclamped as in eval. v2's student
+    stayed bounded on text but reached 1.6e8 on a degenerate self-generated repetition."""
+    set_stage(student, stage, lam, train=False)
+    pp.PIN0 = True
+    exact_fwd, pp.forward_logits = pp.forward_logits, ap.forward_logits_checked
+    ap._exact_fwd = exact_fwd
+    xs = []
+    try:
+        for j in range(0, a.pool_n, 16):             # 16 at a time: the logits of 64 are 3 GB
+            xs.append(pp.sample(student, min(16, a.pool_n - j), a.L, a.gen_steps, seed=seed + j))
+    except FloatingPointError:
+        pass
+    finally:
+        pp.forward_logits = exact_fwd
+    return torch.cat(xs).cpu() if xs else None
+
+
 # ---------------------------------------------------------------- eval
 @torch.no_grad()
 def evaluate(student, teacher, judge, evalset, a, noise_bits=(None,), gen=True):
     out = {}
     for g_ in ops(student, "gelu"):
         g_.oor = [0, 0]; g_.umax = 0.0
-    resid = {"max": 0.0}                             # over every block output (job 1657662: last block only)
-    hks = [b.register_forward_hook(lambda mod, inp, o: resid.__setitem__("max", max(resid["max"], float(o.abs().max()))))
+    resid = {"nll": 0.0, "gen": 0.0, "ph": "nll"}    # over every block output (job 1657662: last block only)
+    hks = [b.register_forward_hook(lambda mod, inp, o: resid.__setitem__(resid["ph"], max(resid[resid["ph"]],
+                                                                                          float(o.abs().max()))))
            for b in pp.blocks(student)]
     for nb in noise_bits:
         S["noise_bits"] = nb
         tag = "" if nb is None else f"_b{nb:g}"
+        resid["ph"] = "nll"
         for ratio in (0.15, 0.5, 0.9):
             g = torch.Generator().manual_seed(7)
             tot = kl = 0.0; cnt = 0
@@ -285,6 +333,7 @@ def evaluate(student, teacher, judge, evalset, a, noise_bits=(None,), gen=True):
                 kl += float((lt.exp() * (lt.clamp_min(-1e4) - ls)).sum())
             out[f"nll{tag}_mask{ratio}"] = tot / max(cnt, 1); out[f"kl{tag}_mask{ratio}"] = kl / max(cnt, 1)
         if gen and a.gen_n:
+            resid["ph"] = "gen"
             pp.PIN0 = True
             exact_fwd, pp.forward_logits = pp.forward_logits, ap.forward_logits_checked
             ap._exact_fwd = exact_fwd
@@ -301,7 +350,8 @@ def evaluate(student, teacher, judge, evalset, a, noise_bits=(None,), gen=True):
     o, n = sum(g_.oor[0] for g_ in ops(student, "gelu")), sum(g_.oor[1] for g_ in ops(student, "gelu"))
     out["gelu_frac_outside"] = o / max(n, 1)
     out["gelu_in_max"] = max(g_.umax for g_ in ops(student, "gelu"))
-    out["resid_max"] = resid["max"]
+    out["resid_max_nll"], out["resid_max_gen"] = resid["nll"], resid["gen"]
+    out["resid_max"] = max(resid["nll"], resid["gen"])
     return out
 
 
@@ -316,15 +366,28 @@ def train_stage(student, teacher, ids, stage, a, log):
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / a.warmup))
     g = torch.Generator().manual_seed(100 + STAGES.index(stage))
     t0 = time.time()
-    skipped = 0
+    skipped, pool = 0, None
+    n_pool = round(a.bs * a.pool_frac) if a.pool_n else 0
     for st in range(steps):
-        set_stage(student, stage, min(1.0, (st + 1) / ramp), train=True)
-        opt.zero_grad(set_to_none=True)
         lam = min(1.0, (st + 1) / ramp)
+        if n_pool and st % a.pool_every == 0:
+            opt.zero_grad(set_to_none=True); gc.collect(); torch.cuda.empty_cache()
+            t1 = time.time()
+            new = sample_pool(student, stage, lam, a, seed=1000 * (STAGES.index(stage) + 1) + st)
+            if new is not None:
+                pool = new
+            log({"stage": stage, "step": st, "pool": "refreshed" if new is not None else "non-finite, kept old",
+                 "pool_size": 0 if pool is None else len(pool), "seconds": time.time() - t1})
+        set_stage(student, stage, lam, train=True)
+        opt.zero_grad(set_to_none=True)
         stats = {"kl": 0.0, "pen": 0.0, "res_pen": 0.0, "res_max": 0.0}
         for _ in range(a.accum):
-            idx = torch.randint(0, len(ids) - a.L, (a.bs,), generator=g)
-            x = torch.stack([ids[i:i + a.L] for i in idx]).to(pp.DEV)
+            nt = a.bs - (n_pool if pool is not None else 0)
+            idx = torch.randint(0, len(ids) - a.L, (nt,), generator=g)
+            x = torch.stack([ids[i:i + a.L] for i in idx])
+            if nt < a.bs:                                # re-masked own samples (pin0 masks below)
+                x = torch.cat([x, pool[torch.randint(0, len(pool), (a.bs - nt,), generator=g)]])
+            x = x.to(pp.DEV)
             xm, mk = pin0_masks(x, g)
             S["noise_bits"], nb = None, S["noise_bits"]
             with torch.no_grad():
@@ -407,6 +470,11 @@ def main():
                      help="stop after a stage with NLL above this at any mask ratio (exact @50%%: 3.84)")
     ap_.add_argument("--abort-skip", type=float, default=0.05, help="... or this fraction of steps skipped")
     ap_.add_argument("--abort-resid", type=float, default=1e3, help="... or block outputs reaching this")
+    ap_.add_argument("--pool-n", type=int, default=64, help="own samples per refresh (0: off)")
+    ap_.add_argument("--pool-every", type=int, default=500)
+    ap_.add_argument("--pool-frac", type=float, default=0.25, help="share of each micro-batch from the pool")
+    ap_.add_argument("--recal-attn", type=int, default=1, help="re-calibrate b, Z on the student before B")
+    ap_.add_argument("--init", help="student state dict to start from (e.g. a previous run's stageA.pt)")
     ap_.add_argument("--ckpt-dir", required=True)
     ap_.add_argument("--out", required=True)
     a = ap_.parse_args()
@@ -423,10 +491,10 @@ def main():
     for p in judge.parameters():
         p.requires_grad_(False)
     evalset = pp.load_chunks(a.L, a.n_eval)
-    ids = spec_alpha.train_tokens(a.train_rows)
+    ids, n_doc = train_tokens(a.train_rows)
     cal = torch.stack([ids[i:i + a.L] for i in torch.randint(0, len(ids) - a.L, (a.n_cal,),
                                                               generator=torch.Generator().manual_seed(3))])
-    out = {"args": vars(a), "train_tokens": len(ids), "stages": {}}
+    out = {"args": vars(a), "train_tokens": len(ids), "train_docs": n_doc, "stages": {}}
     if os.path.exists(a.out):
         out = json.load(open(a.out)) | {"args": vars(a)}
 
@@ -446,6 +514,9 @@ def main():
         json.dump(out, open(a.out, "w"), indent=1)
 
     done = [s for s in STAGES if os.path.exists(os.path.join(a.ckpt_dir, f"stage{s}.pt"))]
+    if a.init and not done:
+        student.load_state_dict(torch.load(a.init, map_location=pp.DEV))
+        log({"init": a.init})
     if done:
         student.load_state_dict(torch.load(os.path.join(a.ckpt_dir, f"stage{done[-1]}.pt"), map_location=pp.DEV))
         log({"resumed_after": done[-1]})
@@ -456,6 +527,14 @@ def main():
         t0 = time.time()
         skip = None
         if stage not in done:                        # checkpoint before eval: an eval crash keeps the training
+            if stage == "B" and a.recal_attn:            # A's trained norms move q.k; v1/v2 used exact-model b, Z
+                set_stage(student, "B", 0.0, train=False)
+                rc = calibrate(student, cal, a.bs)
+                with torch.no_grad():
+                    for pa, b0, z0 in zip(ops(student, "attn"), rc["attn_b"], rc["attn_z"]):
+                        pa.b.copy_(b0.float()); pa.log_z.copy_(z0.log().float())
+                out["calibration_B"] = {"attn_b": rc["attn_b"].tolist(), "attn_kl_by_shift": rc["attn_kl_by_shift"]}
+                log({"recalibrated": "attn", "attn_b": rc["attn_b"].tolist()})
             skip = train_stage(student, teacher, ids, stage, a, log)
             torch.save(student.state_dict(), os.path.join(a.ckpt_dir, f"stage{stage}.pt"))
         set_stage(student, stage, 1.0, train=False)
