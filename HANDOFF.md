@@ -939,8 +939,13 @@ damage ranked, and evaluates after each stage:
     joins WikiText rows with no `<|endoftext|>` (MDLM's OWT packing has
     them between documents), and nothing in WikiText is degenerate
     self-generated text.
-- **v3, running as job 1700233 (2026-11-07, probe `e1pilot3` →
-  `results/plain/e1_pilot3.json`, `ckpt/e1_pilot3/`).**
+- **v3, not run yet (probe `e1pilot3` → `results/plain/e1_pilot3.json`,
+  `ckpt/e1_pilot3/`).** Job 1700233 (2026-11-07) aborted at the card check:
+  06:00.0 and 2F:00.0 both timed out at CUDA init. 06:00.0 had worked
+  through 2026-11-01, and the user's fhe_norm_s 1679982 has sat on gpu2
+  since 2026-11-04 with the same hang signature, so qa-rtx6k-019 looks
+  broken node-wide. Resubmit with `qsub -l gpu=2 -v PROBES=e1pilot3` once
+  CRC has fixed the node.
   - **Data.** `<|endoftext|>` before every WikiText article (`e1_kd.train_tokens`).
   - **Own samples.** 1/4 of each micro-batch comes from a pool of 64 of the
     student's own pin0 samples. The pool is refreshed every 500 steps,
