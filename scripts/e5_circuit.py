@@ -43,7 +43,7 @@ import argparse, collections, json, math, os, sys, tempfile, time
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from e5_pass import VM   # noqa: E402
+from e5_pass import VM, start_state, sample_from, sample_report   # noqa: E402
 
 D, DM, HD, NH, VOC = 1024, 768, 64, 12, 50258
 ROTS = [1 << k for k in range(10)] + [-(1 << k) for k in range(11)]      # +-2^k: head/dim sums, replication; -D: token shift
@@ -75,7 +75,7 @@ class NumpyBE:
     def mulc(self, r, a, c): self.r[r] = self.r[a] * c
     def mov(self, r, a): self.r[r] = self.r[a].copy()
     def boot(self, r, a): self.r[r] = self.r[a].copy()
-    def info(self, r): return {"level": 0, "deg": 1}
+    def info(self, r): return {"level": 0, "deg": 2}
     def check(self, tag, r): pass
 
     def free(self, *rs):
@@ -226,7 +226,7 @@ def bias_of(b, n_out, rows):
 class Circuit:
     def __init__(self, be, P, cfg):
         self.be, self.P, self.cfg = be, P, cfg
-        self.T, self.S = be.T, cfg.S
+        self.T, self.S = be.T, cfg.S      # self.S: current scale of the x register (x is held as x/S)
         self.cache = {}
         self.stat = collections.defaultdict(float)
         self.real = np.zeros(D); self.real[:DM] = 1.0
@@ -274,6 +274,19 @@ class Circuit:
         lo, hi = self.cfg.var[tag]
         return lo / self.cfg.var_margin, hi * self.cfg.var_margin
 
+    def scale_for(self, tag):
+        """Public scale of x at this norm: the residual stream grows ~400x from layer 0 to the head
+        (var 0.06 -> 1.2e4), and bootstrap error is absolute in x/S, so one global S would drown
+        the early layers. From calib: a power of two >= s_margin * max|x| there."""
+        xm = (self.cfg.xmax or {}).get(tag)
+        return self.cfg.S if xm is None else 2.0 ** math.ceil(math.log2(self.cfg.s_margin * xm))
+
+    def rescale_x(self, tag):
+        St = self.scale_for(tag)
+        if St != self.S:
+            self.be.mulc("x", "x", self.S / St)
+            self.S = St
+
     def refresh(self, why):
         be, cfg = self.be, self.cfg
         t0 = time.perf_counter()
@@ -314,6 +327,7 @@ class Circuit:
                 return A / s, s
             Wp, s = self.weights(tag, fold)
             vmin, vmax = self.var_range(tag)
+            self.rescale_x(tag)
             S, wmin = self.S, vmin / vmax
             self.refresh("norm " + tag)                  # x fresh: the norm uses ~17 levels below x
             e0 = np.zeros(D); e0[0] = 1.0
@@ -461,8 +475,8 @@ class Circuit:
         else:
             self.attention_client(lay, m)
         be.check(f"L{i} attn acc", "o")
-        Wo = self.weights(f"L{i}.out", lambda: blocks_of(lay["gate_msa"][:, None] * lay["Wo"] / self.S, 1, 1, DM, DM))
-        be.matvec(f"L{i}.out", Wo, None, ["o"], ["y"])
+        Wo = self.weights((f"L{i}.out", self.S), lambda: blocks_of(lay["gate_msa"][:, None] * lay["Wo"] / self.S, 1, 1, DM, DM))
+        be.matvec(f"L{i}.out.S{self.S:g}", Wo, None, ["o"], ["y"])
         be.add("x", "x", "y")
         be.free("o", "y")
         be.check(f"L{i} x after attn", "x")
@@ -485,9 +499,9 @@ class Circuit:
                 be.enc(p, gelu_np(u), max(0, self.cfg.depth - 6))
             self.stat["client_gelu"] += 1
         be.check(f"L{i} gelu out", "p0")
-        Wd = self.weights(f"L{i}.down", lambda: (blocks_of(lay["gate_mlp"][:, None] * lay["W2"] / self.S, 1, 3, DM, D),
-                                                  bias_of(lay["gate_mlp"] * lay["b2"] / self.S, 1, DM)))
-        be.matvec(f"L{i}.down", Wd[0], Wd[1], ps, ["y"])
+        Wd = self.weights((f"L{i}.down", self.S), lambda: (blocks_of(lay["gate_mlp"][:, None] * lay["W2"] / self.S, 1, 3, DM, D),
+                                                             bias_of(lay["gate_mlp"] * lay["b2"] / self.S, 1, DM)))
+        be.matvec(f"L{i}.down.S{self.S:g}", Wd[0], Wd[1], ps, ["y"])
         be.add("x", "x", "y")
         be.free("y", *ps)
         be.check(f"L{i} x after ffn", "x")
@@ -499,6 +513,7 @@ class Circuit:
         assert len(ids) == T, f"one ciphertext: L must be {T}"
         m = (ids == mask_id).astype(int)
         n_layers = len(P["layers"]) if cfg.layers is None else cfg.layers
+        self.S = self.scale_for("L0.qkv") if cfg.norm == "rsqrt" else cfg.S
         if cfg.embed == "server":
             nb = math.ceil(VOC / D)
             oh = np.zeros((T, nb * D)); oh[np.arange(T), ids] = 1.0
@@ -506,8 +521,8 @@ class Circuit:
             ins = [f"e{k}" for k in range(nb)]
             for k, r in enumerate(ins):
                 be.enc(r, oh[:, k * D:(k + 1) * D].reshape(-1), lvl)
-            Eb = self.weights("embed", lambda: blocks_of(P["E"].T / self.S, 1, nb, DM, D))
-            be.matvec("embed", Eb, None, ins, ["x"])
+            Eb = self.weights(("embed", self.S), lambda: blocks_of(P["E"].T / self.S, 1, nb, DM, D))
+            be.matvec(f"embed.S{self.S:g}", Eb, None, ins, ["x"])
             be.free(*ins)
         else:
             be.enc("x", self.pack(P["E"][ids] / self.S), 0)
@@ -596,9 +611,10 @@ def cmd_check(a):
 
 
 def load_var(a):
-    a.var = None
+    a.var = a.xmax = None
     if a.norm == "rsqrt":
-        a.var = json.load(open(a.var_file))["var"]
+        cal = json.load(open(a.var_file))
+        a.var, a.xmax = cal["var"], cal.get("xmax")
         k = max(a.var.values(), key=lambda v: v[1] / v[0])
         print(f"[e5c] variance bounds from {a.var_file}: widest max/min {k[1] / k[0]:.1f} (x margin^2 {a.var_margin ** 2:g})", flush=True)
 
@@ -611,13 +627,14 @@ def cmd_calib(a):
     torch.set_grad_enabled(False)
     default_ops(a)
     m, E = build_model(a.ckpt, a.stage, pp.DEV, a.exact_norm)
-    rng = {}
+    rng, xmax = {}, {}
 
     def hook(tag):
         def f(mod, inp):
             v = inp[0].float().var(-1, unbiased=False)
             lo, hi = float(v.min()), float(v.max())
             rng[tag] = [min(rng.get(tag, [lo, hi])[0], lo), max(rng.get(tag, [lo, hi])[1], hi)]
+            xmax[tag] = max(xmax.get(tag, 0.0), float(inp[0].abs().max()))
         return f
     for i, b in enumerate(pp.blocks(m)):
         b.norm1.register_forward_pre_hook(hook(f"L{i}.qkv"))
@@ -632,11 +649,13 @@ def cmd_calib(a):
         x[msk] = pp.MASK
         for st in range(0, len(x), 16):
             pp.forward_logits(m, x[st:st + 16].to(pp.DEV))
-    pp.PIN0 = True
-    pp.sample(m, a.gen_n, a.L, a.steps, a.seed)
-    res = {"args": vars(a), "var": rng, "widest_ratio": max(v[1] / v[0] for v in rng.values())}
+    if a.gen_n:
+        pp.PIN0 = True
+        pp.sample(m, a.gen_n, a.L, a.steps, a.seed)
+    res = {"args": vars(a), "var": rng, "xmax": xmax, "widest_ratio": max(v[1] / v[0] for v in rng.values())}
     print("[e5c]", json.dumps({k: [round(v[0], 3), round(v[1], 1)] for k, v in rng.items()}), flush=True)
-    print(f"[e5c] widest max/min variance ratio {res['widest_ratio']:.1f}", flush=True)
+    print(f"[e5c] widest max/min variance ratio {res['widest_ratio']:.1f}; max|x| by norm "
+          f"{[round(xmax[k], 1) for k in rng]}", flush=True)
     json.dump(res, open(a.out, "w"), indent=1)
     return 0
 
@@ -686,10 +705,12 @@ def cmd_run(a):
         return lg
 
     pp.PIN0 = True
+    m._e5_L = a.L
+    start, orig = start_state(pp, a.L, a.infill, a.seed)
     pp.forward_logits = fl
     xs = None
     try:
-        xs = pp.sample(m, 1, a.L, a.steps, a.seed)
+        xs = sample_from(pp, m, start, a.steps, a.seed)
     except StopIteration:
         pass
     pp.forward_logits = real
@@ -699,12 +720,9 @@ def cmd_run(a):
                       "argmax_agree_min": min(p["argmax_agree"] for p in ps), "kl_to_plain_max": max(p["kl_to_plain"] for p in ps),
                       "ops": {"norm": a.norm, "attn": a.attn, "gelu": a.gelu, "refresh": a.refresh, "embed": a.embed}}
     if xs is not None:
-        ref = pp.sample(m, 1, a.L, a.steps, a.seed)
-        from transformers import AutoTokenizer
-        tok = AutoTokenizer.from_pretrained(pp.snapshot("openai-community/gpt2"))
-        res["sample"] = {"tokens": xs[0].tolist(), "text": tok.decode(xs[0].tolist()), "plaintext_tokens": ref[0].tolist(),
-                         "plaintext_text": tok.decode(ref[0].tolist()), "identical_to_plaintext": bool((xs == ref).all()),
-                         "token_agreement": float((xs == ref).float().mean())}
+        res["sample"] = sample_report(pp, m, a, xs, start, orig)
+        if start is not None:
+            print("[e5c] start :", res["sample"]["start_text"].replace("\n", " ")[:400], flush=True)
         print("[e5c] sample:", res["sample"]["text"].replace("\n", " ")[:400], flush=True)
         print("[e5c] plain :", res["sample"]["plaintext_text"].replace("\n", " ")[:400], flush=True)
     print("[e5c]", json.dumps(res["summary"]), flush=True)
@@ -724,6 +742,7 @@ def main():
         s.add_argument("--norm", choices=("fixed", "client", "rsqrt"), default=None)
         s.add_argument("--var-file", help="variance bounds from `calib` (for --norm rsqrt)")
         s.add_argument("--var-margin", type=float, default=3.0, help="bounds widened to [min / m, max * m]")
+        s.add_argument("--s-margin", type=float, default=2.0, help="rsqrt norm: x scale per norm = 2^ceil(log2(m max|x|))")
         s.add_argument("--rsqrt-deg", type=int, default=15)
         s.add_argument("--gold-iters", type=int, default=2)
         s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
@@ -750,6 +769,7 @@ def main():
             s.add_argument("--refresh", choices=("client", "boot", "boot2", "none"), default="client")
             s.add_argument("--embed", choices=("server", "client"), default="server")
             s.add_argument("--steps", type=int, default=16)
+            s.add_argument("--infill", type=float, default=0.0, help="start from real text with this share masked (0: all masked)")
             s.add_argument("--max-passes", type=int, default=0)
             s.add_argument("--debug", action="store_true", help="numpy reference alongside; compare registers at stage boundaries")
             s.add_argument("--workdir", default=os.environ.get("TMPDIR", "/tmp"))

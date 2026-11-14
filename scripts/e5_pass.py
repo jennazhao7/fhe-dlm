@@ -140,6 +140,60 @@ class EncLinear:
         return Y[:, :self.out] * (self.s * s_in)
 
 
+# ---------------------------------------------------------------- sampling
+def start_state(pp, L, infill, seed):
+    """All [MASK] (infill = 0), or a real WikiText chunk with that share of its tokens masked
+    (position 0 kept). MDLM's unconditional samples at L = 64 are degenerate even in plaintext
+    (unigram entropy 2.0 vs 4.5 at L = 256, e1_bc64.json), so short runs infill real text."""
+    import torch
+    if not infill:
+        return None, None
+    x = pp.load_chunks(L, 1, seed=seed).clone()
+    msk = torch.rand(x.shape, generator=torch.Generator().manual_seed(seed)) < infill
+    msk[:, 0] = False
+    orig = x.clone()
+    x[msk] = pp.MASK
+    return x.to(pp.DEV), orig.to(pp.DEV)
+
+
+def sample_from(pp, m, x, steps, seed):
+    """plain_probe.sample's reveal loop from a given start (None: its own all-masked pin0 start)."""
+    import torch
+    if x is None:
+        return pp.sample(m, 1, m_len(pp, m), steps, seed)
+    g = torch.Generator(device=pp.DEV).manual_seed(seed)
+    n, L = x.shape
+    x = x.clone()
+    for k in range(steps, 0, -1):
+        t, s_ = k / steps, (k - 1) / steps
+        probs = pp.forward_logits(m, x).float().softmax(-1)
+        x0 = torch.multinomial(probs.view(-1, probs.shape[-1]), 1, generator=g).view(n, L)
+        reveal = (torch.rand(n, L, generator=g, device=pp.DEV) < (t - s_) / t) & (x == pp.MASK)
+        x = torch.where(reveal, x0, x)
+    return x
+
+
+def m_len(pp, m):
+    return m._e5_L
+
+
+def sample_report(pp, m, a, xs, start, orig):
+    """Decoded sample next to the plaintext model's sample from the same start and seed."""
+    from transformers import AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(pp.snapshot("openai-community/gpt2"))
+    ref = sample_from(pp, m, start, a.steps, a.seed)
+    dec = lambda t: tok.decode([i if i != pp.MASK else tok.convert_tokens_to_ids("_") for i in t])
+    rep = {"tokens": xs[0].tolist(), "text": dec(xs[0].tolist()), "plaintext_tokens": ref[0].tolist(),
+           "plaintext_text": dec(ref[0].tolist()), "identical_to_plaintext": bool((xs == ref).all()),
+           "token_agreement": float((xs == ref).float().mean())}
+    if start is not None:
+        mk = start[0] == pp.MASK
+        rep.update(start_text=dec(start[0].tolist()), original_text=dec(orig[0].tolist()), n_masked=int(mk.sum()),
+                   infill_matches_original=float((xs[0][mk] == orig[0][mk]).float().mean()),
+                   plaintext_infill_matches_original=float((ref[0][mk] == orig[0][mk]).float().mean()))
+    return rep
+
+
 # ---------------------------------------------------------------- selftest
 def cmd_selftest(a):
     D = a.D
@@ -271,10 +325,12 @@ def cmd_linear(a):
         return lg
 
     pp.PIN0 = True
+    m._e5_L = a.L
+    start, orig = start_state(pp, a.L, a.infill, a.seed)
     pp.forward_logits = fl
     xs = None
     try:
-        xs = pp.sample(m, 1, a.L, a.steps, a.seed)
+        xs = sample_from(pp, m, start, a.steps, a.seed)
     except StopIteration:
         pass
     pp.forward_logits = real
@@ -290,13 +346,7 @@ def cmd_linear(a):
         "rescaled": {k: l.rescaled for k, l in lins.items() if l.rescaled},
         "mem": vm.cmd("mem")}
     if xs is not None:
-        ref = pp.sample(m, 1, a.L, a.steps, a.seed)          # same seed, plaintext model
-        from transformers import AutoTokenizer
-        tok = AutoTokenizer.from_pretrained(pp.snapshot("openai-community/gpt2"))
-        res["sample"] = {"tokens": xs[0].tolist(), "text": tok.decode(xs[0].tolist()),
-                         "plaintext_tokens": ref[0].tolist(), "plaintext_text": tok.decode(ref[0].tolist()),
-                         "identical_to_plaintext": bool((xs == ref).all()),
-                         "token_agreement": float((xs == ref).float().mean())}
+        res["sample"] = sample_report(pp, m, a, xs, start, orig)
         print("[e5] sample:", res["sample"]["text"].replace("\n", " ")[:400], flush=True)
         print("[e5] identical to the plaintext model's sample:", res["sample"]["identical_to_plaintext"], flush=True)
     print("[e5]", json.dumps(res["summary"]), flush=True)
@@ -322,6 +372,7 @@ def main():
             s.add_argument("--L", type=int, default=64)
             s.add_argument("--steps", type=int, default=16)
             s.add_argument("--seed", type=int, default=11)
+            s.add_argument("--infill", type=float, default=0.0, help="start from real text with this share masked (0: all masked)")
             s.add_argument("--s-in", type=float, default=2.0 ** 15)
             s.add_argument("--embed", choices=("server", "client"), default="server")
             s.add_argument("--head", choices=("server", "client"), default="server")
