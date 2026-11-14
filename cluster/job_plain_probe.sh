@@ -40,6 +40,9 @@
 #   e1pilot3 v3: EOS between articles + 1/4 of each batch from the student's own samples,
 #           attention re-calibrated before B; starts from v2's stageA.pt with 1000 more A
 #           steps -> results/plain/e1_pilot3.json, ckpt/e1_pilot3/ (qsub -l gpu=2)
+#   e1bc64 / e1bc256  E1 with EXACT norms (--exact-norm): stages B (attention) and C (GELU) only,
+#           at L = 64 (one ciphertext) or 256 -> results/plain/e1_bc<L>.json, ckpt/e1_bc<L>/.
+#           The student of E5's norm-assist protocol (scripts/e5_circuit.py --norm client).
 #   e1where replay the v2 stage-A eval's generation on the GPU and locate the
 #           1.6e8 residual spike -> results/plain/e1_resid_where.json
 #           (scripts/e1_resid_where.py; ~15 min; qsub -l gpu=2 like e1pilot)
@@ -70,10 +73,12 @@ GOOD=""
 for i in $(seq 0 $(( $(nvidia-smi -L | wc -l) - 1 ))); do
   bus=$(nvidia-smi -i "$i" --query-gpu=pci.bus_id --format=csv,noheader)
   if CUDA_VISIBLE_DEVICES=$i timeout 180 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))"; then
-    echo "=== using card $i ($bus)"; GOOD=$i; break
+    echo "=== card $i ($bus) ok"; [ -z "$GOOD" ] && GOOD=$i
+  else
+    echo "=== CUDA sanity check failed or timed out on card $i ($bus)"
   fi
-  echo "=== CUDA sanity check failed or timed out on card $i ($bus)"
 done
+[ -n "$GOOD" ] && echo "=== using card $GOOD"
 if [ -z "$GOOD" ]; then echo "=== no working card -- aborting"; exit 1; fi
 export CUDA_VISIBLE_DEVICES=$GOOD
 for p in ${PROBES:-ranges noise}; do
@@ -97,6 +102,11 @@ for p in ${PROBES:-ranges noise}; do
     e1pilot3) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py \
         --init "$FHEDLM_ROOT/ckpt/e1_pilot2/stageA.pt" --steps 1000 3000 2000 1000 --ramp 1 1000 500 1 \
         --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot3" --out results/plain/e1_pilot3.json ;;
+    e1bc64|e1bc256)   # exact norms (client-side in E5), only the attention and GELU stages
+      L=${p#e1bc}; BS=$(( 4096 / L ))
+      PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --exact-norm --stages B C \
+        --L "$L" --bs "$BS" --res-pen 0 --abort-resid 1e9 --steps 1 3000 2000 1 --ramp 1 1000 500 1 \
+        --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_bc$L" --out "results/plain/e1_bc$L.json" ;;
     e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot2" --out results/plain/e1_pilot2.json ;;
   esac
   echo "=== $p exit $? ($(date))"

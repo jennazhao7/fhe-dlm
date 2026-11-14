@@ -253,12 +253,15 @@ def ops(m, kind):
     return [b.pow_attn for b in blocks] if kind == "attn" else [b.mlp[1] for b in blocks]
 
 
+EXACT_NORM = False   # --exact-norm: LayerNorm stays exact (the client computes it in E5's norm-assist protocol)
+
+
 def set_stage(m, stage, lam, train):
     """Ops of stages before `stage` at lam = 1, this stage's at `lam`."""
     k = STAGES.index(stage)
     for kind, si in (("norm", 0), ("attn", 1), ("gelu", 2)):
         for o in ops(m, kind):
-            o.lam = 1.0 if k > si else lam if k == si else 0.0
+            o.lam = 0.0 if (kind == "norm" and EXACT_NORM) else 1.0 if k > si else lam if k == si else 0.0
     for g in ops(m, "gelu"):
         g.clamp, g.penalty = train, train and k >= 2
     S["noise_bits"] = NOISE_BITS if (k == 3 and train) else None
@@ -445,7 +448,7 @@ def failed(r, a):
 
 
 def main():
-    global NOISE_BITS, RES_BOUND
+    global NOISE_BITS, RES_BOUND, EXACT_NORM
     ap_ = argparse.ArgumentParser()
     ap_.add_argument("--L", type=int, default=256)
     ap_.add_argument("--bs", type=int, default=16)
@@ -474,11 +477,14 @@ def main():
     ap_.add_argument("--pool-every", type=int, default=500)
     ap_.add_argument("--pool-frac", type=float, default=0.25, help="share of each micro-batch from the pool")
     ap_.add_argument("--recal-attn", type=int, default=1, help="re-calibrate b, Z on the student before B")
+    ap_.add_argument("--exact-norm", action="store_true",
+                     help="keep LayerNorm exact in every stage (run with --stages B C --res-pen 0 --abort-resid 1e9): the "
+                          "student for E5's norm-assist protocol, where the client normalises and re-encrypts")
     ap_.add_argument("--init", help="student state dict to start from (e.g. a previous run's stageA.pt)")
     ap_.add_argument("--ckpt-dir", required=True)
     ap_.add_argument("--out", required=True)
     a = ap_.parse_args()
-    NOISE_BITS, RES_BOUND = a.noise_bits, a.res_bound
+    NOISE_BITS, RES_BOUND, EXACT_NORM = a.noise_bits, a.res_bound, a.exact_norm
     torch.manual_seed(0)
     os.makedirs(a.ckpt_dir, exist_ok=True)
 

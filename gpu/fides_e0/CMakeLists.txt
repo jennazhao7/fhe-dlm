@@ -25,10 +25,19 @@ set_source_files_properties(src/fides_e0.cpp src/gpu_encode_host.cpp PROPERTIES 
 target_include_directories(fides_e0 PRIVATE ${OPENFHE_INCS})
 target_link_libraries(fides_e0 PRIVATE fideslib::fideslib CUDA::cudart)
 
+# The encrypted server of the FHE-DLM pass (scripts/e5_pass.py drives it).
+add_executable(fides_vm src/fides_vm.cpp src/gpu_encode_host.cpp src/gpu_encode.cu)
+set_source_files_properties(src/fides_vm.cpp PROPERTIES LANGUAGE CXX)
+target_include_directories(fides_vm PRIVATE ${OPENFHE_INCS})
+target_link_libraries(fides_vm PRIVATE fideslib::fideslib CUDA::cudart)
+
 # Multi-GPU FIDESlib (cluster/setup_fideslib_mgpu.sh) links NCCL from a wheel
 # outside the system paths; pass its lib dir so the static fideslib resolves.
 if(NCCL_LIB_DIR)
   target_link_directories(fides_e0 PRIVATE ${NCCL_LIB_DIR})
   target_link_libraries(fides_e0 PRIVATE nccl)
   set_target_properties(fides_e0 PROPERTIES BUILD_RPATH ${NCCL_LIB_DIR})
+  target_link_directories(fides_vm PRIVATE ${NCCL_LIB_DIR})
+  target_link_libraries(fides_vm PRIVATE nccl)
+  set_target_properties(fides_vm PROPERTIES BUILD_RPATH ${NCCL_LIB_DIR})
 endif()
