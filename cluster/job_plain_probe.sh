@@ -105,7 +105,7 @@ for p in ${PROBES:-ranges noise}; do
     e1bc64|e1bc256)   # exact norms (client-side in E5), only the attention and GELU stages
       L=${p#e1bc}; BS=$(( 4096 / L ))
       PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --exact-norm --stages B C \
-        --L "$L" --bs "$BS" --res-pen 0 --abort-resid 1e9 --steps 1 3000 2000 1 --ramp 1 1000 500 1 \
+        --L "$L" --bs "$BS" --res-pen 0 --abort-resid 1e9 --steps 1 3000 "${E1_C_STEPS:-2000}" 1 --ramp 1 1000 500 1 \
         --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_bc$L" --out "results/plain/e1_bc$L.json" ;;
     e1pilot) PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True "$PY" scripts/e1_kd.py --ckpt-dir "$FHEDLM_ROOT/ckpt/e1_pilot2" --out results/plain/e1_pilot2.json ;;
   esac

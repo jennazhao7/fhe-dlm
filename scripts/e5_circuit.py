@@ -46,7 +46,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from e5_pass import VM, start_state, sample_from, sample_report   # noqa: E402
 
 D, DM, HD, NH, VOC = 1024, 768, 64, 12, 50258
-ROTS = [1 << k for k in range(10)] + [-(1 << k) for k in range(11)]      # +-2^k: head/dim sums, replication; -D: token shift
+# 7 rotation keys: 1, 32, -D for the matvec; window sums and replication are two-level sums over
+# (1, 8) or (1, 32) and their negatives. Job 1747455 loaded 21 keys (+-2^k) next to the bootstrap
+# keys and ran out of memory on the third bootstrap (22.6 of 24 GB per card).
+ROTS = [1, 8, 32, -1, -8, -32, -D]
 UN = 64.0        # x/sigma is bootstrapped as u / UN (uncentred: |x|/sigma reaches 35 at layer 0)
 
 
@@ -243,6 +246,15 @@ class Circuit:
     def tokdim(self, per_tok, dims):
         return (np.asarray(per_tok, np.float64)[:, None] * dims[None, :]).reshape(-1)
 
+    def winsum(self, r, n1, s1, n2, s2):
+        """r <- sum_{i < n1, j < n2} rot(r, i s1 + j s2), n1 + n2 - 2 rotations with keys s1, s2."""
+        be = self.be
+        for n, st in ((n1, s1), (n2, s2)):
+            be.mov("ws", r)
+            for _ in range(n - 1):
+                be.rot("ws", "ws", st); be.add(r, r, "ws")
+        be.free("ws")
+
     def weights(self, key, fn):
         if key not in self.cache:
             self.cache[key] = fn()
@@ -332,9 +344,8 @@ class Circuit:
             self.refresh("norm " + tag)                  # x fresh: the norm uses ~17 levels below x
             e0 = np.zeros(D); e0[0] = 1.0
             be.sq("n2", "x"); be.mov("n1", "x")
-            for k in range(10):                          # sums over the token's dims, valid at dim 0
-                be.rot("t", "n2", 1 << k); be.add("n2", "n2", "t")
-                be.rot("t", "n1", 1 << k); be.add("n1", "n1", "t")
+            self.winsum("n2", 32, 1, 32, 32)             # sums over the token's 1024 dims, valid at dim 0
+            self.winsum("n1", 32, 1, 32, 32)
             be.mulpt("n2", "n2", e0 * (S * S / (DM * vmax)))
             be.mulpt("n1", "n1", e0 * (S / (DM * math.sqrt(vmax))))
             be.sq("n1", "n1")
@@ -354,10 +365,10 @@ class Circuit:
                 be.mul("t", "g", "r"); be.add("g", "g", "t")
                 be.mul("t", "h", "r"); be.add("h", "h", "t")
             be.mulpt("h", "h", e0 * (2.0 * S / (UN * math.sqrt(vmax))))     # 1/(UN sigma) in x/S units, dim 0 only
-            for k in range(10):
-                be.rot("t", "h", -(1 << k)); be.add("h", "h", "t")
+            self.winsum("h", 32, -1, 32, -32)
             be.check(tag + " S/(UN sigma)", "h")
             be.mul("u", "x", "h")                        # (x - mean)/sigma / UN once the matrix centres it
+            be.free("n1", "n2", "w", "h", "g", "r", "t", "one")
             self.boot_reg("u")
             for _ in range(int(round(math.log2(UN * s)))):
                 be.add("u", "u", "u")
@@ -422,8 +433,7 @@ class Circuit:
             if r:
                 be.rot("kr", "kr", -D); be.rot("v", "v", -D)
             be.mul("s", "qr", "kr")
-            for k in range(6):
-                be.rot("t", "s", 1 << k); be.add("s", "s", "t")
+            self.winsum("s", 8, 1, 8, 8)                 # head sums at head-first dims
             if r == 0:
                 i = be.info("s")
                 be.enc("one", np.ones(be.slots), i["level"])
@@ -434,15 +444,14 @@ class Circuit:
             be.add("s", "s", "B")
             be.sq("s", "s")
             be.mulpt("s", "s", M)
-            for k in range(6):
-                be.rot("t", "s", -(1 << k)); be.add("s", "s", "t")
+            self.winsum("s", 8, -1, 8, -8)               # replicate over the head's dims
             if r == 0:
                 be.check("weights r=0", "s")
             if r == 0:
                 be.mul("o", "s", "v")
             else:
                 be.mul("s", "s", "v"); be.add("o", "o", "s")
-        be.free("s", "t", "B", "one", "qr", "kr", "q", "k", "v")
+        be.free("s", "B", "one", "qr", "kr", "q", "k", "v")
 
     def attention_client(self, lay, m):
         be = self.be
