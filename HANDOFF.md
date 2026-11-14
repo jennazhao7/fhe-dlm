@@ -939,13 +939,20 @@ damage ranked, and evaluates after each stage:
     joins WikiText rows with no `<|endoftext|>` (MDLM's OWT packing has
     them between documents), and nothing in WikiText is degenerate
     self-generated text.
-- **v3, not run yet (probe `e1pilot3` → `results/plain/e1_pilot3.json`,
-  `ckpt/e1_pilot3/`).** Job 1700233 (2026-11-07) aborted at the card check:
-  06:00.0 and 2F:00.0 both timed out at CUDA init. 06:00.0 had worked
-  through 2026-11-01, and the user's fhe_norm_s 1679982 has sat on gpu2
-  since 2026-11-04 with the same hang signature, so qa-rtx6k-019 looks
-  broken node-wide. Resubmit with `qsub -l gpu=2 -v PROBES=e1pilot3` once
-  CRC has fixed the node.
+- **v3 (job 1747029, 2026-11-13; probe `e1pilot3` → `results/plain/e1_pilot3.json`,
+  `ckpt/e1_pilot3/stageA.pt`): stage A still spikes in generation, run aborted.**
+  NLL 2.14 / 3.82 / 7.02 and gen-PPL 135 (1.12×) are fine and the residual max on
+  real text is 430, but `resid_max_gen` is 3.5e8 (GELU input 2.4e6), so the
+  abort rule stopped before B. EOS packing and training on the student's own
+  samples did not remove the rare-sample blow-up: without a norm nothing
+  re-bounds an unusual activation. (Job 1700233 on 2026-11-07 never ran: both
+  its cards hung at CUDA init. On 2026-11-13 all four cards pass the check:
+  06:00.0, 2F:00.0, 86:00.0, D8:00.0.)
+- **Consequence (2026-11-13): the norm moves to the client.** With client
+  assist allowed, E5's first deep protocol keeps LayerNorm exact on the client
+  (decrypt x, normalise, re-encrypt: 2 rounds per layer, no bootstrap) and
+  distils only the attention and the GELU: `e1_kd.py --exact-norm --stages B C`
+  (probes `e1bc64`, `e1bc256`). See §12.
   - **Data.** `<|endoftext|>` before every WikiText article (`e1_kd.train_tokens`).
   - **Own samples.** 1/4 of each micro-batch comes from a pool of 64 of the
     student's own pin0 samples. The pool is refreshed every 500 steps,
@@ -962,3 +969,55 @@ damage ranked, and evaluates after each stage:
 Demoted (not blocking): fold two-pass into the cost model (bootstrap ≈ 2.23 s
 on 4 GPUs, 20 usable; ≈ +12 s/pass); make the `fides_e0` error loops
 NaN-aware and find the 4096-slot GPU anomaly (E5 uses full slots).
+
+## 12. Session 2026-11-13: first end-to-end encrypted MDLM passes (E5)
+
+Goal set by the user: an end-to-end FHE-DLM pass, client assist allowed,
+jobs launched automatically on the node's four cards.
+
+### Code
+
+- `gpu/fides_e0/src/fides_vm.cpp` — the encrypted server as an op interpreter
+  over FIDESlib (stdin/stdout, vectors as raw files). `matvec` is the
+  GPU-encoded token-major block matvec of job 1520180 generalised to
+  n_out × n_in blocks with a bias (bias ⊙ Enc(kb), so the device only does
+  ct×pt and ct+ct); also add/sub/mul/sq/rot/mulpt/cheb/boot/tolevel/rescale.
+  Built in `gpu/fides_e0/build2` (`cmake --build gpu/fides_e0/build2 --target fides_vm`).
+  - FIDESlib 2.1.3's **CPU fallback** of `EvalMult(ct, pt)` throws
+    `bad any_cast`; the dry-run path calls OpenFHE directly (`mul_pt`).
+  - The front end has no `libcuda.so.1`; an empty stub
+    (`scratch/stubcuda/libcuda.so.1`) is enough for CPU dry runs.
+- `scripts/e5_pass.py` — client + driver. `selftest`: random matvecs vs numpy.
+  `linear`: MDLM with every `nn.Linear` (embedding, QKV, out, FFN up/down, LM
+  head) replaced by the encrypted server; the client does the weight-free
+  steps. Depth-2 context, no bootstrap.
+- `scripts/e5_circuit.py` — the deep circuit: fixed norm (centring folded into
+  the next matvec, so no rotations), rotary, 64-shift (s+b)²/Z attention,
+  Chebyshev GELU, head; each op has a client fallback
+  (`--norm/--attn/--gelu client`), `--refresh client|boot`. `NumpyBE` runs the
+  same op list exactly, `--debug` compares registers at stage boundaries.
+- `cluster/job_e5_pass.sh` — one fides_vm per job; `E5_STUDENT` picks the
+  student stage; chain behind an E1 job with `-hold_jid`.
+
+### Results so far
+
+- **Linear assist, exact MDLM, L = 64, 16 steps (job 1747094,
+  `results/e5/linear_L64.json`).** 50 server rounds and 220 1024-diagonal
+  blocks per pass; logits match the plaintext model to ~1e-5 (argmax agreement
+  100%) at **~195 s per pass on one RTX 6000** (matvec 152 s, of which host FFT
+  40 s; encrypt 17 s, decrypt 23 s). GPU self-test: 0.7 s per block at 3
+  towers, error < 1e-6.
+- **Deep circuit, validation.** numpy circuit vs torch MDLM (client ops):
+  logit error 2e-5. Toy ring (N = 2^12, 2 tokens, CPU fallback), all ops on
+  the server with placeholder constants: every register matches numpy to
+  ~1e-11. Levels: attention half 8, GELU 7, FFN half 10, as in the audit.
+
+### Running / queued (2026-11-13 20:30)
+
+- 1747200 `e1bc64` (exact-norm B, C at L = 64) → `ckpt/e1_bc64`, `results/plain/e1_bc64.json`.
+- 1747229 deep circuit on the GPU with placeholder constants, `--debug`
+  → `results/e5/deep_mech.json` (first test of FIDESlib's device-side level handling).
+- 1747230 `e1bc256`.
+- 1747231 (held on 1747200) encrypted generation with the `e1_bc64` student
+  → `results/e5/deep_bc64.json`.
+
