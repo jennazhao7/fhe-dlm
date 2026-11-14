@@ -1,0 +1,1747 @@
+{
+ "args": {
+  "cmd": "run",
+  "ckpt": "/groups/tjung/jzhao7/fhe-dlm/ckpt/e1_bc64/stageB.pt",
+  "stage": "B",
+  "norm": "rsqrt",
+  "var_file": "results/e5/var_boot1pass_stageB.json",
+  "var_margin": 3.0,
+  "s_margin": 2.0,
+  "rsqrt_deg": 15,
+  "gold_iters": 2,
+  "n1": 16,
+  "boot_bits": 8,
+  "attn": "pow",
+  "gelu": "client",
+  "exact_norm": true,
+  "S": 1024.0,
+  "L": 64,
+  "layers": null,
+  "seed": 11,
+  "out": "results/e5/boot1pass_stageB.json",
+  "bin": "/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build-mgpu/fides_vm",
+  "logn": 17,
+  "depth": 43,
+  "gpus": 4,
+  "cpu": false,
+  "refresh": "boot2",
+  "embed": "server",
+  "steps": 16,
+  "infill": 0.5,
+  "max_passes": 1,
+  "debug": true,
+  "workdir": "/tmp/1747614.1.gpu",
+  "var": {
+   "L0.qkv": [
+    0.05697266012430191,
+    0.15846151113510132
+   ],
+   "L0.up": [
+    0.17812032997608185,
+    69.65711212158203
+   ],
+   "L1.qkv": [
+    0.7071305513381958,
+    68.10054016113281
+   ],
+   "L1.up": [
+    1.1926265954971313,
+    85.1295394897461
+   ],
+   "L2.qkv": [
+    1.9314405918121338,
+    77.09259033203125
+   ],
+   "L2.up": [
+    3.432711362838745,
+    91.2253646850586
+   ],
+   "L3.qkv": [
+    3.6107404232025146,
+    156.72914123535156
+   ],
+   "L3.up": [
+    5.486814975738525,
+    225.13633728027344
+   ],
+   "L4.qkv": [
+    6.6972832679748535,
+    228.24623107910156
+   ],
+   "L4.up": [
+    9.167689323425293,
+    238.10134887695312
+   ],
+   "L5.qkv": [
+    7.646864414215088,
+    205.27427673339844
+   ],
+   "L5.up": [
+    14.741480827331543,
+    207.6999969482422
+   ],
+   "L6.qkv": [
+    14.756590843200684,
+    203.75099182128906
+   ],
+   "L6.up": [
+    27.10315704345703,
+    213.86538696289062
+   ],
+   "L7.qkv": [
+    21.299964904785156,
+    199.19447326660156
+   ],
+   "L7.up": [
+    36.39851379394531,
+    505.2742004394531
+   ],
+   "L8.qkv": [
+    47.02908706665039,
+    500.5234680175781
+   ],
+   "L8.up": [
+    76.49398803710938,
+    632.06494140625
+   ],
+   "L9.qkv": [
+    51.43440628051758,
+    462.3070983886719
+   ],
+   "L9.up": [
+    102.46248626708984,
+    1077.5966796875
+   ],
+   "L10.qkv": [
+    119.44010925292969,
+    1138.3046875
+   ],
+   "L10.up": [
+    195.08447265625,
+    1852.41455078125
+   ],
+   "L11.qkv": [
+    165.1419677734375,
+    2478.81298828125
+   ],
+   "L11.up": [
+    536.9149780273438,
+    6696.45166015625
+   ],
+   "head": [
+    372.2349853515625,
+    6134.01513671875
+   ]
+  },
+  "xmax": {
+   "L0.qkv": 8.422440528869629,
+   "L0.up": 78.79673767089844,
+   "L1.qkv": 91.79644775390625,
+   "L1.up": 126.080322265625,
+   "L2.qkv": 115.80812072753906,
+   "L2.up": 121.74544525146484,
+   "L3.qkv": 176.3022918701172,
+   "L3.up": 199.99404907226562,
+   "L4.qkv": 198.7420196533203,
+   "L4.up": 216.28262329101562,
+   "L5.qkv": 206.09326171875,
+   "L5.up": 199.57554626464844,
+   "L6.qkv": 202.2205047607422,
+   "L6.up": 232.19110107421875,
+   "L7.qkv": 190.82919311523438,
+   "L7.up": 347.9066467285156,
+   "L8.qkv": 326.9957275390625,
+   "L8.up": 382.9002380371094,
+   "L9.qkv": 320.3438415527344,
+   "L9.up": 494.49298095703125,
+   "L10.qkv": 504.0882568359375,
+   "L10.up": 674.138916015625,
+   "L11.qkv": 772.3136596679688,
+   "L11.up": 1079.377197265625,
+   "head": 1043.179931640625
+  }
+ },
+ "ready": {
+  "ready": true,
+  "ring": 131072,
+  "depth": 43,
+  "D": 1024,
+  "slots": 65536,
+  "gpus": 4,
+  "rot_keys": 9,
+  "boot": 1,
+  "keygen_s": 67.6909,
+  "load_s": 110.204,
+  "gpu_gb": 15.8856,
+  "host_gb": 43.3237
+ },
+ "setup_s": 181.44627002201742,
+ "passes": [
+  {
+   "pass": 0,
+   "n_masked": 33,
+   "wall_s": 1108.7278143719886,
+   "vm_seconds": {
+    "enc": 54.97128600000001,
+    "matvec": 493.1871500000001,
+    "free": 0.15872139999999998,
+    "dec": 120.68987999999993,
+    "info": 0.034489570000000046,
+    "mem": 0.046242896,
+    "tolevel": 1.8314777300000007,
+    "boot": 112.88695000000001,
+    "sub": 0.11417572600000003,
+    "add": 7.591832872999976,
+    "mulc": 0.08090841000000003,
+    "sq": 6.58429088999999,
+    "mov": 0.2985137179999992,
+    "rot": 201.71050133999927,
+    "mulpt": 65.97825180000012,
+    "cheb": 2.5050844999999993,
+    "mul": 15.800639819999983
+   },
+   "vm_calls": {
+    "enc": 148,
+    "matvec": 50,
+    "free": 1797,
+    "dec": 271,
+    "info": 247,
+    "mem": 185,
+    "tolevel": 75,
+    "boot": 100,
+    "sub": 125,
+    "add": 29724,
+    "mulc": 55,
+    "sq": 818,
+    "mov": 3247,
+    "rot": 28914,
+    "mulpt": 977,
+    "cheb": 25,
+    "mul": 1736
+   },
+   "matvec": {
+    "rot_s": 34.164680999999995,
+    "host_fft_s": 13.771575800000006,
+    "upload_s": 13.987430699999997,
+    "mult_s": 429.69721,
+    "pt_mults": 379981.0,
+    "rots": 29331.0,
+    "skipped": 70713.0
+   },
+   "logit_max_abs_err": 0.08151102066040039,
+   "logit_max_abs": 26.549095153808594,
+   "argmax_agree": 1.0,
+   "kl_to_plain": 3.0022518330952153e-05,
+   "stat": {
+    "bootstraps": 100.0,
+    "refresh_s": 113.65468989504734,
+    "server_norm": 25.0,
+    "gelu_in_max": 45.58689328023256,
+    "client_gelu": 12.0
+   },
+   "mem": {
+    "op": "mem",
+    "s": 0.00071622,
+    "gpu_gb": 22.0321,
+    "host_gb": 44.2378,
+    "regs": 0
+   }
+  }
+ ],
+ "checks": [
+  {
+   "tag": "embed",
+   "max_abs_err": 5.980287558562947e-10,
+   "max_abs_ref": 0.2632012665271759,
+   "level": 40,
+   "deg": 2,
+   "gpu_gb": 18.0458
+  },
+  {
+   "tag": "refresh norm L0.qkv",
+   "max_abs_err": 1.35717681158694e-05,
+   "max_abs_ref": 0.2632012665271759,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 20.0458
+  },
+  {
+   "tag": "L0.qkv var/vmax",
+   "max_abs_err": 7.664362949300063e-06,
+   "max_abs_ref": 0.3333333283308326,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 20.0458
+  },
+  {
+   "tag": "L0.qkv S/(UN sigma)",
+   "max_abs_err": 0.0008766763427434654,
+   "max_abs_ref": 1.8511483708574041,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 20.0458
+  },
+  {
+   "tag": "L0 q",
+   "max_abs_err": 0.0031178706480954332,
+   "max_abs_ref": 15.670123422336552,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 20.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.00042216530558925047,
+   "max_abs_ref": 1.9695546190328124,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 20.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.015706456774822186,
+   "max_abs_ref": 134.3086522243817,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 20.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00012046256537506794,
+   "max_abs_ref": 0.5568770721322365,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 20.0477
+  },
+  {
+   "tag": "L0 attn acc",
+   "max_abs_err": 0.001569765236634879,
+   "max_abs_ref": 4.348497307200134,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 20.0477
+  },
+  {
+   "tag": "L0 x after attn",
+   "max_abs_err": 0.00019406897325338623,
+   "max_abs_ref": 0.8204342315942532,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 20.0634
+  },
+  {
+   "tag": "refresh norm L0.up",
+   "max_abs_err": 2.7773608428038887e-05,
+   "max_abs_ref": 0.10255427894928165,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 20.0634
+  },
+  {
+   "tag": "L0.up var/vmax",
+   "max_abs_err": 1.1129594777708335e-05,
+   "max_abs_ref": 0.02987102277573322,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 20.0634
+  },
+  {
+   "tag": "L0.up S/(UN sigma)",
+   "max_abs_err": 0.0142818255122239,
+   "max_abs_ref": 4.573993579288476,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 20.0634
+  },
+  {
+   "tag": "L0 gelu in",
+   "max_abs_err": 0.030751976729971098,
+   "max_abs_ref": 12.937260616055227,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L0 gelu out",
+   "max_abs_err": 4.886396842707086e-12,
+   "max_abs_ref": 7.67680852127223,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L0 x after ffn",
+   "max_abs_err": 2.5324488344045937e-05,
+   "max_abs_ref": 0.14412794599152068,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L1.qkv",
+   "max_abs_err": 2.8403425520212577e-05,
+   "max_abs_ref": 0.14412794599152068,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L1.qkv var/vmax",
+   "max_abs_err": 1.2862751215925172e-05,
+   "max_abs_ref": 0.04660758887512649,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L1.qkv S/(UN sigma)",
+   "max_abs_err": 0.009000337434136085,
+   "max_abs_ref": 2.7515060977618204,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L1 q",
+   "max_abs_err": 0.020734862347270955,
+   "max_abs_ref": 10.842627097270064,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.002677153065850396,
+   "max_abs_ref": 1.4492850153835821,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.0850864907328237,
+   "max_abs_ref": 36.02362804047205,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00041138612628381643,
+   "max_abs_ref": 0.2388622459679157,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L1 attn acc",
+   "max_abs_err": 0.0038692066632837196,
+   "max_abs_ref": 2.0344353549385086,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L1 x after attn",
+   "max_abs_err": 0.00010066614536007046,
+   "max_abs_ref": 0.14702151048217338,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L1.up",
+   "max_abs_err": 0.00010151060528475198,
+   "max_abs_ref": 0.14702151048217338,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L1.up var/vmax",
+   "max_abs_err": 1.511562770684094e-05,
+   "max_abs_ref": 0.0409247264903165,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L1.up S/(UN sigma)",
+   "max_abs_err": 0.0057842724227819,
+   "max_abs_ref": 2.3768829871975474,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L1 gelu in",
+   "max_abs_err": 0.02266555701314843,
+   "max_abs_ref": 10.482978943061177,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L1 gelu out",
+   "max_abs_err": 4.089423244479917e-12,
+   "max_abs_ref": 4.516653899751571,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L1 x after ffn",
+   "max_abs_err": 0.00010482491671279584,
+   "max_abs_ref": 0.1640670342485432,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L2.qkv",
+   "max_abs_err": 9.786856501802291e-05,
+   "max_abs_ref": 0.1640670342485432,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L2.qkv var/vmax",
+   "max_abs_err": 1.6394237775385623e-05,
+   "max_abs_ref": 0.04819698796364071,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L2.qkv S/(UN sigma)",
+   "max_abs_err": 0.0010246783506786539,
+   "max_abs_ref": 1.9780800243917023,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L2 q",
+   "max_abs_err": 0.012294053931711124,
+   "max_abs_ref": 8.86366595484186,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0015562415691523224,
+   "max_abs_ref": 1.069050087867955,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.027534869699992193,
+   "max_abs_ref": 39.31881529009844,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.0003787393802845429,
+   "max_abs_ref": 0.3240999117681278,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L2 attn acc",
+   "max_abs_err": 0.003326145602264685,
+   "max_abs_ref": 2.5237248639445395,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L2 x after attn",
+   "max_abs_err": 0.00014355035516659675,
+   "max_abs_ref": 0.20969188221756374,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L2.up",
+   "max_abs_err": 0.00014383610723649187,
+   "max_abs_ref": 0.20969188221756374,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L2.up var/vmax",
+   "max_abs_err": 2.594201764139631e-05,
+   "max_abs_ref": 0.05512089158027987,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L2.up S/(UN sigma)",
+   "max_abs_err": 0.0010226041495604576,
+   "max_abs_ref": 1.6295072505682013,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L2 gelu in",
+   "max_abs_err": 0.014592723045660616,
+   "max_abs_ref": 9.009165130745986,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L2 gelu out",
+   "max_abs_err": 4.88503681950192e-12,
+   "max_abs_ref": 4.144077828169911,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L2 x after ffn",
+   "max_abs_err": 0.00014232611675668583,
+   "max_abs_ref": 0.19806861224115369,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L3.qkv",
+   "max_abs_err": 7.65932499350308e-05,
+   "max_abs_ref": 0.09903430612057684,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L3.qkv var/vmax",
+   "max_abs_err": 1.619177658631482e-05,
+   "max_abs_ref": 0.042416201577424414,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L3.qkv S/(UN sigma)",
+   "max_abs_err": 0.0032698001299320545,
+   "max_abs_ref": 3.1877937778636216,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L3 q",
+   "max_abs_err": 0.010315651551453975,
+   "max_abs_ref": 6.525573210865188,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0013189765990714586,
+   "max_abs_ref": 0.8184171881438316,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.022262969018292722,
+   "max_abs_ref": 20.204787587255275,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00047764103084332876,
+   "max_abs_ref": 0.24759256387891793,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L3 attn acc",
+   "max_abs_err": 0.006506085774125925,
+   "max_abs_ref": 3.002622801444747,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L3 x after attn",
+   "max_abs_err": 8.376720596740828e-05,
+   "max_abs_ref": 0.12193492789421209,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L3.up",
+   "max_abs_err": 8.663106723984237e-05,
+   "max_abs_ref": 0.12193492789421209,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L3.up var/vmax",
+   "max_abs_err": 2.7395993029227794e-05,
+   "max_abs_ref": 0.041629833550904424,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L3.up S/(UN sigma)",
+   "max_abs_err": 0.0035633757481727812,
+   "max_abs_ref": 2.829429108058446,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L3 gelu in",
+   "max_abs_err": 0.011657882690355836,
+   "max_abs_ref": 8.464664289172052,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L3 gelu out",
+   "max_abs_err": 5.043077067057311e-12,
+   "max_abs_ref": 4.174141265637621,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L3 x after ffn",
+   "max_abs_err": 8.547423082106743e-05,
+   "max_abs_ref": 0.12331574269890958,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L4.qkv",
+   "max_abs_err": 8.538776556378525e-05,
+   "max_abs_ref": 0.12331574269890958,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L4.qkv var/vmax",
+   "max_abs_err": 2.7373679234166115e-05,
+   "max_abs_ref": 0.04292809221689359,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L4.qkv S/(UN sigma)",
+   "max_abs_err": 0.001961438471395738,
+   "max_abs_ref": 2.5509487353208646,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L4 q",
+   "max_abs_err": 0.00848136432319814,
+   "max_abs_ref": 9.434449239172228,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0010981923182337462,
+   "max_abs_ref": 1.1137393906037432,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.024689376248236083,
+   "max_abs_ref": 28.450571718701138,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.000378047153139216,
+   "max_abs_ref": 0.28049985178040543,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L4 attn acc",
+   "max_abs_err": 0.0034262669559400605,
+   "max_abs_ref": 1.723194221236128,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L4 x after attn",
+   "max_abs_err": 0.00010546064301247826,
+   "max_abs_ref": 0.13783109273780003,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L4.up",
+   "max_abs_err": 9.75830617881146e-05,
+   "max_abs_ref": 0.13783109273780003,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L4.up var/vmax",
+   "max_abs_err": 2.9017011426851758e-05,
+   "max_abs_ref": 0.04702915511412612,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L4.up S/(UN sigma)",
+   "max_abs_err": 0.001273140995456945,
+   "max_abs_ref": 2.1707966970405566,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L4 gelu in",
+   "max_abs_err": 0.010100744160665087,
+   "max_abs_ref": 10.462852892307204,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L4 gelu out",
+   "max_abs_err": 5.323130825019007e-12,
+   "max_abs_ref": 3.159211583001964,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L4 x after ffn",
+   "max_abs_err": 0.00010093586626709616,
+   "max_abs_ref": 0.14850777001473037,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L5.qkv",
+   "max_abs_err": 9.931263992259826e-05,
+   "max_abs_ref": 0.14850777001473037,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L5.qkv var/vmax",
+   "max_abs_err": 2.723488054064832e-05,
+   "max_abs_ref": 0.049884965623164114,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L5.qkv S/(UN sigma)",
+   "max_abs_err": 0.0014761727511001244,
+   "max_abs_ref": 2.294756214063374,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L5 q",
+   "max_abs_err": 0.00832244161993767,
+   "max_abs_ref": 10.013616411377825,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.001165992248794545,
+   "max_abs_ref": 1.2502232674136515,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.02511503460459963,
+   "max_abs_ref": 29.09521433931519,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00036241027225870914,
+   "max_abs_ref": 0.25341096752981435,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L5 attn acc",
+   "max_abs_err": 0.004280339277930811,
+   "max_abs_ref": 3.2243662885626025,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L5 x after attn",
+   "max_abs_err": 0.00017374714774046063,
+   "max_abs_ref": 0.19742232249442576,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L5.up",
+   "max_abs_err": 0.0001801689279530838,
+   "max_abs_ref": 0.19742232249442576,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L5.up var/vmax",
+   "max_abs_err": 6.929561894700176e-05,
+   "max_abs_ref": 0.08086769351242575,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L5.up S/(UN sigma)",
+   "max_abs_err": 0.001207923564318536,
+   "max_abs_ref": 1.6462445421504526,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L5 gelu in",
+   "max_abs_err": 0.008332952949904993,
+   "max_abs_ref": 7.961331057482999,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L5 gelu out",
+   "max_abs_err": 4.947542375788316e-12,
+   "max_abs_ref": 3.3880733533681737,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L5 x after ffn",
+   "max_abs_err": 0.00017957456878514577,
+   "max_abs_ref": 0.17768987131404299,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L6.qkv",
+   "max_abs_err": 0.00016848998591598163,
+   "max_abs_ref": 0.17768987131404299,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L6.qkv var/vmax",
+   "max_abs_err": 5.5168940245764464e-05,
+   "max_abs_ref": 0.08109678712110732,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L6.qkv S/(UN sigma)",
+   "max_abs_err": 0.002064858969018424,
+   "max_abs_ref": 1.8943795785359874,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L6 q",
+   "max_abs_err": 0.006850410642536442,
+   "max_abs_ref": 7.534243111098112,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0008271519158531415,
+   "max_abs_ref": 0.9767032508335459,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.01874256247504391,
+   "max_abs_ref": 36.54067259912922,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00021027460854677882,
+   "max_abs_ref": 0.23115184184511706,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L6 attn acc",
+   "max_abs_err": 0.0032687420113834964,
+   "max_abs_ref": 2.4138056725617467,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L6 x after attn",
+   "max_abs_err": 0.0002435781603144227,
+   "max_abs_ref": 0.27165989563913606,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L6.up",
+   "max_abs_err": 0.0002477593608713746,
+   "max_abs_ref": 0.27165989563913606,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L6.up var/vmax",
+   "max_abs_err": 9.65134479790214e-05,
+   "max_abs_ref": 0.12724266843573764,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L6.up S/(UN sigma)",
+   "max_abs_err": 0.0010052690766788608,
+   "max_abs_ref": 1.3360130047038432,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L6 gelu in",
+   "max_abs_err": 0.01221583320688957,
+   "max_abs_ref": 22.293525314282995,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L6 gelu out",
+   "max_abs_err": 4.704625578000332e-12,
+   "max_abs_ref": 3.1925077017768246,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L6 x after ffn",
+   "max_abs_err": 0.0002508402839885848,
+   "max_abs_ref": 0.23627020254821432,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L7.qkv",
+   "max_abs_err": 0.000249753454071161,
+   "max_abs_ref": 0.23627020254821432,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L7.qkv var/vmax",
+   "max_abs_err": 9.155913592809317e-05,
+   "max_abs_ref": 0.12695870185430255,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L7.qkv S/(UN sigma)",
+   "max_abs_err": 0.0010396223583302167,
+   "max_abs_ref": 1.4584945394471402,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L7 q",
+   "max_abs_err": 0.009203381153767731,
+   "max_abs_ref": 10.391259924926002,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.001265523093441412,
+   "max_abs_ref": 1.299367595842707,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.02379106217606264,
+   "max_abs_ref": 25.890042243975905,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00048202837225475026,
+   "max_abs_ref": 0.2709018196798248,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L7 attn acc",
+   "max_abs_err": 0.004112370906409257,
+   "max_abs_ref": 3.549399332658702,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L7 x after attn",
+   "max_abs_err": 0.0002677374141337452,
+   "max_abs_ref": 0.2983765568647442,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L7.up",
+   "max_abs_err": 0.00012793921098118444,
+   "max_abs_ref": 0.1491882784323721,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L7.up var/vmax",
+   "max_abs_err": 4.8783928057370696e-05,
+   "max_abs_ref": 0.07425251983459512,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L7.up S/(UN sigma)",
+   "max_abs_err": 0.001437550639150409,
+   "max_abs_ref": 2.19300664516328,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L7 gelu in",
+   "max_abs_err": 0.007818213339114144,
+   "max_abs_ref": 8.59544331449127,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L7 gelu out",
+   "max_abs_err": 4.198447145498108e-12,
+   "max_abs_ref": 6.844471612039547,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L7 x after ffn",
+   "max_abs_err": 0.00011734290275609849,
+   "max_abs_ref": 0.14354829192232954,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L8.qkv",
+   "max_abs_err": 0.00012744811407212897,
+   "max_abs_ref": 0.14354829192232954,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L8.qkv var/vmax",
+   "max_abs_err": 4.074131324192931e-05,
+   "max_abs_ref": 0.08233978712111023,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L8.qkv S/(UN sigma)",
+   "max_abs_err": 0.0014458319936228037,
+   "max_abs_ref": 2.1470229903976663,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L8 q",
+   "max_abs_err": 0.005361783263033937,
+   "max_abs_ref": 8.24057579762831,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0005989123974581845,
+   "max_abs_ref": 1.0065686215999012,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.021537812362126374,
+   "max_abs_ref": 35.41292566738842,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00028868091149225616,
+   "max_abs_ref": 0.2628333601343444,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L8 attn acc",
+   "max_abs_err": 0.003478355129613586,
+   "max_abs_ref": 2.5277426401463883,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L8 x after attn",
+   "max_abs_err": 0.00014136182096688432,
+   "max_abs_ref": 0.18642911665724685,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L8.up",
+   "max_abs_err": 0.00014874554726859723,
+   "max_abs_ref": 0.18642911665724685,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L8.up var/vmax",
+   "max_abs_err": 9.175633745853867e-05,
+   "max_abs_ref": 0.09040713029365628,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L8.up S/(UN sigma)",
+   "max_abs_err": 0.0011581386481316347,
+   "max_abs_ref": 1.5649492423286322,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L8 gelu in",
+   "max_abs_err": 0.005078825625634442,
+   "max_abs_ref": 5.386552614854726,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L8 gelu out",
+   "max_abs_err": 4.875183590158372e-12,
+   "max_abs_ref": 2.964800875678682,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L8 x after ffn",
+   "max_abs_err": 0.00014770183171353146,
+   "max_abs_ref": 0.15873267526780233,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L9.qkv",
+   "max_abs_err": 0.00014416156032096006,
+   "max_abs_ref": 0.15873267526780233,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L9.qkv var/vmax",
+   "max_abs_err": 0.00011035270786670381,
+   "max_abs_ref": 0.12324334067471174,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L9.qkv S/(UN sigma)",
+   "max_abs_err": 0.001328181653606153,
+   "max_abs_ref": 1.787136855733944,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L9 q",
+   "max_abs_err": 0.007021421711605358,
+   "max_abs_ref": 10.633171050866125,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0008737083810989033,
+   "max_abs_ref": 1.3293641056458017,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.01781353988304213,
+   "max_abs_ref": 25.863397937870072,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.00024279986761810424,
+   "max_abs_ref": 0.31517258666952835,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L9 attn acc",
+   "max_abs_err": 0.004056080654218253,
+   "max_abs_ref": 3.1436923757092115,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L9 x after attn",
+   "max_abs_err": 0.00018756021592622463,
+   "max_abs_ref": 0.25204033182630503,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L9.up",
+   "max_abs_err": 0.00018016457305269906,
+   "max_abs_ref": 0.25204033182630503,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L9.up var/vmax",
+   "max_abs_err": 0.00010302549398459593,
+   "max_abs_ref": 0.11614137667158354,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L9.up S/(UN sigma)",
+   "max_abs_err": 0.0008649679418437639,
+   "max_abs_ref": 1.2883921810725207,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L9 gelu in",
+   "max_abs_err": 0.005910602631874706,
+   "max_abs_ref": 6.508542767956838,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L9 gelu out",
+   "max_abs_err": 4.3689218909293e-12,
+   "max_abs_ref": 3.472920045164757,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L9 x after ffn",
+   "max_abs_err": 0.0001696161582957767,
+   "max_abs_ref": 0.2914416107438995,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L10.qkv",
+   "max_abs_err": 0.00018114141033198639,
+   "max_abs_ref": 0.2914416107438995,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L10.qkv var/vmax",
+   "max_abs_err": 0.00010502001974718733,
+   "max_abs_ref": 0.13618204335283446,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L10.qkv S/(UN sigma)",
+   "max_abs_err": 0.0007354265018519879,
+   "max_abs_ref": 1.2252576936143103,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L10 q",
+   "max_abs_err": 0.005647578491579264,
+   "max_abs_ref": 10.29364397720941,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0007317356073647252,
+   "max_abs_ref": 1.2846185540966537,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.01629482877527355,
+   "max_abs_ref": 22.167135275931738,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.0003410471144731919,
+   "max_abs_ref": 0.24916231227738947,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L10 attn acc",
+   "max_abs_err": 0.0036985333373404927,
+   "max_abs_ref": 2.6582255062567883,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L10 x after attn",
+   "max_abs_err": 0.00018840193044905584,
+   "max_abs_ref": 0.39426236162845363,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L10.up",
+   "max_abs_err": 0.0001024871700601171,
+   "max_abs_ref": 0.19713118081422681,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L10.up var/vmax",
+   "max_abs_err": 0.000107219247569873,
+   "max_abs_ref": 0.16735560096866234,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L10.up S/(UN sigma)",
+   "max_abs_err": 0.0009433157991542984,
+   "max_abs_ref": 1.9678516692957053,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L10 gelu in",
+   "max_abs_err": 0.004982604387127054,
+   "max_abs_ref": 5.816930060690527,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L10 gelu out",
+   "max_abs_err": 4.681921517146748e-12,
+   "max_abs_ref": 3.35086128008736,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L10 x after ffn",
+   "max_abs_err": 0.00010333260216133233,
+   "max_abs_ref": 0.210047821389749,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm L11.qkv",
+   "max_abs_err": 9.780827104950707e-05,
+   "max_abs_ref": 0.210047821389749,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L11.qkv var/vmax",
+   "max_abs_err": 7.776385908739303e-05,
+   "max_abs_ref": 0.1261814210125652,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L11.qkv S/(UN sigma)",
+   "max_abs_err": 0.0016993301173795494,
+   "max_abs_ref": 2.2269048068145034,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L11 q",
+   "max_abs_err": 0.007337176540517021,
+   "max_abs_ref": 10.224958061661138,
+   "level": 31,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 0.0009099460191361319,
+   "max_abs_ref": 1.278108605549962,
+   "level": 32,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 0.03738697527306556,
+   "max_abs_ref": 22.162073387352258,
+   "level": 33,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 0.0020735630262107563,
+   "max_abs_ref": 0.6454712090164358,
+   "level": 35,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L11 attn acc",
+   "max_abs_err": 0.0162175627453518,
+   "max_abs_ref": 6.995054998323159,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "L11 x after attn",
+   "max_abs_err": 0.0002040280304143119,
+   "max_abs_ref": 0.28787724755805677,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "refresh norm L11.up",
+   "max_abs_err": 0.0001046760699593488,
+   "max_abs_ref": 0.14393862377902839,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L11.up var/vmax",
+   "max_abs_err": 0.00018191080515318758,
+   "max_abs_ref": 0.10170403778434385,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L11.up S/(UN sigma)",
+   "max_abs_err": 0.002089874283747406,
+   "max_abs_ref": 2.373202314025064,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L11 gelu in",
+   "max_abs_err": 0.005590081348363363,
+   "max_abs_ref": 4.588277815070781,
+   "level": 29,
+   "deg": 2,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L11 gelu out",
+   "max_abs_err": 4.368588824021913e-12,
+   "max_abs_ref": 2.4438121673786752,
+   "level": 37,
+   "deg": 1,
+   "gpu_gb": 21.0634
+  },
+  {
+   "tag": "L11 x after ffn",
+   "max_abs_err": 0.00010730529761094482,
+   "max_abs_ref": 0.13387759187354534,
+   "level": 37,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "refresh norm head",
+   "max_abs_err": 0.00010903357954445553,
+   "max_abs_ref": 0.13387759187354534,
+   "level": 22,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "head var/vmax",
+   "max_abs_err": 0.0001784391365071969,
+   "max_abs_ref": 0.097844380443378,
+   "level": 24,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "head S/(UN sigma)",
+   "max_abs_err": 0.0025623486531356487,
+   "max_abs_ref": 2.5810393345196725,
+   "level": 36,
+   "deg": 2,
+   "gpu_gb": 21.0477
+  },
+  {
+   "tag": "logits block 0",
+   "max_abs_err": 0.025592277802731545,
+   "max_abs_ref": 24.077909271422634,
+   "level": 40,
+   "deg": 2,
+   "gpu_gb": 22.0321
+  }
+ ],
+ "summary": {
+  "passes": 1,
+  "s_per_pass": 1108.7278143719886,
+  "logit_max_abs_err": 0.08151102066040039,
+  "argmax_agree_min": 1.0,
+  "kl_to_plain_max": 3.0022518330952153e-05,
+  "ops": {
+   "norm": "rsqrt",
+   "attn": "pow",
+   "gelu": "client",
+   "refresh": "boot2",
+   "embed": "server"
+  }
+ }
+}

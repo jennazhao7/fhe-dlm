@@ -1034,21 +1034,61 @@ jobs launched automatically on the node's four cards.
 - **Linear assist at L = 256 (job 1747331, `results/e5/linear_L256.json`,
   8 steps):** 636 s per pass (4 ciphertexts, 880 blocks).
 
-### Running / queued (2026-11-13 21:15)
+- **Linear assist at L = 256, stopped after 4 of 9 passes** to free the card:
+  627–636 s per pass, logit error 3e-5, argmax agreement 100%.
+- **E1 with exact norms, L = 64 (`results/plain/e1_bc64.json`, `ckpt/e1_bc64/stageB.pt`).**
+  Exact MDLM at L = 64: NLL 3.26 / 5.04 / 8.32, gen-PPL 17.8 at unigram entropy
+  1.99 — unconditional samples are degenerate at this length even in
+  plaintext (4.49 at L = 256), so 64-token runs use `--infill 0.5`.
+  Stage B ((s+b)²/Z attention): NLL 3.06 / 4.70 / 7.87 (below the teacher's on
+  WikiText), KL to the teacher 0.52–0.65, gen-PPL 45.7, entropy 1.91;
+  `resid_max_gen` 1.25e4. Stage C runs 4.3 s/step (checkpointed Chebyshev).
+- **Stage-B student, attention under encryption, 1 GPU (job 1747506,
+  `results/e5/deep_B64_1pass.json`):** norms and GELU on the client, client
+  refresh, depth 13. One infill pass: logit error 1.9e-5 vs the plaintext
+  student, argmax agreement 100%, 135 register checks (worst relative error
+  7e-10), 527 s with `--debug` (matvec 287 s; the 64-shift attention is ~35 s
+  for all 12 layers), 10.7 GB.
+- **Stage-B student, LayerNorm + attention + bootstraps on the server, 4 GPUs
+  (job 1747614, `results/e5/boot1pass_stageB.json`).** `--norm rsqrt
+  --refresh boot2 --depth 43 --n1 16`, GELU on the client (12 rounds), 100
+  bootstraps (50 two-pass). One infill pass: **logit error 0.08 on ±26.5,
+  argmax agreement 100%, KL to the plaintext student 3e-5**; 1109 s with
+  `--debug` (matvec 493 s, rotations 202 s, bootstraps 113 s, debug decrypts
+  121 s); 22.6 GB peak per card. Per-stage relative errors are 1e-3..1e-2:
+  the bootstrap's absolute error in x/S reaches w = var/vmax, and 1/√w is
+  steep at small w. The student's calibrated variance bounds are wide
+  (max/min 391, from its own unconditional samples); calibrating on infill
+  states only (`calib --gen-n 0`) would tighten them.
+- **Memory on the 4-GPU build.** FIDESlib's pool never returns blocks, so
+  usage only grows; it grows at the matvecs (job 1747579: +4 GB for one
+  matvec at 14 towers with 32 baby steps). Two runs died on the third and
+  eighth bootstrap (1747455 with 21 rotation keys, 1747524 with 7). Fixes
+  that hold (21.1 GB plateau): 9 rotation keys with two-level window sums,
+  `--n1 16`, matvecs dropped to 13–15 towers after the bootstrap
+  (`tolevel`), norm registers freed before bootstrapping u, no cached bias
+  constants.
 
-- 1747366 (4 GPUs, held): exact MDLM, `--norm rsqrt --attn client --gelu client
-  --refresh boot2`, one pass with `--debug` → `results/e5/boot_exact.json`.
-  First run of rot/mult/cheb on the multi-GPU build.
-- 1747367 (4 GPUs, held on 1747366): the `e1_bc64` student with everything on
-  the server, `--norm rsqrt --refresh boot2`, 16 steps → `results/e5/full_bc64.json`.
-- 1747231 now waits for 1747367.
+### Queue left running (2026-11-13 22:50), each held on the one before
 
-### Earlier queue (2026-11-13 20:30)
+1. 1747624 `e1bc64` stage C (1200 steps from `stageB.pt`), ~00:20.
+2. 1747625 (4 GPUs, 6 h limit): `E5_STUDENT=ckpt/e1_bc64` → stage C with the
+   GELU polynomial on the server if C did not abort, else stage B with the
+   GELU on the client; `--norm rsqrt --refresh boot2 --depth 43 --n1 16
+   --infill 0.5 --steps 16` → `results/e5/full_bc64[_stageB].json`.
+   With stage C this is the pass with no client step between encrypting the
+   tokens and decrypting the logits. Not yet run: the Chebyshev GELU at
+   depth 43 (validated at depth 13 only), and the student's GELU inputs
+   must stay inside [-8, 8] or the run dies at a decrypt.
+3. 1747841 (1 GPU): stage-B student, client norm/GELU/refresh, 16 steps
+   → `results/e5/deep_B64.json` (the fallback: every part already validated).
+4. 1747507 `e1bc256`.
 
-- 1747200 `e1bc64` (exact-norm B, C at L = 64) → `ckpt/e1_bc64`, `results/plain/e1_bc64.json`.
-- 1747229 deep circuit on the GPU with placeholder constants, `--debug`
-  → `results/e5/deep_mech.json` (first test of FIDESlib's device-side level handling).
-- 1747230 `e1bc256`.
-- 1747231 (held on 1747200) encrypted generation with the `e1_bc64` student
-  → `results/e5/deep_bc64.json`.
+### Not done
 
+- The deep circuit holds 64 tokens in one ciphertext; L = 256 needs
+  cross-ciphertext attention (16 × the attention loop, 4 × the matvecs:
+  roughly an hour per pass on 4 GPUs).
+- Speed: matvecs run at 13–15 towers where 9–11 would do; the head and the
+  embedding are 100 of the 220 blocks.
+- `fides_vm` holds the secret key (client and server in one process).
