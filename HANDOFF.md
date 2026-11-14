@@ -1069,10 +1069,21 @@ jobs launched automatically on the node's four cards.
   (`tolevel`), norm registers freed before bootstrapping u, no cached bias
   constants.
 
+- **Stage C (polynomial GELU) of `e1_bc64` failed its eval (job 1747624,
+  00:19 on 2026-11-14).** Training looked fine (KL 0.45 at λ = 1, GELU penalty
+  4–7), but training clamps the polynomial's input and the eval, like CKKS,
+  does not: 1.66% of GELU inputs are outside [-8, 8] (max 150), NLL 750 / 323
+  / 165, residual 1e35. The hinge at |u| > 6 with weight 1e-3 does not bring
+  the tail in. So the GELU stays on the client for now; job 1747625 fell back
+  to the stage-B student automatically. To move it to the server: per-layer
+  ranges with a higher degree, a composite (sign-based) approximation for the
+  tail, or training against the unclamped polynomial.
+
 ### Queue left running (2026-11-13 22:50), each held on the one before
 
 1. 1747624 `e1bc64` stage C (1200 steps from `stageB.pt`), ~00:20.
-2. 1747625 (4 GPUs, 6 h limit): `E5_STUDENT=ckpt/e1_bc64` → stage C with the
+2. 1747625 (4 GPUs, 6 h limit; **started 00:18 with stage B, GELU on the
+   client**, → `results/e5/full_bc64_stageB.json`): `E5_STUDENT=ckpt/e1_bc64` → stage C with the
    GELU polynomial on the server if C did not abort, else stage B with the
    GELU on the client; `--norm rsqrt --refresh boot2 --depth 43 --n1 16
    --infill 0.5 --steps 16` → `results/e5/full_bc64[_stageB].json`.
