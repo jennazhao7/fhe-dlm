@@ -18,6 +18,7 @@
 //   mulc|addc <r> <a> <const>
 //   mulpt|addpt <r> <a> <file> <period> [deg]   period D (sparse) or SLOTS
 //   cheb <r> <a> <lo> <hi> <coeff file> <n>     EvalChebyshevSeries
+//   mov <r> <a>                       alias (ops never modify their inputs)
 //   rescale <r> <a>                   pending rescale now (deg 2 -> 1)
 //   tolevel <r> <a> <level>           a + Enc(0 at level): drops a to that level, deg 1
 //   boot <r> <a>   info <r>   free <r>   mem   quit
@@ -431,6 +432,10 @@ int main(int argc, char** argv) {
 				in >> r >> a >> lo >> hi >> file >> n;
 				auto c    = read_raw<double>(file, n);
 				vm.reg[r] = cc->EvalChebyshevSeries(vm.get(a), c, lo, hi);
+			} else if (op == "mov") {
+				std::string r, a;
+				in >> r >> a;
+				vm.reg[r] = vm.get(a);
 			} else if (op == "rescale") {
 				std::string r, a;
 				in >> r >> a;

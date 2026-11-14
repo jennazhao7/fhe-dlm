@@ -10,8 +10,12 @@ E1 student (scripts/e1_kd.py):
   --norm  fixed   c[mask_t] * g * (x - mean)       (E1 stage A)   | client: exact LayerNorm
   --attn  pow     (q.k/8 + b_h)^2 / z[h, mask_t]   (E1 stage B)   | client: rotary + softmax
   --gelu  poly    Chebyshev degree 31 on [-8, 8]   (E1 stage C)   | client: exact GELU
+          rsqrt   exact LayerNorm on the server: var = mean(x^2) - mean(x)^2 by rotations, 1/sigma by a
+                  Chebyshev start + Goldschmidt steps, x/sigma bootstrapped; needs --refresh boot|boot2 and
+                  --var-file (public variance bounds per norm, from `calib`). No client inside the pass.
   --refresh client  the client re-encrypts x at every half-layer (no bootstrap; depth 13)
-            boot    FIDESlib bootstrap when the levels run out   (E1 stage D; needs the 3-4 GPU build)
+            boot    FIDESlib bootstrap (8.5 bits; depth 43, the 4-GPU build)
+            boot2   two-pass bootstrap (16.4 bits, one more level)
 
 Layout (single ciphertext, L = T = 64 tokens): slot = token*D + dim, D = 1024,
 real dims 0..767. The residual stream is held as x/S; everything else is in
@@ -42,7 +46,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from e5_pass import VM   # noqa: E402
 
 D, DM, HD, NH, VOC = 1024, 768, 64, 12, 50258
-ROTS = [1, 2, 4, 8, 16, 32, -D, -1, -2, -4, -8, -16, -32]
+ROTS = [1 << k for k in range(10)] + [-(1 << k) for k in range(11)]      # +-2^k: head/dim sums, replication; -D: token shift
+UN = 64.0        # x/sigma is bootstrapped as u / UN (uncentred: |x|/sigma reaches 35 at layer 0)
 
 
 def gelu_np(z):
@@ -67,6 +72,8 @@ class NumpyBE:
     def rot(self, r, a, k): self.r[r] = np.roll(self.r[a], -k)
     def mulpt(self, r, a, v): self.r[r] = self.r[a] * self._full(v)
     def tolevel(self, r, a, level): self.r[r] = self.r[a].copy()
+    def mulc(self, r, a, c): self.r[r] = self.r[a] * c
+    def mov(self, r, a): self.r[r] = self.r[a].copy()
     def boot(self, r, a): self.r[r] = self.r[a].copy()
     def info(self, r): return {"level": 0, "deg": 1}
     def check(self, tag, r): pass
@@ -108,6 +115,8 @@ class VmBE:
     def rot(self, r, a, k): self.vm.cmd(f"rot {r} {a} {k}")
     def mulpt(self, r, a, v): self.vm.cmd(f"mulpt {r} {a} {self._vec(v)} {len(v)}")
     def tolevel(self, r, a, level): self.vm.cmd(f"tolevel {r} {a} {level}")
+    def mulc(self, r, a, c): self.vm.cmd(f"mulc {r} {a} {c!r}")
+    def mov(self, r, a): self.vm.cmd(f"mov {r} {a}")
     def boot(self, r, a): self.vm.cmd(f"boot {r} {a}")
     def info(self, r): return self.vm.cmd(f"info {r}")
     def free(self, *rs): self.vm.cmd("free " + " ".join(rs))
@@ -239,18 +248,44 @@ class Circuit:
             self.cache[key] = fn()
         return self.cache[key]
 
+    def boot_reg(self, r):
+        """Bootstrap register r (|values| < 1). boot2 = two-pass (HANDOFF §11): b1 = Boot(r),
+        b2 = Boot((r - b1) 2^p), r = b1 + b2 2^-p."""
+        be, cfg = self.be, self.cfg
+        if cfg.refresh not in ("boot", "boot2"):
+            return
+        t0 = time.perf_counter()
+        be.tolevel(r, r, cfg.depth - 1)
+        if cfg.refresh == "boot":
+            be.boot(r, r)
+        else:
+            be.boot("b1", r)
+            be.sub("bd", r, "b1")
+            for _ in range(cfg.boot_bits):
+                be.add("bd", "bd", "bd")
+            be.boot("bd", "bd")
+            be.mulc("bd", "bd", 2.0 ** -cfg.boot_bits)
+            be.add(r, "b1", "bd")
+            be.free("b1", "bd")
+        self.stat["bootstraps"] += 1 if cfg.refresh == "boot" else 2
+        self.stat["refresh_s"] += time.perf_counter() - t0
+
+    def var_range(self, tag):
+        lo, hi = self.cfg.var[tag]
+        return lo / self.cfg.var_margin, hi * self.cfg.var_margin
+
     def refresh(self, why):
         be, cfg = self.be, self.cfg
         t0 = time.perf_counter()
+        if cfg.refresh in ("boot", "boot2"):
+            self.boot_reg("x")
+            be.check(f"refresh {why}", "x")
+            return
         if cfg.refresh == "client":
             v = be.dec("x")
             self.stat["x_max"] = max(self.stat["x_max"], float(np.abs(v).max()) * self.S)
             be.enc("x", v, 0)
             self.stat["client_refresh"] += 1
-        elif cfg.refresh == "boot":
-            be.tolevel("x", "x", cfg.depth - 1)
-            be.boot("x", "x")
-            self.stat["bootstraps"] += 1
         self.stat["refresh_s"] += time.perf_counter() - t0
         be.check(f"refresh {why}", "x")
 
@@ -260,15 +295,63 @@ class Circuit:
 
     def before_half(self, need, why):
         cfg = self.cfg
+        if cfg.norm == "rsqrt":
+            return                                   # the norm bootstraps x itself
         if cfg.refresh == "client":
             self.refresh(why)
-        elif cfg.refresh == "boot" and self.levels_left() < need + 2:
+        elif cfg.refresh in ("boot", "boot2") and self.levels_left() < need + 2:
             self.refresh(why)
 
     def normed_input(self, tag, c, g_mod, W, m, level=0):
         """Register `u` and the folded matrix so that matvec(u) = W (norm(x) (.) g_mod).
         Returns W' (rows as W)."""
         be, cfg = self.be, self.cfg
+        if cfg.norm == "rsqrt":
+            def fold():
+                A = W * g_mod[None, :]
+                A = A - A.mean(1, keepdims=True)
+                s = 2.0 ** math.ceil(math.log2(max(1.0, float(np.abs(A).max()))))      # power of two: undone by self-adds
+                return A / s, s
+            Wp, s = self.weights(tag, fold)
+            vmin, vmax = self.var_range(tag)
+            S, wmin = self.S, vmin / vmax
+            self.refresh("norm " + tag)                  # x fresh: the norm uses ~17 levels below x
+            e0 = np.zeros(D); e0[0] = 1.0
+            be.sq("n2", "x"); be.mov("n1", "x")
+            for k in range(10):                          # sums over the token's dims, valid at dim 0
+                be.rot("t", "n2", 1 << k); be.add("n2", "n2", "t")
+                be.rot("t", "n1", 1 << k); be.add("n1", "n1", "t")
+            be.mulpt("n2", "n2", e0 * (S * S / (DM * vmax)))
+            be.mulpt("n1", "n1", e0 * (S / (DM * math.sqrt(vmax))))
+            be.sq("n1", "n1")
+            be.sub("w", "n2", "n1")                      # w = var / vmax at dim 0, 0 elsewhere
+            be.check(tag + " var/vmax", "w")
+
+            ch = self.weights(("rsqrt", round(math.log2(wmin), 4)), lambda: np.polynomial.chebyshev.chebinterpolate(
+                lambda t: 0.5 / np.sqrt(wmin + (t + 1) * (1 - wmin) / 2), cfg.rsqrt_deg))
+            be.cheb("h", "w", wmin, 1.0, ch)             # h ~ 1/(2 sqrt(w))
+            be.mul("g", "w", "h"); be.add("g", "g", "g")  # g = 2 w h ~ sqrt(w): the invariant Goldschmidt needs
+            for _ in range(cfg.gold_iters):              # Goldschmidt: r = 1/2 - g h; g += g r; h += h r
+                be.mul("r", "g", "h")
+                i = be.info("r")
+                be.enc("one", np.ones(be.slots), i["level"])
+                be.mulpt("one", "one", np.full(D, 0.5))
+                be.sub("r", "one", "r")
+                be.mul("t", "g", "r"); be.add("g", "g", "t")
+                be.mul("t", "h", "r"); be.add("h", "h", "t")
+            be.mulpt("h", "h", e0 * (2.0 * S / (UN * math.sqrt(vmax))))     # 1/(UN sigma) in x/S units, dim 0 only
+            for k in range(10):
+                be.rot("t", "h", -(1 << k)); be.add("h", "h", "t")
+            be.check(tag + " S/(UN sigma)", "h")
+            be.mul("u", "x", "h")                        # (x - mean)/sigma / UN once the matrix centres it
+            self.boot_reg("u")
+            for _ in range(int(round(math.log2(UN * s)))):
+                be.add("u", "u", "u")
+            if level:
+                be.tolevel("u", "u", level)
+            be.free("n1", "n2", "w", "h", "g", "r", "t", "one")
+            self.stat["server_norm"] += 1
+            return Wp
         if cfg.norm == "fixed":
             def fold():
                 A = W * g_mod[None, :]
@@ -362,7 +445,7 @@ class Circuit:
         else:
             p = np.exp(s - s.max(-1, keepdims=True)); p /= p.sum(-1, keepdims=True)
         o = np.einsum("htu,uhd->thd", p, v).reshape(self.T, DM)
-        be.enc("o", self.pack(o), 0)
+        be.enc("o", self.pack(o), max(0, self.cfg.depth - 6))      # one matvec left to do: few towers
         be.free("q", "k", "v")
         self.stat["client_attn"] += 1
 
@@ -399,7 +482,7 @@ class Circuit:
             for p in ps:
                 u = be.dec(p)
                 self.stat["gelu_in_max"] = max(self.stat["gelu_in_max"], float(np.abs(u).max()))
-                be.enc(p, gelu_np(u), 0)
+                be.enc(p, gelu_np(u), max(0, self.cfg.depth - 6))
             self.stat["client_gelu"] += 1
         be.check(f"L{i} gelu out", "p0")
         Wd = self.weights(f"L{i}.down", lambda: (blocks_of(lay["gate_mlp"][:, None] * lay["W2"] / self.S, 1, 3, DM, D),
@@ -439,6 +522,8 @@ class Circuit:
         self.before_half(3, "head")
         nb = math.ceil(VOC / D)
         if cfg.refresh != "none" and cfg.norm == "fixed":
+            if cfg.refresh != "client" and self.levels_left() < 5:
+                self.refresh("head")
             be.tolevel("x", "x", max(0, cfg.depth - 4))      # the 50 head blocks on few towers
         Wp = self.normed_input("head", f.get("c"), f["g"] * (1 + f["scale"]), f["W"], m, level=max(0, cfg.depth - 3))
         Wb = self.weights("head.b", lambda: (blocks_of(Wp, nb, 1, D, DM), bias_of(f["W"] @ f["shift"] + f["b"], nb, D)))
@@ -471,7 +556,7 @@ def build_model(ckpt, stage, dev, exact_norm=False):
 def default_ops(a):
     """Server-side ops implied by the E1 stage unless given explicitly."""
     k = -1 if a.ckpt in (None, "none") else "ABCD".index(a.stage)
-    if a.exact_norm:
+    if a.exact_norm and not a.norm:
         a.norm = "client"
     a.norm = a.norm or ("fixed" if k >= 0 else "client")
     a.attn = a.attn or ("pow" if k >= 1 else "client")
@@ -487,6 +572,7 @@ def cmd_check(a):
     m, E = build_model(a.ckpt, a.stage, pp.DEV, a.exact_norm)
     P = extract(m, a.L, a.norm == "fixed", a.attn != "client", a.gelu == "poly")
     a.refresh, a.depth, a.embed = "none", 0, "client"
+    load_var(a)
     g = torch.Generator().manual_seed(a.seed)
     data = pp.load_chunks(a.L, a.n, seed=a.seed)
     res = {"args": vars(a), "cases": []}
@@ -509,18 +595,65 @@ def cmd_check(a):
     return 0 if res["ok"] else 1
 
 
+def load_var(a):
+    a.var = None
+    if a.norm == "rsqrt":
+        a.var = json.load(open(a.var_file))["var"]
+        k = max(a.var.values(), key=lambda v: v[1] / v[0])
+        print(f"[e5c] variance bounds from {a.var_file}: widest max/min {k[1] / k[0]:.1f} (x margin^2 {a.var_margin ** 2:g})", flush=True)
+
+
+def cmd_calib(a):
+    """Public variance bounds of every LayerNorm input (per token), over masked real text and
+    the model's own sampling trajectories: what the rsqrt norm's polynomial has to cover."""
+    import torch
+    import plain_probe as pp
+    torch.set_grad_enabled(False)
+    default_ops(a)
+    m, E = build_model(a.ckpt, a.stage, pp.DEV, a.exact_norm)
+    rng = {}
+
+    def hook(tag):
+        def f(mod, inp):
+            v = inp[0].float().var(-1, unbiased=False)
+            lo, hi = float(v.min()), float(v.max())
+            rng[tag] = [min(rng.get(tag, [lo, hi])[0], lo), max(rng.get(tag, [lo, hi])[1], hi)]
+        return f
+    for i, b in enumerate(pp.blocks(m)):
+        b.norm1.register_forward_pre_hook(hook(f"L{i}.qkv"))
+        b.norm2.register_forward_pre_hook(hook(f"L{i}.up"))
+    m.backbone.output_layer.norm_final.register_forward_pre_hook(hook("head"))
+    data = pp.load_chunks(a.L, a.n, seed=a.seed)
+    g = torch.Generator().manual_seed(a.seed)
+    for ratio in (0.15, 0.5, 0.9, 1.0):
+        x = data.clone()
+        msk = torch.rand(x.shape, generator=g) < ratio
+        msk[:, 0] = False
+        x[msk] = pp.MASK
+        for st in range(0, len(x), 16):
+            pp.forward_logits(m, x[st:st + 16].to(pp.DEV))
+    pp.PIN0 = True
+    pp.sample(m, a.gen_n, a.L, a.steps, a.seed)
+    res = {"args": vars(a), "var": rng, "widest_ratio": max(v[1] / v[0] for v in rng.values())}
+    print("[e5c]", json.dumps({k: [round(v[0], 3), round(v[1], 1)] for k, v in rng.items()}), flush=True)
+    print(f"[e5c] widest max/min variance ratio {res['widest_ratio']:.1f}", flush=True)
+    json.dump(res, open(a.out, "w"), indent=1)
+    return 0
+
+
 def cmd_run(a):
     import torch
     import plain_probe as pp
     torch.set_grad_enabled(False)
     k = default_ops(a)
+    load_var(a)
     T = (1 << (a.logn - 1)) // D
     assert a.L == T, f"L must be {T} (one ciphertext)"
     t0 = time.perf_counter()
     m, E = build_model(a.ckpt, a.stage, pp.DEV, a.exact_norm)
     P = extract(m, a.L, a.norm == "fixed", a.attn != "client", a.gelu == "poly")
     wd = tempfile.mkdtemp(prefix="e5c_", dir=a.workdir)
-    vm = VM(a.bin, a.logn, a.depth, D, a.gpus, ROTS, a.refresh == "boot", wd, cpu=a.cpu)
+    vm = VM(a.bin, a.logn, a.depth, D, a.gpus, ROTS, a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
     print("[e5c]", json.dumps(vm.ready), flush=True)
     chk = []
     be = PairBE(VmBE(vm), NumpyBE(vm.slots), chk) if a.debug else VmBE(vm)
@@ -584,11 +717,16 @@ def cmd_run(a):
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("check", "run"):
+    for name in ("check", "run", "calib"):
         s = sub.add_parser(name)
         s.add_argument("--ckpt", default="none", help="E1 student state dict, or none for the exact MDLM")
         s.add_argument("--stage", default="A", choices=list("ABCD"))
-        s.add_argument("--norm", choices=("fixed", "client"), default=None)
+        s.add_argument("--norm", choices=("fixed", "client", "rsqrt"), default=None)
+        s.add_argument("--var-file", help="variance bounds from `calib` (for --norm rsqrt)")
+        s.add_argument("--var-margin", type=float, default=3.0, help="bounds widened to [min / m, max * m]")
+        s.add_argument("--rsqrt-deg", type=int, default=15)
+        s.add_argument("--gold-iters", type=int, default=2)
+        s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
         s.add_argument("--attn", choices=("pow", "client", "client-pow"), default=None)
         s.add_argument("--gelu", choices=("poly", "client"), default=None)
         s.add_argument("--exact-norm", action="store_true", help="student trained with e1_kd.py --exact-norm (norms on the client)")
@@ -599,13 +737,17 @@ def main():
         s.add_argument("--out", default=None)
         if name == "check":
             s.add_argument("--n", type=int, default=3)
+        elif name == "calib":
+            s.add_argument("--n", type=int, default=64)
+            s.add_argument("--gen-n", type=int, default=8)
+            s.add_argument("--steps", type=int, default=16)
         else:
             s.add_argument("--bin", required=True)
             s.add_argument("--logn", type=int, default=17)
             s.add_argument("--depth", type=int, default=13)
             s.add_argument("--gpus", type=int, default=1)
             s.add_argument("--cpu", action="store_true")
-            s.add_argument("--refresh", choices=("client", "boot", "none"), default="client")
+            s.add_argument("--refresh", choices=("client", "boot", "boot2", "none"), default="client")
             s.add_argument("--embed", choices=("server", "client"), default="server")
             s.add_argument("--steps", type=int, default=16)
             s.add_argument("--max-passes", type=int, default=0)
@@ -614,7 +756,7 @@ def main():
     a = ap.parse_args()
     if a.out:
         os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
-    sys.exit(cmd_check(a) if a.cmd == "check" else cmd_run(a))
+    sys.exit({"check": cmd_check, "run": cmd_run, "calib": cmd_calib}[a.cmd](a))
 
 
 if __name__ == "__main__":

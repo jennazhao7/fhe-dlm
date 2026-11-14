@@ -22,6 +22,11 @@
 # E5_STUDENT=<ckpt dir>  (e5_circuit.py) picks the student from an e1_kd.py --exact-norm run: stage C if
 #   its checkpoint exists and the run did not abort there, else stage B with the GELU on the client;
 #   appends --ckpt/--stage/--exact-norm[/--gelu client] to E5_ARGS. Use with -hold_jid <the E1 job>.
+# E5_GPUS=n  (n > 1) one fides_vm over n cards with the multi-GPU FIDESlib build (needed for bootstraps:
+#   --refresh boot|boot2, depth 43); submit with -l gpu=n. Appends --gpus n.
+# E5_CALIB=1 (e5_circuit.py) first runs `calib` for the chosen model (variance bounds for --norm rsqrt,
+#   on the CPU) -> results/e5/var_<tag>.json and appends --var-file.
+#   qsub -l gpu=4 -l h_rt=5:00:00 -v E5_GPUS=4,E5_CALIB=1,E5_SCRIPT=e5_circuit.py,E5_TAG=full_bc64,E5_STUDENT=$PWD/ckpt/e1_bc64,E5_ARGS="run --norm rsqrt --refresh boot2 --depth 43 --S 2048 --steps 16" cluster/job_e5_pass.sh
 # E5_SELFTEST=0 skips the real-size matvec self-test (results/e5/selftest_gpu_<job>.json)
 # The node's cards hang at CUDA init now and then (HANDOFF §11), and SGE cannot
 # choose one, so ask for a spare (`-l gpu=2`): every assigned card is checked
@@ -38,46 +43,62 @@ export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=${NSLOTS:-6}
 export PROBE_DEV=cpu      # the client's plaintext steps run on the CPU; the card is the server's
 mkdir -p results/e5 results/logs
 
-GOOD=""
+GOOD=""; GOODS=(); NG=${E5_GPUS:-1}
 for i in $(seq 0 $(( $(nvidia-smi -L | wc -l) - 1 ))); do
   bus=$(nvidia-smi -i "$i" --query-gpu=pci.bus_id --format=csv,noheader)
   if CUDA_VISIBLE_DEVICES=$i timeout 180 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))"; then
-    echo "=== card $i ($bus) ok"; [ -z "$GOOD" ] && GOOD=$i
+    echo "=== card $i ($bus) ok"; [ -z "$GOOD" ] && GOOD=$i; GOODS+=("$i")
   else
     echo "=== CUDA sanity check failed or timed out on card $i ($bus)"
   fi
 done
 if [ -z "$GOOD" ]; then echo "=== no working card -- aborting"; exit 1; fi
-echo "=== using card $GOOD"
-export CUDA_VISIBLE_DEVICES=$GOOD
+if [ "${#GOODS[@]}" -lt "$NG" ]; then echo "=== ${#GOODS[@]} working cards, need $NG -- aborting"; exit 1; fi
+export CUDA_VISIBLE_DEVICES=$(IFS=,; echo "${GOODS[*]:0:$NG}")
+echo "=== using card(s) $CUDA_VISIBLE_DEVICES"
 
 module load "${CUDA_MODULE:-cuda/13.2.1}" 2>/dev/null
-export LD_LIBRARY_PATH="$FHEDLM_ROOT/third_party/fideslib/lib:$FHEDLM_ROOT/third_party/fideslib/lib64:$FHEDLM_ROOT/third_party/openfhe-fides/lib:${LD_LIBRARY_PATH:-}"
-BIN="${E5_BIN:-$FHEDLM_ROOT/gpu/fides_e0/build/fides_vm}"
+if [ "$NG" -gt 1 ]; then
+  NCCL_LIB=$(dirname "$(find "$FHEDLM_ROOT/third_party/nccl-cu13" -name libnccl.so.2 | head -1)")
+  export LD_LIBRARY_PATH="$NCCL_LIB:$FHEDLM_ROOT/third_party/fideslib-mgpu/lib:$FHEDLM_ROOT/third_party/fideslib-mgpu/lib64:$FHEDLM_ROOT/third_party/openfhe-fides/lib:${LD_LIBRARY_PATH:-}"
+  BIN="${E5_BIN:-$FHEDLM_ROOT/gpu/fides_e0/build-mgpu/fides_vm}"
+else
+  export LD_LIBRARY_PATH="$FHEDLM_ROOT/third_party/fideslib/lib:$FHEDLM_ROOT/third_party/fideslib/lib64:$FHEDLM_ROOT/third_party/openfhe-fides/lib:${LD_LIBRARY_PATH:-}"
+  BIN="${E5_BIN:-$FHEDLM_ROOT/gpu/fides_e0/build/fides_vm}"
+fi
 [ -x "$BIN" ] || { echo "FATAL: $BIN missing -- cmake --build gpu/fides_e0/build --target fides_vm"; exit 1; }
 WORK="${TMPDIR:-$FHEDLM_ROOT/scratch/e5tmp}"; mkdir -p "$WORK"
 TAG=${E5_TAG:-linear_L64}
 
 nvidia-smi --query-gpu=timestamp,memory.used,utilization.gpu --format=csv,noheader -i "$GOOD" -l 5 > "results/logs/e5_${JOB_ID:-local}.smi.csv" &
 SMI=$!
-if [ "${E5_SELFTEST:-1}" = 1 ]; then
+if [ "${E5_SELFTEST:-1}" = 1 ] && [ "$NG" = 1 ]; then
   echo "=== selftest ($(date))"
   "$PY" scripts/e5_pass.py selftest --bin "$BIN" --workdir "$WORK" --out "results/e5/selftest_gpu_${JOB_ID:-local}.json"
   rc=$?; echo "=== selftest exit $rc ($(date))"
   [ $rc -eq 0 ] || { kill $SMI; exit 1; }
 fi
 read -ra ARGS <<< "${E5_ARGS:-linear --L 64 --steps 16}"
+STU=()
+[ "$NG" -gt 1 ] && ARGS+=(--gpus "$NG")
 if [ -n "${E5_STUDENT:-}" ]; then
   J="results/plain/$(basename "$E5_STUDENT").json"
   aborted=$("$PY" -c "import json,sys; d=json.load(open(sys.argv[1])); print(' '.join(r['abort'] for r in d.get('log', []) if 'abort' in r))" "$J" 2>/dev/null)
   echo "=== student $E5_STUDENT: checkpoints $(ls "$E5_STUDENT" 2>/dev/null | tr '\n' ' '); aborted stages: ${aborted:-none}"
   if [ -f "$E5_STUDENT/stageC.pt" ] && [[ " $aborted " != *" C "* ]]; then
-    ARGS+=(--ckpt "$E5_STUDENT/stageC.pt" --stage C --exact-norm)
+    STU=(--ckpt "$E5_STUDENT/stageC.pt" --stage C --exact-norm)
   elif [ -f "$E5_STUDENT/stageB.pt" ] && [[ " $aborted " != *" B "* ]]; then
-    ARGS+=(--ckpt "$E5_STUDENT/stageB.pt" --stage B --exact-norm --gelu client); TAG="${TAG}_stageB"
+    STU=(--ckpt "$E5_STUDENT/stageB.pt" --stage B --exact-norm --gelu client); TAG="${TAG}_stageB"
   else
     echo "=== no usable student in $E5_STUDENT -- aborting"; kill $SMI; exit 1
   fi
+  ARGS+=("${STU[@]}")
+fi
+if [ "${E5_CALIB:-0}" = 1 ]; then
+  echo "=== calib ${STU[*]:---ckpt none} ($(date))"
+  CAL=(); for x in "${STU[@]}"; do [ "$x" = "--gelu" ] && break; CAL+=("$x"); done
+  "$PY" scripts/e5_circuit.py calib "${CAL[@]}" --out "results/e5/var_${TAG}.json" || { echo "=== calib failed"; kill $SMI; exit 1; }
+  ARGS+=(--var-file "results/e5/var_${TAG}.json")
 fi
 echo "=== ${E5_SCRIPT:-e5_pass.py} ${ARGS[*]} ($(date))"
 "$PY" "scripts/${E5_SCRIPT:-e5_pass.py}" "${ARGS[0]}" --bin "$BIN" --workdir "$WORK" --out "results/e5/${TAG}.json" "${ARGS[@]:1}"

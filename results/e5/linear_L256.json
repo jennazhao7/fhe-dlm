@@ -1,0 +1,84 @@
+{
+ "args": {
+  "cmd": "linear",
+  "bin": "/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build2/fides_vm",
+  "logn": 17,
+  "cpu": false,
+  "workdir": "/tmp/1747331.1.gpu",
+  "out": "results/e5/linear_L256.json",
+  "gpus": 1,
+  "L": 256,
+  "steps": 8,
+  "seed": 11,
+  "s_in": 32768.0,
+  "embed": "server",
+  "head": "server",
+  "layers": null,
+  "max_passes": 0
+ },
+ "ready": {
+  "ready": true,
+  "ring": 131072,
+  "depth": 2,
+  "D": 1024,
+  "slots": 65536,
+  "gpus": 1,
+  "rot_keys": 3,
+  "boot": 0,
+  "keygen_s": 0.66817,
+  "load_s": 0.387217,
+  "gpu_gb": 1.27429,
+  "host_gb": 0.617489
+ },
+ "setup_s": 12.144457746995613,
+ "rounds_per_pass": 50,
+ "blocks_per_ct_pass": 220,
+ "passes": [
+  {
+   "pass": 0,
+   "n_masked": 256,
+   "wall_s": 636.432818006957,
+   "vm_seconds": {
+    "enc": 63.200266999999975,
+    "matvec": 500.5308289999999,
+    "dec": 67.039837,
+    "free": 0.009393019999999997
+   },
+   "vm_calls": {
+    "enc": 492,
+    "matvec": 200,
+    "dec": 588,
+    "free": 200
+   },
+   "matvec": {
+    "rot_s": 19.96193779999999,
+    "host_fft_s": 50.08424450000001,
+    "upload_s": 19.123590400000012,
+    "mult_s": 410.45283300000006,
+    "pt_mults": 1519780.0,
+    "rots": 81152.0,
+    "skipped": 282852.0
+   },
+   "logit_max_abs_err": 9.5367431640625e-06,
+   "argmax_agree": 1.0,
+   "linear_max_abs_err": {
+    "embed": 7.450580596923828e-09,
+    "qkv": 5.7220458984375e-06,
+    "out": 4.57763671875e-05,
+    "up": 1.52587890625e-05,
+    "down": 1.52587890625e-05,
+    "head": 8.58306884765625e-06
+   },
+   "linear_max_abs_ref": {
+    "embed": 8.442068099975586,
+    "qkv": 18.776165008544922,
+    "out": 96.23303985595703,
+    "up": 33.26299285888672,
+    "down": 30.743831634521484,
+    "head": 13.762228012084961
+   },
+   "cts_up_total": 492,
+   "cts_down_total": 588
+  }
+ ]
+}
