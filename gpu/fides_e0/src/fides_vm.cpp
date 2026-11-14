@@ -144,8 +144,13 @@ struct Vm {
 		if (it != consts.end()) return it->second;
 		std::vector<double> v(SLOTS, c);
 		auto pt = cc->MakeCKKSPackedPlaintext(v, 1, level);
+		if (c != 0.0) {   // bias multipliers differ per matrix: do not keep one ciphertext per (level, kb) on the device
+			scratch_const = cc->Encrypt(keys.publicKey, pt);
+			return scratch_const;
+		}
 		return consts[key] = cc->Encrypt(keys.publicKey, pt);
 	}
+	Ct scratch_const;
 	// FLEXIBLEAUTO leaves a product at deg 2; do the pending rescale so plaintexts
 	// can be encoded at the level the multiplication will really run at.
 	Ct deg1(const Ct& x) { return x->GetNoiseScaleDeg() > 1 ? cc->Rescale(x) : x; }
@@ -306,8 +311,10 @@ int main(int argc, char** argv) {
 	DEPTH = uint32_t(std::atoi(argv[2]));
 	D     = uint32_t(std::atoi(argv[3]));
 	SLOTS = RING / 2;
-	N1    = 1u << (int(std::log2(D)) / 2);
-	N2    = D / N1;
+	// Baby steps per matvec half: sqrt(D) by default. FIDES_VM_N1=16 halves the live baby
+	// ciphertexts (the matvec's memory peak: 4 GB at 14 towers with 32, job 1747579) for 2x giant steps.
+	N1 = std::getenv("FIDES_VM_N1") ? uint32_t(std::atoi(std::getenv("FIDES_VM_N1"))) : 1u << (int(std::log2(D)) / 2);
+	N2 = D / N1;
 	const int ngpu  = std::atoi(argv[4]);
 	const bool boot = std::atoi(argv[6]) != 0;
 	std::vector<int32_t> rots;

@@ -49,7 +49,8 @@ D, DM, HD, NH, VOC = 1024, 768, 64, 12, 50258
 # 7 rotation keys: 1, 32, -D for the matvec; window sums and replication are two-level sums over
 # (1, 8) or (1, 32) and their negatives. Job 1747455 loaded 21 keys (+-2^k) next to the bootstrap
 # keys and ran out of memory on the third bootstrap (22.6 of 24 GB per card).
-ROTS = [1, 8, 32, -1, -8, -32, -D]
+def rot_keys(n1):
+    return sorted({1, 8, n1, HD // 2, -1, -8, -n1, -(HD // 2), -D})      # +-32: rotary
 UN = 64.0        # x/sigma is bootstrapped as u / UN (uncentred: |x|/sigma reaches 35 at layer 0)
 
 
@@ -167,7 +168,7 @@ class PairBE:
         got, ref = self.v.dec(r), self.n.dec(r)
         i = self.v.info(r)
         rec = {"tag": tag, "max_abs_err": float(np.abs(got - ref).max()), "max_abs_ref": float(np.abs(ref).max()),
-               "level": i["level"], "deg": i["deg"]}
+               "level": i["level"], "deg": i["deg"], "gpu_gb": self.v.vm.cmd("mem")["gpu_gb"]}
         self.log.append(rec)
         print("[chk]", json.dumps(rec), flush=True)
 
@@ -344,8 +345,9 @@ class Circuit:
             self.refresh("norm " + tag)                  # x fresh: the norm uses ~17 levels below x
             e0 = np.zeros(D); e0[0] = 1.0
             be.sq("n2", "x"); be.mov("n1", "x")
-            self.winsum("n2", 32, 1, 32, 32)             # sums over the token's 1024 dims, valid at dim 0
-            self.winsum("n1", 32, 1, 32, 32)
+            n1 = cfg.n1
+            self.winsum("n2", n1, 1, D // n1, n1)        # sums over the token's 1024 dims, valid at dim 0
+            self.winsum("n1", n1, 1, D // n1, n1)
             be.mulpt("n2", "n2", e0 * (S * S / (DM * vmax)))
             be.mulpt("n1", "n1", e0 * (S / (DM * math.sqrt(vmax))))
             be.sq("n1", "n1")
@@ -365,15 +367,18 @@ class Circuit:
                 be.mul("t", "g", "r"); be.add("g", "g", "t")
                 be.mul("t", "h", "r"); be.add("h", "h", "t")
             be.mulpt("h", "h", e0 * (2.0 * S / (UN * math.sqrt(vmax))))     # 1/(UN sigma) in x/S units, dim 0 only
-            self.winsum("h", 32, -1, 32, -32)
+            self.winsum("h", n1, -1, D // n1, -n1)
             be.check(tag + " S/(UN sigma)", "h")
             be.mul("u", "x", "h")                        # (x - mean)/sigma / UN once the matrix centres it
             be.free("n1", "n2", "w", "h", "g", "r", "t", "one")
             self.boot_reg("u")
             for _ in range(int(round(math.log2(UN * s)))):
                 be.add("u", "u", "u")
-            if level:
-                be.tolevel("u", "u", level)
+            # Fewer towers for what follows (matvec memory and time scale with them): the attention
+            # half needs 7 levels below u, the FFN half 9; keep 3 spare for the next rescale of x.
+            lv = level or (cfg.depth - (14 if tag.endswith(".up") else 12))
+            if cfg.refresh in ("boot", "boot2") and lv > 0:
+                be.tolevel("u", "u", lv)
             be.free("n1", "n2", "w", "h", "g", "r", "t", "one")
             self.stat["server_norm"] += 1
             return Wp
@@ -681,7 +686,8 @@ def cmd_run(a):
     m, E = build_model(a.ckpt, a.stage, pp.DEV, a.exact_norm)
     P = extract(m, a.L, a.norm == "fixed", a.attn != "client", a.gelu == "poly")
     wd = tempfile.mkdtemp(prefix="e5c_", dir=a.workdir)
-    vm = VM(a.bin, a.logn, a.depth, D, a.gpus, ROTS, a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
+    os.environ["FIDES_VM_N1"] = str(a.n1)
+    vm = VM(a.bin, a.logn, a.depth, D, a.gpus, rot_keys(a.n1), a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
     print("[e5c]", json.dumps(vm.ready), flush=True)
     chk = []
     be = PairBE(VmBE(vm), NumpyBE(vm.slots), chk) if a.debug else VmBE(vm)
@@ -754,6 +760,7 @@ def main():
         s.add_argument("--s-margin", type=float, default=2.0, help="rsqrt norm: x scale per norm = 2^ceil(log2(m max|x|))")
         s.add_argument("--rsqrt-deg", type=int, default=15)
         s.add_argument("--gold-iters", type=int, default=2)
+        s.add_argument("--n1", type=int, default=32, help="matvec baby steps (16 halves its memory; use with the bootstrap keys loaded)")
         s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
         s.add_argument("--attn", choices=("pow", "client", "client-pow"), default=None)
         s.add_argument("--gelu", choices=("poly", "client"), default=None)
