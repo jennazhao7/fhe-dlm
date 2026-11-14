@@ -1,0 +1,36 @@
+[fides_e0] keygen: 5.19019 s, gpu used 0.162964 GB, host peak 1.1272 GB
+[fides_e0] boot_keygen: 25.7035 s, gpu used 0.162964 GB, host peak 19.34 GB
+[fides_e0] load_context: 41.5213 s, gpu used 18.8016 GB, host peak 24.9585 GB
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b689]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54be20]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fdf6a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4f8ce3]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x52103b]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4b0eea]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x48add0]
+[fides_e0] keygen: 5.06327 s, gpu used 0.162964 GB, host peak 1.12772 GB
+[fides_e0] boot_keygen: 46.6305 s, gpu used 0.162964 GB, host peak 34.8995 GB
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b7ee]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54cfdd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fa153]
+/lib64/libgomp.so.1(GOMP_parallel+0x46)[0x15205cc1f576]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4ff6dd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x534d13]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58442a]
+[fides_e0] keygen: 34.9114 s, gpu used 0.162964 GB, host peak 23.6001 GB
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b7ee]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54cc1d]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fa153]
+/lib64/libgomp.so.1(GOMP_parallel+0x46)[0x153681c1b576]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4ff6dd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x534d27]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4a9e24]

@@ -1,0 +1,72 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_plain_probe (1546416)
+queue     : gpu
+started   : Thu Oct 15 01:03:57 PM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Thu Oct 15 13:03:57 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.91.07              Driver Version: 595.91.07      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:D8:00.0 Off |                    0 |
+| N/A   57C    P8             17W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+=== ranges (Thu Oct 15 01:03:57 PM EDT 2026)
+/groups/tjung/jzhao7/conda-envs/fhedlm/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Using the latest cached version of the dataset since Salesforce/wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-103-raw-v1' at /groups/tjung/jzhao7/fhe-dlm/hf-cache/datasets/Salesforce___wikitext/wikitext-103-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Oct 15 12:35:47 2026).
+Token indices sequence length is longer than the specified maximum sequence length for this model (247289 > 1024). Running this sequence through the model will result in indexing errors
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:411: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(dtype=self.precision):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:139: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:303: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+[ranges] mask 0.1: max|resid| 22205.1  max|gelu_in| 124.0
+[ranges] mask 0.3: max|resid| 22828.0  max|gelu_in| 128.4
+[ranges] mask 0.5: max|resid| 23411.7  max|gelu_in| 131.4
+[ranges] mask 0.7: max|resid| 24041.5  max|gelu_in| 134.9
+[ranges] mask 0.9: max|resid| 23455.5  max|gelu_in| 131.9
+=== ranges exit 0 (Thu Oct 15 01:05:43 PM EDT 2026)
+=== noise (Thu Oct 15 01:05:43 PM EDT 2026)
+/groups/tjung/jzhao7/conda-envs/fhedlm/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Using the latest cached version of the dataset since Salesforce/wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-103-raw-v1' at /groups/tjung/jzhao7/fhe-dlm/hf-cache/datasets/Salesforce___wikitext/wikitext-103-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Oct 15 12:35:47 2026).
+Token indices sequence length is longer than the specified maximum sequence length for this model (247289 > 1024). Running this sequence through the model will result in indexing errors
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:411: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(dtype=self.precision):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:139: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:303: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+[noise] {"bits": null, "nll_mask0.15": 2.2763348620450947, "nll_mask0.5": 3.938205157097805, "nll_mask0.9": 7.146295625678173, "gen_ppl_gpt2_large": 90.47605100713561, "gen_unigram_entropy": 4.576275818049908, "seconds": 53.8774619102478}
+[noise] {"bits": 16, "nll_mask0.15": 2.2848395841574365, "nll_mask0.5": 3.9566361614498713, "nll_mask0.9": 7.156068138372724, "seconds": 6.088332891464233}
+[noise] {"bits": 12, "nll_mask0.15": 6.7579001681170885, "nll_mask0.5": 10.29647462763634, "nll_mask0.9": 11.023792150041539, "seconds": 6.085182189941406}
+[noise] {"bits": 10, "nll_mask0.15": 15.798147324960443, "nll_mask0.5": 20.910279828369763, "nll_mask0.9": 20.677694572072834, "gen_ppl_gpt2_large": 152491.69818733906, "gen_unigram_entropy": 5.043450981378555, "seconds": 43.333927392959595}
+[noise] {"bits": 9, "nll_mask0.15": 20.664396546182754, "nll_mask0.5": 27.289318996965147, "nll_mask0.9": 26.65251528008545, "gen_ppl_gpt2_large": 395411.92350775946, "gen_unigram_entropy": 5.138248920440674, "seconds": 43.9107563495636}
+[noise] {"bits": 8, "nll_mask0.15": 21.70884800237342, "nll_mask0.5": 32.417706624950185, "nll_mask0.9": 32.119964697916316, "gen_ppl_gpt2_large": 415866.94476413657, "gen_unigram_entropy": 5.364306718111038, "seconds": 43.94342350959778}
+[noise] {"bits": 7, "nll_mask0.15": 35.769005537974685, "nll_mask0.5": 35.54570771129028, "nll_mask0.9": 35.47404279589536, "gen_ppl_gpt2_large": 281403.86187645915, "gen_unigram_entropy": 5.460566133260727, "seconds": 43.94419765472412}
+[noise] {"bits": 6, "nll_mask0.15": 41.53724307753165, "nll_mask0.5": 41.528935779482545, "nll_mask0.9": 41.66147590578482, "gen_ppl_gpt2_large": 222935.74353956155, "gen_unigram_entropy": 5.465543627738953, "seconds": 44.03119373321533}
+[noise] {"bits": 5, "nll_mask0.15": 45.33201522943038, "nll_mask0.5": 45.56980669085865, "nll_mask0.9": 45.575872723881865, "seconds": 6.2835001945495605}
+=== noise exit 0 (Thu Oct 15 01:12:04 PM EDT 2026)
+Loading CRC_default/1.1

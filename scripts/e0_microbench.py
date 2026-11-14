@@ -133,7 +133,10 @@ def bench_ring(ring):
         dt = time.perf_counter() - t0
         dec = cc.Decrypt(out, keys.secretKey); dec.SetLength(N_TEST * 16)
         err = max(abs(v - gelu(u)) for v, u in zip(dec.GetRealPackedValue(), xs))
-        g = {"degree": deg, "seconds": dt, "depth_used": int(out.GetLevel() - ct_g.GetLevel()),
+        # depth incl. the pending rescale (FLEXIBLEAUTO is lazy); without it
+        # deg 31 read 6 levels instead of the 7 it really costs.
+        g = {"degree": deg, "seconds": dt,
+             "depth_used": int(out.GetLevel() + out.GetNoiseScaleDeg() - 1 - ct_g.GetLevel()),
              "max_abs_error": err}
         r["gelu"].append(g)
         print(f"[e0] N=2^{ring.bit_length() - 1} GELU deg {deg}: {dt:.2f}s "

@@ -1,0 +1,114 @@
+{
+  "ring_dim": 131072,
+  "scaling_mod": 59,
+  "first_mod": 60,
+  "budget": [
+    4,
+    4
+  ],
+  "depth": 43,
+  "iterations": [
+    1,
+    2,
+    3
+  ],
+  "security": "HEStd_128_classic",
+  "secret": "UNIFORM_TERNARY",
+  "scaling_technique": "FLEXIBLEAUTO",
+  "runs": [
+    {
+      "ring_dim": 131072,
+      "slots": 4096,
+      "depth": 43,
+      "bootstrap_depth": 22,
+      "budget": [
+        4,
+        4
+      ],
+      "scaling_mod": 59,
+      "first_mod": 60,
+      "setup_seconds": 16.02274227142334,
+      "iterations": {
+        "1": {
+          "max_err_bits": 11.803931954873855,
+          "rms_err_bits": 13.507458679222147,
+          "max_abs_err": 0.0002796806464684387,
+          "rms_abs_err": 8.587164298764519e-05,
+          "levels_left_raw": 22,
+          "usable_levels": 21,
+          "seconds": 40.41259217262268
+        },
+        "2": {
+          "max_err_bits": 22.559599233757016,
+          "rms_err_bits": 24.515508459434052,
+          "max_abs_err": 1.6176476846929688e-07,
+          "rms_abs_err": 4.169621128891829e-08,
+          "levels_left_raw": 21,
+          "usable_levels": 20,
+          "seconds": 79.12991261482239
+        },
+        "3": {
+          "error": "RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/scheme/ckksrns/ckksrns-fhe.cpp:l.451:EvalBootstrap(): CKKS Bootstrapping only supported for 1 or 2 iterations."
+        }
+      },
+      "precision_arg": 11,
+      "manual_2pass": {
+        "max_err_bits": 22.54112781354992,
+        "rms_err_bits": 24.48912515495029,
+        "max_abs_err": 1.6384922518764e-07,
+        "rms_abs_err": 4.24657462941544e-08,
+        "levels_left_raw": 21,
+        "usable_levels": 20,
+        "seconds": 77.40810418128967
+      },
+      "peak_rss_gb": 32.97489929199219
+    },
+    {
+      "ring_dim": 131072,
+      "slots": 65536,
+      "depth": 43,
+      "bootstrap_depth": 22,
+      "budget": [
+        4,
+        4
+      ],
+      "scaling_mod": 59,
+      "first_mod": 60,
+      "setup_seconds": 18.921000957489014,
+      "iterations": {
+        "1": {
+          "max_err_bits": 8.494749751602756,
+          "rms_err_bits": 10.960157263196923,
+          "max_abs_err": 0.0027722061273984244,
+          "rms_abs_err": 0.0005019539851716412,
+          "levels_left_raw": 22,
+          "usable_levels": 21,
+          "seconds": 65.71572303771973
+        },
+        "2": {
+          "max_err_bits": 16.518726061869675,
+          "rms_err_bits": 18.958006130964307,
+          "max_abs_err": 1.0650450180560433e-05,
+          "rms_abs_err": 1.963683525557212e-06,
+          "levels_left_raw": 21,
+          "usable_levels": 20,
+          "seconds": 132.3457465171814
+        },
+        "3": {
+          "error": "RuntimeError: /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/scheme/ckksrns/ckksrns-fhe.cpp:l.451:EvalBootstrap(): CKKS Bootstrapping only supported for 1 or 2 iterations."
+        }
+      },
+      "precision_arg": 8,
+      "manual_2pass": {
+        "max_err_bits": 16.401183535956392,
+        "rms_err_bits": 18.958292902618673,
+        "max_abs_err": 1.155451687756548e-05,
+        "rms_abs_err": 1.963293233227181e-06,
+        "levels_left_raw": 21,
+        "usable_levels": 20,
+        "seconds": 134.3717164993286
+      },
+      "peak_rss_gb": 39.79458236694336
+    }
+  ]
+}

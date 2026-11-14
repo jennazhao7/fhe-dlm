@@ -1,0 +1,719 @@
+nvcc Build cuda_13.2.r13.2/compiler.37668154_0 at /software/c/cuda/13.2.1; g++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14); cmake: none
+cmake < 3.25: installing a recent one into the fhedlm env
+-- The C compiler identification is GNU 11.5.0
+-- The CXX compiler identification is GNU 11.5.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Building in Release mode
+-- BUILD_UNITTESTS:    OFF
+-- BUILD_EXAMPLES:     OFF
+-- BUILD_BENCHMARKS:   OFF
+-- BUILD_EXTRAS:       OFF
+-- BUILD_STATIC:       ON
+-- BUILD_SHARED:       ON
+-- GIT_SUBMOD_AUTO:    ON
+-- WITH_BE2:           OFF
+-- WITH_BE4:           OFF
+-- WITH_NTL:           OFF
+-- WITH_TCM:           OFF
+-- WITH_OPENMP:        ON
+-- NATIVE_SIZE:        64
+-- CKKS_M_FACTOR:      1
+-- WITH_NATIVEOPT:     OFF
+-- WITH_COVTEST:       OFF
+-- WITH_NOISE_DEBUG:   OFF
+-- WITH_REDUCED_NOISE: OFF
+-- USE_MACPORTS:       OFF
+-- BUILTIN_INFO_AVAILABLE is defined
+***** INSTALL IS AT /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides; to change, run cmake with -DCMAKE_INSTALL_PREFIX=/your/path
+-- Architecture is x86_64
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of __int128
+-- Check size of __int128 - done
+-- Check size of uint64_t
+-- Check size of uint64_t - done
+-- NATIVEINT is set to 64
+-- MATHBACKEND is set to 4
+-- MATHBACKEND set to 4. Setting WITH_BE4 to ON
+-- Found OpenMP_C: -fopenmp (found version "4.5")
+-- Found OpenMP_CXX: -fopenmp (found version "4.5")
+-- Found OpenMP: TRUE (found version "4.5")
+-- Found Git: /usr/bin/git (found version "2.52.0")
+-- Submodule update
+Submodule 'third-party/cereal' (https://github.com/openfheorg/cereal.git) registered for path 'third-party/cereal'
+Submodule 'third-party/google-benchmark' (https://github.com/google/benchmark.git) registered for path 'third-party/google-benchmark'
+Submodule 'third-party/google-test' (https://github.com/google/googletest.git) registered for path 'third-party/google-test'
+Submodule 'third-party/gperftools' (https://github.com/gperftools/gperftools.git) registered for path 'third-party/gperftools'
+Cloning into '/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/deps/openfhe-src/third-party/cereal'...
+Cloning into '/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/deps/openfhe-src/third-party/google-benchmark'...
+Cloning into '/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/deps/openfhe-src/third-party/google-test'...
+Cloning into '/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/deps/openfhe-src/third-party/gperftools'...
+Submodule path 'third-party/cereal': checked out '984e3f194862b17916536b5fade40cba6e47a6fe'
+Submodule path 'third-party/google-benchmark': checked out 'eddb0241389718a23a42db6af5f0164b6e0139af'
+Submodule path 'third-party/google-test': checked out '52eb8108c5bdec04579160ae17225d66034bd723'
+Submodule path 'third-party/gperftools': checked out '83edb60836d87cf1b406e8846b9059c03031e8f5'
+-- Configuring done (36.0s)
+-- Generating done (1.9s)
+-- Build files have been written to: /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/deps/openfhe-src/build
+-- Copied demoData files
+[  0%] Built target third-party
+[  3%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/lattice/lattice.cpp.o
+[  3%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/lattice/constants-lattice-impl.cpp.o
+[  5%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/lattice/trapdoor-dcrtpoly.cpp.o
+[  5%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/chebyshev.cpp.o
+[  5%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/lattice/stdlatticeparms.cpp.o
+[  5%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/discretegaussiangeneratorgeneric.cpp.o
+[  7%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/lattice/trapdoor-poly.cpp.o
+[  7%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/dftransform.cpp.o
+[  8%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/distributiongenerator.cpp.o
+[ 10%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintdyn/mubintvecdyn.cpp.o
+[ 10%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintdyn/be4-math-impl.cpp.o
+[ 11%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintdyn/ubintdyn.cpp.o
+[ 12%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintfxd/be2-math-impl.cpp.o
+[ 13%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintfxd/mubintvecfxd.cpp.o
+[ 14%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintfxd/ubintfxd.cpp.o
+[ 14%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintntl/be6-math-impl.cpp.o
+[ 15%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintntl/mubintvecntl.cpp.o
+[ 16%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/bigintntl/ubintntl.cpp.o
+[ 17%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/intnat/benative-math-impl.cpp.o
+[ 18%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hal/intnat/mubintvecnat.cpp.o
+[ 19%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/hermite.cpp.o
+[ 20%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/matrix.cpp.o
+[ 21%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/blockAllocator/blockAllocator.cpp.o
+[ 21%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/math/nbtheory2.cpp.o
+[ 22%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/blockAllocator/xallocator.cpp.o
+[ 23%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/debug.cpp.o
+[ 24%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/demangle.cpp.o
+[ 26%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/hashutil.cpp.o
+[ 26%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/get-call-stack.cpp.o
+[ 27%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/inttypes.cpp.o
+[ 28%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/memory.cpp.o
+[ 28%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/openfhebase64.cpp.o
+[ 29%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/parallel.cpp.o
+[ 30%] Building C object src/core/CMakeFiles/coreobj.dir/lib/utils/prng/blake2b-ref.c.o
+[ 31%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/prng/blake2engine.cpp.o
+[ 32%] Building C object src/core/CMakeFiles/coreobj.dir/lib/utils/prng/blake2xb-ref.c.o
+[ 33%] Building CXX object src/core/CMakeFiles/coreobj.dir/lib/utils/utilities.cpp.o
+[ 33%] Built target coreobj
+[ 35%] Linking CXX shared library ../../lib/libOPENFHEcore.so
+[ 35%] Linking CXX static library ../../lib/libOPENFHEcore_static.a
+[ 35%] Built target OPENFHEcore_static
+[ 35%] Built target OPENFHEcore
+[ 36%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/binfhe-base-scheme.cpp.o
+[ 39%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/rgsw-acc-cggi.cpp.o
+[ 39%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/lwe-pke.cpp.o
+[ 39%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/binfhecontext.cpp.o
+[ 41%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/rgsw-acc.cpp.o
+[ 41%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/rgsw-acc-dm.cpp.o
+[ 42%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/rgsw-acc-lmkcdey.cpp.o
+[ 42%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/binfhe-constants-impl.cpp.o
+[ 43%] Building CXX object src/binfhe/CMakeFiles/binfheobj.dir/lib/rgsw-cryptoparameters.cpp.o
+[ 43%] Built target binfheobj
+[ 44%] Linking CXX static library ../../lib/libOPENFHEbinfhe_static.a
+[ 44%] Linking CXX shared library ../../lib/libOPENFHEbinfhe.so
+[ 44%] Built target OPENFHEbinfhe_static
+[ 44%] Built target OPENFHEbinfhe
+[ 45%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/ciphertext-impl.cpp.o
+[ 45%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/cryptocontext.cpp.o
+[ 46%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/cryptoobject-impl.cpp.o
+[ 47%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/encoding/ckkspackedencoding.cpp.o
+[ 52%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/cryptocontextfactory.cpp.o
+[ 52%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/encoding/coefpackedencoding.cpp.o
+[ 52%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/encoding/encodingparams.cpp.o
+[ 52%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/constants-impl.cpp.o
+[ 53%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/encoding/packedencoding.cpp.o
+[ 54%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/encoding/stringencoding.cpp.o
+[ 54%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/globals-impl.cpp.o
+[ 55%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/key/evalkey.cpp.o
+[ 56%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/key/evalkeyrelin.cpp.o
+[ 57%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/key/privatekey.cpp.o
+[ 58%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/key/publickey.cpp.o
+[ 59%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/keyswitch/keyswitch-base.cpp.o
+[ 60%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/keyswitch/keyswitch-bv.cpp.o
+[ 61%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/keyswitch/keyswitch-hybrid.cpp.o
+[ 61%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-cryptoparameters.cpp.o
+[ 62%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-leveledshe.cpp.o
+[ 64%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-multiparty.cpp.o
+[ 64%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-parametergeneration.cpp.o
+[ 65%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-pke.cpp.o
+[ 66%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bfvrns/bfvrns-scheme.cpp.o
+[ 67%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-cryptoparameters.cpp.o
+[ 68%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-leveledshe.cpp.o
+[ 68%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-multiparty.cpp.o
+[ 69%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-parametergeneration.cpp.o
+[ 71%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-scheme.cpp.o
+[ 71%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/bgvrns/bgvrns-pke.cpp.o
+[ 72%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-advancedshe.cpp.o
+[ 73%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-cryptoparameters.cpp.o
+[ 74%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-fhe.cpp.o
+[ 75%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-leveledshe.cpp.o
+[ 75%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-multiparty.cpp.o
+[ 76%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-parametergeneration.cpp.o
+[ 77%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-pke.cpp.o
+[ 78%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-scheme.cpp.o
+[ 79%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-schemeswitching.cpp.o
+[ 80%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/ckksrns/ckksrns-utils.cpp.o
+[ 81%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/gen-cryptocontext-params-impl.cpp.o
+[ 82%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/gen-cryptocontext-params-validation.cpp.o
+[ 82%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/scheme-id-impl.cpp.o
+[ 83%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/scheme/scheme-swch-params.cpp.o
+[ 84%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-advancedshe.cpp.o
+[ 86%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-fhe.cpp.o
+[ 86%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-cryptoparameters.cpp.o
+[ 87%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-leveledshe.cpp.o
+[ 88%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-multiparty.cpp.o
+[ 89%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-parametergeneration.cpp.o
+[ 89%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-pke.cpp.o
+[ 90%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-pre.cpp.o
+[ 91%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/base-scheme.cpp.o
+[ 92%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemebase/rlwe-cryptoparameters-impl.cpp.o
+[ 93%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemelet/rlwe-mp.cpp.o
+[ 94%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemerns/rns-cryptoparameters.cpp.o
+[ 96%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemerns/rns-multiparty.cpp.o
+[ 96%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemerns/rns-leveledshe.cpp.o
+[ 97%] Building CXX object src/pke/CMakeFiles/pkeobj.dir/lib/schemerns/rns-pke.cpp.o
+[ 97%] Built target pkeobj
+[ 98%] Linking CXX static library ../../lib/libOPENFHEpke_static.a
+[100%] Linking CXX shared library ../../lib/libOPENFHEpke.so
+[100%] Built target OPENFHEpke
+[100%] Built target OPENFHEpke_static
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/config_core.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/access.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/archives/adapters.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/archives/binary.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/archives/json.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/archives/portable_binary.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/archives/xml.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/cereal.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/helpers.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/polymorphic_impl.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/polymorphic_impl_fwd.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/static_object.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/traits.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/details/util.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/LICENSE
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/base64.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/LICENSE
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/allocators.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/cursorstreamwrapper.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/document.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/encodedstream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/encodings.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/error/en.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/error/error.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/filereadstream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/filewritestream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/biginteger.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/diyfp.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/dtoa.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/ieee754.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/itoa.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/meta.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/pow10.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/regex.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/stack.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/strfunc.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/strtod.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/internal/swap.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/istreamwrapper.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/memorybuffer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/memorystream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/msinttypes/LICENSE
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/msinttypes/inttypes.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/msinttypes/stdint.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/ostreamwrapper.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/pointer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/prettywriter.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/rapidjson.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/reader.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/schema.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/stream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/stringbuffer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidjson/writer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/license.txt
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/manual.html
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/rapidxml.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/rapidxml_iterators.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/rapidxml_print.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/external/rapidxml/rapidxml_utils.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/macros.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/specialize.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/array.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/atomic.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/base_class.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/bitset.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/boost_variant.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/chrono.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/common.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/complex.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/concepts/pair_associative_container.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/deque.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/forward_list.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/functional.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/list.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/map.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/memory.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/optional.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/polymorphic.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/queue.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/set.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/stack.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/string.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/tuple.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/unordered_map.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/unordered_set.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/utility.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/valarray.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/variant.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/types/vector.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/cereal/version.hpp
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEcore.so.1.5.1
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEcore_static.a
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/constants-lattice.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/dgsampling-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/dgsampling.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/field2n-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/field2n.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/dcrtpoly-interface.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/dcrtpoly-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/dcrtpoly.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/ildcrtparams.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/ilparams.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/poly-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/default/poly.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/elemparams.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/lat-backend.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/hal/poly-interface.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/ilelement.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/lat-hal.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/matrix-lattice-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/stdlatticeparms.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/trapdoor-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/trapdoor.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/lattice/trapdoorparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/SAMPLING_README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/binaryuniformgenerator-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/binaryuniformgenerator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/chebyshev.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/dftransform.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/discretegaussiangenerator-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/discretegaussiangenerator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/discretegaussiangeneratorgeneric.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/discreteuniformgenerator-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/discreteuniformgenerator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/distrgen.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/distributiongenerator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/basicint.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintbackend.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintdyn/backenddyn.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintdyn/mubintvecdyn.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintdyn/transformdyn-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintdyn/transformdyn.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintdyn/ubintdyn.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintfxd/backendfxd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintfxd/mubintvecfxd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintfxd/transformfxd-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintfxd/transformfxd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintfxd/ubintfxd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintntl/backendntl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintntl/mubintvecntl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintntl/transformntl-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintntl/transformntl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/bigintntl/ubintntl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/integer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/intnat/mubintvecnat.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/intnat/transformnat-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/intnat/transformnat.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/intnat/ubintnat.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/nativeintbackend.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/transform.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hal/vector.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/hermite.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/math-hal.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/math_backends.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/matrix-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/matrix.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/matrixstrassen-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/matrixstrassen.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/nbtheory-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/nbtheory.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/ternaryuniformgenerator-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/math/ternaryuniformgenerator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/openfhecore.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/testdefs.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/caller_info.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/debug.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/demangle.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/exception.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/get-call-stack.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/hashutil.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/inttypes.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/memory.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/openfhebase64.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/parallel.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/serial.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/CPPLINT.cfg
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/blake2-impl.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/blake2.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/blake2engine.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/prng/prng.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/serializable.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/sertype.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/type_name.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/utilities-int.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/utilities.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/blockAllocator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/stl_allocator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xallocator.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xlist.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xmap.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xqueue.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xset.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xsstream.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xstring.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/utils/blockAllocator/xvector.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/core/version.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEpke.so.1.5.1
+-- Set non-toolchain portion of runtime path of "/groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEpke.so.1.5.1" to ""
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEpke_static.a
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/ciphertext-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/ciphertext-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/ciphertext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/constants-defs.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/constants.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/cryptocontext-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/cryptocontext-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/cryptocontext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/cryptocontextfactory.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/cryptoobject.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/ckkspackedencoding.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/coefpackedencoding.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/encodingparams.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/encodings.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/packedencoding.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/plaintext-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/plaintext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/plaintextfactory.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/encoding/stringencoding.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/gen-cryptocontext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/globals.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/evalkey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/evalkey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/evalkeyrelin-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/evalkeyrelin.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/key-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/key.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/keypair.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/privatekey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/privatekey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/publickey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/key/publickey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/keyswitch/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/keyswitch/keyswitch-base.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/keyswitch/keyswitch-bv.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/keyswitch/keyswitch-hybrid.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/keyswitch/keyswitch-rns.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/metadata-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/metadata.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/openfhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-advancedshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-fhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-leveledshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-multiparty.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-parametergeneration.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-pre.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/bfvrns-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/gen-cryptocontext-bfvrns-internal.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/gen-cryptocontext-bfvrns-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bfvrns/gen-cryptocontext-bfvrns.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-advancedshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-fhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-leveledshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-multiparty.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-parametergeneration.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-pre.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/bgvrns-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/gen-cryptocontext-bgvrns-internal.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/gen-cryptocontext-bgvrns-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/bgvrns/gen-cryptocontext-bgvrns.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-advancedshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-fhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-leveledshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-multiparty.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-parametergeneration.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-pre.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-schemeswitching.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/ckksrns-utils.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/gen-cryptocontext-ckksrns-internal.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/gen-cryptocontext-ckksrns-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/ckksrns/gen-cryptocontext-ckksrns.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/gen-cryptocontext-params-defaults.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/gen-cryptocontext-params-validation.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/gen-cryptocontext-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/scheme-id.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/scheme-swch-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/scheme/scheme-utils.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-advancedshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-fhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-leveledshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-multiparty.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-parametergeneration.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-pre.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/base-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/decrypt-result.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemebase/rlwe-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemelet/rlwe-mp.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-advancedshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-fhe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-leveledshe.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-modulus-limits.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-multiparty.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-parametergeneration.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-pre.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/schemerns/rns-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/BaseTestCase.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestCCParams.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestCryptoContext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestException.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestMetadataTest.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestMetadataTestSer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestReadCSVData.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestSer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/UnitTestUtils.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/pke/unittest/utils/schemeswitching-data-serializer.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEbinfhe.so.1.5.1
+-- Set non-toolchain portion of runtime path of "/groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEbinfhe.so.1.5.1" to ""
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/libOPENFHEbinfhe_static.a
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/README.md
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/binfhe-base-params.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/binfhe-base-scheme.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/binfhe-constants.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/binfhecontext-ser.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/binfhecontext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-ciphertext-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-ciphertext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-keypair-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-keypair.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-keyswitchkey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-keyswitchkey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-pke.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-privatekey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-privatekey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-publickey-fwd.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/lwe-publickey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-acc-cggi.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-acc-dm.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-acc-lmkcdey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-acc.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-acckey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-cryptoparameters.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rgsw-evalkey.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe/binfhe/rlwe-ciphertext.h
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/OpenFHE/OpenFHEConfig.cmake
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/OpenFHE/OpenFHEConfigVersion.cmake
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/OpenFHE/OpenFHETargets.cmake
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib/OpenFHE/OpenFHETargets-release.cmake
+-- FIDESlib install path at: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib
+-- OpenFHE install path at: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides
+CMake Warning at cmake/ClangFormat.cmake:41 (message):
+  clang-format not found! The 'format' target will not be available.
+Call Stack (most recent call first):
+  CMakeLists.txt:92 (include)
+
+
+-- CUDA found: 13.2.78
+-- CUDA include path: /software/c/cuda/13.2.1/targets/x86_64-linux/include;/software/c/cuda/13.2.1/targets/x86_64-linux/include/cccl
+-- NCCL not found: building without NCCL support
+-- FOUND PACKAGE OpenFHE
+-- OpenFHE Version: 1.5.1
+-- OpenFHE installed as shared libraries: ON
+-- OpenFHE include files location: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/include/openfhe
+-- OpenFHE lib files location: /groups/tjung/jzhao7/fhe-dlm/third_party/openfhe-fides/lib
+-- OpenFHE Native Backend size: 64
+-- IPO / LTO enabled
+-- Configuring done (12.2s)
+-- Generating done (0.6s)
+-- Build files have been written to: /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/build
+[  2%] Linking CUDA device code CMakeFiles/gpu-test.dir/cmake_device_link.o
+[  4%] Linking CUDA executable gpu-test
+[  6%] Built target gpu-test
+[ 10%] Building CXX object CMakeFiles/fideslib.dir/src/CKKS/RNSPoly.cpp.o
+[ 10%] Building CXX object CMakeFiles/fideslib.dir/src/CKKS/RNSPolyBatch.cpp.o
+[ 13%] Building CXX object CMakeFiles/fideslib.dir/src/CKKS/Ciphertext.cpp.o
+[ 21%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/Bootstrap.cu.o
+[ 21%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/AccumulateBroadcast.cu.o
+[ 21%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/ApproxModEval.cu.o
+[ 23%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/CoeffsToSlots.cu.o
+[ 23%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/Context.cu.o
+[ 26%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/KeySwitchingKey.cu.o
+[ 28%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/Limb.cu.o
+[ 30%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/LimbPartition.cu.o
+[ 32%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/LimbPartitionBatch.cu.o
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/Context.cu: In member function ‘std::vector<long unsigned int> FIDESlib::CKKS::ContextData::ElemForEvalMult(int, double, int)’:
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/Context.cu:384:25: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<double>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  384 |                 if (level < param.ScalingFactorReal.size()) {
+      |                   ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[ 34%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/LimbPartitionMGPU.cu.o
+[ 36%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/Parameters.cu.o
+[ 39%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/LinearTransform.cu.o
+[ 41%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/Plaintext.cu.o
+[ 43%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/openfhe-interface/ParameterSwitch.cu.o
+[ 45%] Building CUDA object CMakeFiles/fideslib.dir/src/CKKS/openfhe-interface/RawCiphertext.cu.o
+[ 47%] Building CUDA object CMakeFiles/fideslib.dir/src/ConstantsGPU.cu.o
+[ 50%] Building CUDA object CMakeFiles/fideslib.dir/src/CudaUtils.cu.o
+[ 52%] Building CUDA object CMakeFiles/fideslib.dir/src/PolyApprox.cu.o
+[ 54%] Building CXX object CMakeFiles/fideslib.dir/api/CCParams.cpp.o
+[ 56%] Building CXX object CMakeFiles/fideslib.dir/api/Ciphertext.cpp.o
+[ 58%] Building CXX object CMakeFiles/fideslib.dir/api/CryptoContext.cpp.o
+[ 60%] Building CXX object CMakeFiles/fideslib.dir/api/GenCryptoContext.cpp.o
+[ 63%] Building CXX object CMakeFiles/fideslib.dir/api/Plaintext.cpp.o
+[ 65%] Building CXX object CMakeFiles/fideslib.dir/api/Serialize.cpp.o
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu(826): warning #177-D: variable "MAKE_CTS_LT_FRIENDLY" was declared but never referenced
+  constexpr bool MAKE_CTS_LT_FRIENDLY = true;
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu(827): warning #177-D: variable "MAKE_STC_LT_FRIENDLY" was declared but never referenced
+  constexpr bool MAKE_STC_LT_FRIENDLY = true;
+                 ^
+
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu: In function ‘FIDESlib::CKKS::RawParams FIDESlib::CKKS::GetRawParams(lbcrypto::CryptoContext<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<long unsigned int> > > >, FIDESlib::BOOT_CONFIG)’:
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu:299:40: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<std::shared_ptr<lbcrypto::ILParamsImpl<intnat::NativeIntegerT<long unsigned int> > > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  299 |                         for (int k = 1; k <= cryptoParams->GetElementParams()->GetParams().size(); ++k) {
+      |                                      ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu:304:107: warning: comparison of integer expressions of different signedness: ‘std::vector<std::shared_ptr<lbcrypto::ILParamsImpl<intnat::NativeIntegerT<long unsigned int> > > >::size_type’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+  304 |                                 while (curr_l > (k - (cryptoParams->GetElementParams()->GetParams().size() == k && lbcrypto::FLEXIBLEAUTOEXT == cryptoParams->GetScalingTechnique()))) {
+      |                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu:336:42: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<std::shared_ptr<lbcrypto::ILParamsImpl<intnat::NativeIntegerT<long unsigned int> > > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  336 |                                         if (k < cryptoParams->GetElementParams()->GetParams().size()) {
+      |                                         ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu: In function ‘std::vector<int> FIDESlib::CKKS::GetBootstrapIndexes(lbcrypto::CryptoContext<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<long unsigned int> > > >, int, FIDESlib::CKKS::BootstrapPrecomputation*)’:
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu:994:40: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<FIDESlib::CKKS::BootstrapPrecomputation::LTstep>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  994 |                         for (int i = 0; i < result.CtS.size(); i++) {
+      |                                      ~~^~~~~~~~~~~~~~~~~~~~~
+/groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CKKS/openfhe-interface/RawCiphertext.cu:1005:40: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<FIDESlib::CKKS::BootstrapPrecomputation::LTstep>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+ 1005 |                         for (int i = 0; i < result.StC.size(); i++) {
+      |                                      ~~^~~~~~~~~~~~~~~~~~~~~
+[ 67%] Linking CUDA device code CMakeFiles/fideslib.dir/cmake_device_link.o
+[ 69%] Linking CXX static library fideslib.a
+[ 93%] Built target fideslib
+[ 95%] Linking CUDA device code CMakeFiles/dummy.dir/cmake_device_link.o
+nvlink warning : Ignoring -dlto option because no LTO objects found
+[ 97%] Linking CXX executable dummy
+[100%] Built target dummy
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/lib64/fideslib.a
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CCParams.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Ciphertext.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CryptoContext.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Definitions.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/GenCryptoContext.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/KeyPair.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Plaintext.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/PrivateKey.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/PublicKey.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Serialize.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/fideslib.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/share/fideslib/cmake/fideslibTargets.cmake
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/share/fideslib/cmake/fideslibTargets-release.cmake
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/share/fideslib/cmake/fideslibConfig.cmake
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/share/fideslib/cmake/fideslibConfigVersion.cmake
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/AddSub.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/AccumulateBroadcast.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/ApproxModEval.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Bootstrap.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/BootstrapPrecomputation.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Ciphertext.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/CoeffsToSlots.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Context.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Conv.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/ElemenwiseBatchKernels.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/KeySwitchingKey.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Limb.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/LimbPartition.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/LinearTransform.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Parameters.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Plaintext.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/RNSPoly.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/Rescale.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/forwardDefs.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/openfhe-interface
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/openfhe-interface/ParameterSwitch.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CKKS/openfhe-interface/RawCiphertext.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/ConstantsGPU.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/CudaUtils.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/LimbUtils.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/LogUtil.hpp
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Math.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/ModMult.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/NTT.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/NTTfusions.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/NTThelper.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/PeerUtils.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/PolyApprox.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/Rotation.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/VectorGPU.cuh
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/ntt_types.inc
+-- Up-to-date: /groups/tjung/jzhao7/fhe-dlm/third_party/fideslib/include/fideslib/parallel_for.hpp
+-- Using FIDESlib.
+-- Configuring done (2.4s)
+-- Generating done (0.2s)
+-- Build files have been written to: /groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build
+[ 50%] Linking CXX executable fides_e0
+lto-wrapper: warning: using serial compilation of 21 LTRANS jobs
+[100%] Built target fides_e0
+=== built: /groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0
+BUILD_EXIT=0
+=== qstat
+=== qsub
+Your job 1519057 ("fhedlm_gpu_fides") has been submitted
+QSUB_EXIT=0

@@ -1,0 +1,29 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : d24cepyc052.crc.nd.edu
+job       : fhedlm_iterboot (1629894)
+queue     : long
+started   : Mon Oct 26 09:59:01 AM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+cluster/job_common.sh: line 30: nvidia-smi: command not found
+WARNING: nvidia-smi failed -- did this land on a GPU node?
+==============================================================
+[env] python 3.10.21  torch 2.5.1+cu121  cuda=False
+[env] WARNING: no CUDA device -- did this land on a GPU node?
+[env] FHEDLM_ROOT: /groups/tjung/jzhao7/fhe-dlm
+[env] HF_HOME:     /groups/tjung/jzhao7/fhe-dlm/hf-cache (offline=1)
+[env] free on /groups/tjung/jzhao7/fhe-dlm: 4644 GB
+[iterboot] slots=4096: keys ready in 16s
+[iterboot] slots=4096 k=1:   40.2s  max 11.77 bits  rms 13.48 bits  usable levels 21
+[iterboot] slots=4096 k=2:   77.1s  max 22.39 bits  rms 24.48 bits  usable levels 20
+[iterboot] slots=4096 k=3: FAILED /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/scheme/ckksrns/ckksrns-fhe.cpp:l.451:EvalBootstrap(): CKKS Bootstrapping only supported for 1 or 2 iterations.
+[iterboot] slots=65536: keys ready in 19s
+[iterboot] slots=65536 k=1:   62.7s  max 8.41 bits  rms 10.96 bits  usable levels 21
+[iterboot] slots=65536 k=2:  124.3s  max 16.46 bits  rms 18.96 bits  usable levels 20
+[iterboot] slots=65536 k=3: FAILED /root/openfhe-python-packager/build/openfhe-development/src/pke/lib/scheme/ckksrns/ckksrns-fhe.cpp:l.451:EvalBootstrap(): CKKS Bootstrapping only supported for 1 or 2 iterations.
+[iterboot] wrote /groups/tjung/jzhao7/fhe-dlm/results/e0_iterboot.json
+[iterboot] exit=0 at Mon Oct 26 10:05:23 AM EDT 2026
+Loading CRC_default/1.1

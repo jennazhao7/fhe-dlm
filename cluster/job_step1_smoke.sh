@@ -19,13 +19,13 @@
 # Everything is prefetched -- this job never reaches the network.
 
 source ~/.bashrc
-conda activate fhedlm
+conda activate /groups/tjung/jzhao7/conda-envs/fhedlm
 set -uo pipefail
 
 export FHEDLM_ROOT=/groups/tjung/jzhao7/fhe-dlm
 cd "$FHEDLM_ROOT"
 source cluster/job_common.sh
-export FHEDLM_CONDA_ENV="$HOME/.conda/envs/fhedlm"
+export FHEDLM_CONDA_ENV="/groups/tjung/jzhao7/conda-envs/fhedlm"
 source cluster/env.sh
 
 CKPT=$(ls "$FHEDLM_ROOT"/hf-cache/hub/models--embedded-language-flows--ELF-B-owt-torch/snapshots/*/checkpoint_95085 2>/dev/null | head -1)

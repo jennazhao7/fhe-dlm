@@ -1,0 +1,23 @@
+{
+    "mode": "matvec_enc",
+    "ring": 131072,
+    "depth": 43,
+    "level": 21,
+    "D": 1024,
+    "rotation_keys": 3,
+    "keygen_s": 8.56805,
+    "keygen_gpu_gb": 0.162964,
+    "load_context_s": 5.26723,
+    "load_context_gpu_gb": 2.80164,
+    "host_fft_s": 0.208811,
+    "upload_s": 0.0229196,
+    "encode_check_residues_differing": 0,
+    "total_s": 3.74127,
+    "rotate_s": 0.46459,
+    "gpu_encode_s": 1.23083,
+    "mult_add_s": 2.04511,
+    "pt_mults": 2047,
+    "gpu_gb_peak_seen": 13.8915,
+    "max_abs_error": 1.55114e-10,
+    "host_peak_gb": 8.33211
+}

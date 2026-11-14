@@ -1,0 +1,15 @@
+  norm1 (+token mask)                 1
+  QKV packed: 1 pass for 3 blocks     1
+  split Q/K/V (group mask) + replicate  1
+  scores..xV (block + cache keys)     4
+  out-proj                            1
+  == attention half                   8
+  norm2 (+token mask)                 1
+  FFN up packed: 1 pass for 3 blocks  1
+  GELU deg 31 (1 call, not 3)         7
+  FFN down packed + group sum         1
+  == FFN half                        10
+layer 0: max|err| 1.05e-04  max|x/S| 0.42  max|gelu in| 4.0  levels used 18/43
+layer 1: max|err| 1.38e-04  max|x/S| 0.54  max|gelu in| 3.9  levels used 36/43
+levels/layer: attention 8 + FFN 10 = 18 (cost model: 18); usable per bootstrap window: 21
+EXIT=0

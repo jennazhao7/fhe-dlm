@@ -1,0 +1,75 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_plain_probe (1574220)
+queue     : gpu
+started   : Sat Oct 17 10:51:34 AM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Sat Oct 17 10:51:34 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.91.07              Driver Version: 595.91.07      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:06:00.0 Off |                    0 |
+| N/A   27C    P8             14W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+=== outlier (Sat Oct 17 10:51:34 AM EDT 2026)
+/groups/tjung/jzhao7/conda-envs/fhedlm/lib/python3.10/site-packages/transformers/tokenization_utils_base.py:1601: FutureWarning: `clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default. For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+  warnings.warn(
+Using the latest cached version of the dataset since Salesforce/wikitext couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'wikitext-103-raw-v1' at /groups/tjung/jzhao7/fhe-dlm/hf-cache/datasets/Salesforce___wikitext/wikitext-103-raw-v1/0.0.0/b08601e04326c79dfdd32d625aee71d232d685c3 (last modified on Thu Oct 15 12:35:47 2026).
+Token indices sequence length is longer than the specified maximum sequence length for this model (247289 > 1024). Running this sequence through the model will result in indexing errors
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:411: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(dtype=self.precision):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:139: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+/groups/tjung/jzhao7/fhe-dlm/hf-cache/modules/transformers_modules/60054720485e8aa080d5d2f3eaebafe1b829afb9/modeling_mdlm_2.py:303: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(enabled=False):
+[spikes] L5: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 4098..17969..21009
+[outlier] L5: ch682 masked 65±1087.4 [-19,21009] unmasked -3.9±3.9
+[spikes] L6: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 5420..19167..22241
+[outlier] L6: ch12 masked 68±62.7 [-63,1063] unmasked 56.6±38.7; ch218 masked -99±103.0 [-1813,-20] unmasked -91.5±22.2; ch313 masked -13±97.6 [-124,1538] unmasked 33.8±38.9; ch344 masked -108±209.6 [-3593,-16] unmasked -96.1±20.9; ch682 masked 70±1162.1 [-17,22241] unmasked -4.3±3.8
+[spikes] L7: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 6370..19886..22962
+[outlier] L7: ch12 masked 87±105.5 [-97,1780] unmasked 71.9±49.3; ch218 masked -133±248.1 [-4167,-33] unmasked -119.4±28.9; ch313 masked -13±180.8 [-156,2889] unmasked 43.4±50.0; ch344 masked -152±458.8 [-7618,-14] unmasked -127.0±27.5; ch682 masked 73±1206.2 [-21,22962] unmasked -5.4±4.3
+[spikes] L8: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 8898..20108..23187
+[outlier] L8: ch12 masked 106±162.1 [-143,2709] unmasked 83.0±61.3; ch218 masked -178±418.3 [-7020,-32] unmasked -150.0±29.9; ch313 masked -14±282.6 [-196,4555] unmasked 49.6±59.4; ch344 masked -193±692.3 [-11506,28] unmasked -152.9±32.4; ch682 masked 73±1219.8 [-21,23187] unmasked -6.1±4.7
+[spikes] L9: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 10688..20116..23195
+[outlier] L9: ch12 masked 158±218.3 [-230,3601] unmasked 103.7±86.8; ch218 masked -277±539.9 [-9172,-26] unmasked -234.0±50.7; ch313 masked -22±373.4 [-292,6062] unmasked 56.2±82.7; ch344 masked -282±892.3 [-14986,55] unmasked -221.1±45.7; ch488 masked 46±92.9 [-1011,302] unmasked -29.7±96.4; ch682 masked 73±1220.3 [-25,23195] unmasked -6.3±5.7
+[spikes] L10: 65 tokens (0.51/seq, 100% masked) pos [(0, 65)] mask-rank [(0, 65)] |x| 11996..19953..23024
+[outlier] L10: ch12 masked 267±261.7 [-178,4427] unmasked 149.3±98.7; ch218 masked -417±584.2 [-10053,48] unmasked -314.0±85.2; ch313 masked -33±438.4 [-364,7161] unmasked 53.4±100.4; ch344 masked -416±1036.6 [-17601,217] unmasked -301.6±67.9; ch488 masked 54±105.1 [-1113,362] unmasked -37.0±106.1; ch682 masked 71±1210.6 [-34,23024] unmasked -8.3±6.6
+[spikes] L11: 73 tokens (0.57/seq, 95% masked) pos [(0, 65), (26, 2), (3, 1), (247, 1), (30, 1)] mask-rank [(0, 65), (9, 1), (1, 1), (114, 1), (17, 1)] |x| 1001..19543..22829
+[outlier] L11: ch12 masked 417±358.9 [-177,6230] unmasked 288.0±129.9; ch218 masked -568±698.9 [-12138,97] unmasked -454.8±147.5; ch277 masked -483±159.1 [-2318,198] unmasked -304.6±166.3; ch313 masked -31±379.2 [-439,6100] unmasked 37.7±98.5; ch344 masked -543±1133.7 [-19426,232] unmasked -416.3±114.4; ch682 masked 71±1199.3 [-39,22829] unmasked -7.2±7.0; ch684 masked 360±154.7 [-121,1788] unmasked 221.1±123.5
+[outlier] {"mode": "offset", "bits": null, "nll_mask0.15": 2.2851953913178185, "nll_mask0.5": 3.9356563292114655, "nll_mask0.9": 7.091316740602109}
+[outlier] {"mode": "offset", "bits": 16, "nll_mask0.15": 2.293455060804541, "nll_mask0.5": 3.9543135608592936, "nll_mask0.9": 7.099644942964087, "S_median": 19278.884765625, "S_max": 23100.64453125}
+[outlier] {"mode": "offset", "bits": 12, "nll_mask0.15": 7.281935715019679, "nll_mask0.5": 10.1654025138991, "nll_mask0.9": 10.935511903147043, "S_median": 19325.5390625, "S_max": 23105.32421875}
+[outlier] {"mode": "offset", "bits": 10, "nll_mask0.15": 16.710377285327507, "nll_mask0.5": 20.72902092714268, "nll_mask0.9": 20.61036666398196, "S_median": 18832.865234375, "S_max": 23224.513671875}
+[outlier] {"mode": "offset", "bits": 9, "nll_mask0.15": 23.583121076624153, "nll_mask0.5": 27.31735056553636, "nll_mask0.9": 27.10167801309007, "S_median": 17480.35546875, "S_max": 23704.357421875, "gen_ppl_gpt2_large": 397652.5859812353, "gen_unigram_entropy": 5.161112681031227}
+[outlier] {"mode": "offset", "bits": 8, "nll_mask0.15": 30.202244186553408, "nll_mask0.5": 33.593780631624085, "nll_mask0.9": 33.934171580388636, "S_median": 12459.3232421875, "S_max": 22862.30078125, "gen_ppl_gpt2_large": 415159.82269255456, "gen_unigram_entropy": 5.390385642647743}
+[outlier] {"mode": "offset", "bits": 7, "nll_mask0.15": 35.20563588269729, "nll_mask0.5": 36.231134748514364, "nll_mask0.9": 34.76936751814297, "S_median": 8950.111328125, "S_max": 17848.125}
+[outlier] {"mode": "offset", "bits": 6, "nll_mask0.15": 41.705942980271026, "nll_mask0.5": 41.513005038902165, "nll_mask0.9": 41.739475061889586, "S_median": 9480.5302734375, "S_max": 15017.072265625}
+[outlier] {"mode": "oracle", "bits": null, "nll_mask0.15": 2.2851953913178185, "nll_mask0.5": 3.9356563292114655, "nll_mask0.9": 7.091316740602109}
+[outlier] {"mode": "oracle", "bits": 16, "nll_mask0.15": 2.2851210738995866, "nll_mask0.5": 3.935740386695537, "nll_mask0.9": 7.091416489864521, "S_median": 404.7356262207031, "S_max": 892.8776245117188}
+[outlier] {"mode": "oracle", "bits": 12, "nll_mask0.15": 2.2875191546759788, "nll_mask0.5": 3.940221189043068, "nll_mask0.9": 7.094085610566163, "S_median": 410.2611389160156, "S_max": 889.1151733398438}
+[outlier] {"mode": "oracle", "bits": 10, "nll_mask0.15": 2.334633162412191, "nll_mask0.5": 4.020112144050955, "nll_mask0.9": 7.11571854970666, "S_median": 415.782470703125, "S_max": 884.906494140625}
+[outlier] {"mode": "oracle", "bits": 9, "nll_mask0.15": 2.5608719255212486, "nll_mask0.5": 4.399779787339949, "nll_mask0.9": 7.275962428042763, "S_median": 407.397705078125, "S_max": 864.0848388671875, "gen_ppl_gpt2_large": 929.117839734496, "gen_unigram_entropy": 4.956004023551941}
+[outlier] {"mode": "oracle", "bits": 8, "nll_mask0.15": 3.883399595440788, "nll_mask0.5": 6.681261678306684, "nll_mask0.9": 8.272026240017126, "S_median": 391.25042724609375, "S_max": 851.1448364257812, "gen_ppl_gpt2_large": 3475.6063838589657, "gen_unigram_entropy": 5.058024391531944}
+[outlier] {"mode": "oracle", "bits": 7, "nll_mask0.15": 11.077698410721403, "nll_mask0.5": 12.345224386218833, "nll_mask0.9": 13.056405227338239, "S_median": 542.6664428710938, "S_max": 991.2283325195312}
+[outlier] {"mode": "oracle", "bits": 6, "nll_mask0.15": 20.827163617227978, "nll_mask0.5": 21.465512859538688, "nll_mask0.9": 21.62086669789406, "S_median": 1255.08544921875, "S_max": 1864.94287109375}
+=== outlier exit 0 (Sat Oct 17 10:55:27 AM EDT 2026)
+Loading CRC_default/1.1

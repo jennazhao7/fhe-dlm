@@ -1,0 +1,104 @@
+{
+  "packed": false,
+  "logn": 12,
+  "slots": 2048,
+  "D": 64,
+  "d": 48,
+  "hd": 16,
+  "B": 4,
+  "T": 32,
+  "depth": 43,
+  "bootstrap_depth": 22,
+  "usable_after_boot": 21,
+  "gelu_degree": 31,
+  "levels_attention": 8,
+  "levels_ffn": 10,
+  "levels_per_layer": 18,
+  "cost_model_levels_per_layer": 18,
+  "bootstraps": 10,
+  "layers": 12,
+  "stages_layer0": [
+    {
+      "stage": "norm1",
+      "levels": 1
+    },
+    {
+      "stage": "QKV matvec",
+      "levels": 1
+    },
+    {
+      "stage": "K/V token shift (wrap masks)",
+      "levels": 1
+    },
+    {
+      "stage": "scores q*k (+head sum, 0 lvl)",
+      "levels": 1
+    },
+    {
+      "stage": "power 2",
+      "levels": 1
+    },
+    {
+      "stage": "/Z + head mask + replicate",
+      "levels": 1
+    },
+    {
+      "stage": "x V",
+      "levels": 1
+    },
+    {
+      "stage": "gather (0 lvl) + out-proj",
+      "levels": 1
+    },
+    {
+      "stage": "== attention half",
+      "levels": 8
+    },
+    {
+      "stage": "norm2",
+      "levels": 1
+    },
+    {
+      "stage": "FFN up matvec 1->3",
+      "levels": 1
+    },
+    {
+      "stage": "GELU Chebyshev deg 31",
+      "levels": 7
+    },
+    {
+      "stage": "FFN down matvec 3->1",
+      "levels": 1
+    },
+    {
+      "stage": "== FFN half",
+      "levels": 10
+    }
+  ],
+  "log": [
+    "layer 0: max|err| 9.88e-05  max|x/S| 0.19  max|gelu in| 4.1  levels used 18/43",
+    "layer 1: max|err| 1.59e-04  max|x/S| 0.20  max|gelu in| 3.9  levels used 36/43",
+    "bootstrap before layer 2 attn (2.0s)",
+    "layer 2: max|err| 3.60e-04  max|x/S| 0.25  max|gelu in| 6.2  levels used 40/43",
+    "bootstrap before layer 3 attn (1.7s)",
+    "layer 3: max|err| 3.85e-04  max|x/S| 0.27  max|gelu in| 3.8  levels used 40/43",
+    "bootstrap before layer 4 attn (2.3s)",
+    "layer 4: max|err| 5.72e-04  max|x/S| 0.35  max|gelu in| 5.0  levels used 40/43",
+    "bootstrap before layer 5 attn (2.1s)",
+    "layer 5: max|err| 5.92e-04  max|x/S| 0.35  max|gelu in| 4.6  levels used 40/43",
+    "bootstrap before layer 6 attn (2.2s)",
+    "layer 6: max|err| 6.33e-04  max|x/S| 0.42  max|gelu in| 6.2  levels used 40/43",
+    "bootstrap before layer 7 attn (1.9s)",
+    "layer 7: max|err| 8.91e-04  max|x/S| 0.45  max|gelu in| 5.1  levels used 40/43",
+    "bootstrap before layer 8 attn (2.1s)",
+    "layer 8: max|err| 7.76e-04  max|x/S| 0.41  max|gelu in| 5.1  levels used 40/43",
+    "bootstrap before layer 9 attn (2.0s)",
+    "layer 9: max|err| 1.03e-03  max|x/S| 0.47  max|gelu in| 6.9  levels used 40/43",
+    "bootstrap before layer 10 attn (2.1s)",
+    "layer 10: max|err| 9.96e-04  max|x/S| 0.49  max|gelu in| 6.6  levels used 40/43",
+    "bootstrap before layer 11 attn (1.8s)",
+    "layer 11: max|err| 1.21e-03  max|x/S| 0.63  max|gelu in| 6.2  levels used 40/43"
+  ],
+  "setup_s": 1.7338124689999859,
+  "run_s": 75.65702708999993
+}

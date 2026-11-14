@@ -1,0 +1,1071 @@
+{
+ "args": {
+  "cmd": "run",
+  "ckpt": "/groups/tjung/jzhao7/fhe-dlm/ckpt/e1_bc64/stageB.pt",
+  "stage": "B",
+  "norm": "client",
+  "var_file": null,
+  "var_margin": 3.0,
+  "s_margin": 2.0,
+  "rsqrt_deg": 15,
+  "gold_iters": 2,
+  "boot_bits": 8,
+  "attn": "pow",
+  "gelu": "client",
+  "exact_norm": true,
+  "S": 1024.0,
+  "L": 64,
+  "layers": null,
+  "seed": 11,
+  "out": "results/e5/deep_B64_1pass.json",
+  "bin": "/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_vm",
+  "logn": 17,
+  "depth": 13,
+  "gpus": 1,
+  "cpu": false,
+  "refresh": "client",
+  "embed": "server",
+  "steps": 16,
+  "infill": 0.5,
+  "max_passes": 1,
+  "debug": true,
+  "workdir": "/tmp/1747506.1.gpu",
+  "var": null,
+  "xmax": null
+ },
+ "ready": {
+  "ready": true,
+  "ring": 131072,
+  "depth": 13,
+  "D": 1024,
+  "slots": 65536,
+  "gpus": 1,
+  "rot_keys": 21,
+  "boot": 0,
+  "keygen_s": 6.77699,
+  "load_s": 6.64324,
+  "gpu_gb": 3.41101,
+  "host_gb": 3.81177
+ },
+ "setup_s": 19.342769311973825,
+ "passes": [
+  {
+   "pass": 0,
+   "n_masked": 33,
+   "wall_s": 527.1362070760224,
+   "vm_seconds": {
+    "enc": 57.41261899999998,
+    "matvec": 286.65971,
+    "free": 0.006168002,
+    "dec": 76.86649299999995,
+    "info": 0.0019040620000000009,
+    "rot": 22.098637590000163,
+    "mulpt": 61.91115570000001,
+    "add": 2.729953605999996,
+    "mul": 5.07465804,
+    "sq": 2.0841062300000015
+   },
+   "vm_calls": {
+    "enc": 148,
+    "matvec": 50,
+    "free": 86,
+    "dec": 271,
+    "info": 147,
+    "rot": 10776,
+    "mulpt": 852,
+    "add": 10812,
+    "mul": 1536,
+    "sq": 768
+   },
+   "matvec": {
+    "rot_s": 10.927287,
+    "host_fft_s": 13.8176004,
+    "upload_s": 5.018585699999999,
+    "mult_s": 255.88258999999996,
+    "pt_mults": 379981.0,
+    "rots": 20288.0,
+    "skipped": 70713.0
+   },
+   "logit_max_abs_err": 1.9073486328125e-05,
+   "logit_max_abs": 26.549095153808594,
+   "argmax_agree": 1.0,
+   "kl_to_plain": -1.1416561918053958e-08,
+   "stat": {
+    "x_max": 589.2980168726306,
+    "client_refresh": 25.0,
+    "refresh_s": 20.734114679100458,
+    "client_norm": 25.0,
+    "gelu_in_max": 45.63721709171678,
+    "client_gelu": 12.0
+   },
+   "mem": {
+    "op": "mem",
+    "s": 0.000150124,
+    "gpu_gb": 10.4481,
+    "host_gb": 5.61293,
+    "regs": 0
+   }
+  }
+ ],
+ "checks": [
+  {
+   "tag": "embed",
+   "max_abs_err": 5.603611704426553e-12,
+   "max_abs_ref": 0.008225039578974247,
+   "level": 10,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L0 attn",
+   "max_abs_err": 4.658071535912009e-12,
+   "max_abs_ref": 0.008225039579587394,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L0 q",
+   "max_abs_err": 6.282818709735238e-11,
+   "max_abs_ref": 15.66976332938446,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 8.467809786694147e-12,
+   "max_abs_ref": 1.9695093487455706,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.3627143857775081e-10,
+   "max_abs_ref": 134.3059649514443,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 2.8857138900661994e-11,
+   "max_abs_ref": 0.5568523550155212,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L0 attn acc",
+   "max_abs_err": 8.177103438811173e-11,
+   "max_abs_ref": 4.348098765549029,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L0 x after attn",
+   "max_abs_err": 4.632592021275245e-12,
+   "max_abs_ref": 0.025638029489996123,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L0 ffn",
+   "max_abs_err": 5.327349796381243e-12,
+   "max_abs_ref": 0.02563802949165561,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L0 gelu in",
+   "max_abs_err": 8.859091238377914e-11,
+   "max_abs_ref": 12.942765167305662,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L0 gelu out",
+   "max_abs_err": 4.288541743946439e-12,
+   "max_abs_ref": 7.6808716873709235,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L0 x after ffn",
+   "max_abs_err": 4.744821980521945e-12,
+   "max_abs_ref": 0.03599470687774372,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L1 attn",
+   "max_abs_err": 4.8690976109985046e-12,
+   "max_abs_ref": 0.03599470687772565,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L1 q",
+   "max_abs_err": 1.7766937920882242e-10,
+   "max_abs_ref": 10.842178677865055,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 2.1368684599565313e-11,
+   "max_abs_ref": 1.4492077034969173,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 2.081974592726965e-10,
+   "max_abs_ref": 36.08394076111327,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 3.891997835125949e-12,
+   "max_abs_ref": 0.23898894163582066,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L1 attn acc",
+   "max_abs_err": 3.452660379821282e-11,
+   "max_abs_ref": 2.0344404529111046,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L1 x after attn",
+   "max_abs_err": 5.077995609044632e-12,
+   "max_abs_ref": 0.03675784703927745,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L1 ffn",
+   "max_abs_err": 4.620040308985505e-12,
+   "max_abs_ref": 0.03675784703907375,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L1 gelu in",
+   "max_abs_err": 7.990441641680945e-11,
+   "max_abs_ref": 10.527363348395063,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L1 gelu out",
+   "max_abs_err": 4.5389247915750275e-12,
+   "max_abs_ref": 4.513654816705148,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L1 x after ffn",
+   "max_abs_err": 4.120914425832863e-12,
+   "max_abs_ref": 0.04101287119922666,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L2 attn",
+   "max_abs_err": 4.305540841388622e-12,
+   "max_abs_ref": 0.04101287119874366,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L2 q",
+   "max_abs_err": 9.356737606935894e-11,
+   "max_abs_ref": 8.8640612987089,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 1.186030440525343e-11,
+   "max_abs_ref": 1.0692034235423735,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.0431655539377971e-10,
+   "max_abs_ref": 39.240419680369484,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 2.9707833415493212e-12,
+   "max_abs_ref": 0.3241947892970471,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L2 attn acc",
+   "max_abs_err": 3.125122383096368e-11,
+   "max_abs_ref": 2.5250408505435544,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L2 x after attn",
+   "max_abs_err": 4.565868923179714e-12,
+   "max_abs_ref": 0.052677599771294346,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L2 ffn",
+   "max_abs_err": 4.957054731968835e-12,
+   "max_abs_ref": 0.0526775997717099,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L2 gelu in",
+   "max_abs_err": 9.865575023582096e-11,
+   "max_abs_ref": 8.974666008350118,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L2 gelu out",
+   "max_abs_err": 4.303807310535035e-12,
+   "max_abs_ref": 4.141887774490659,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L2 x after ffn",
+   "max_abs_err": 4.101381355018785e-12,
+   "max_abs_ref": 0.049614835406603365,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L3 attn",
+   "max_abs_err": 4.3283219348065616e-12,
+   "max_abs_ref": 0.049614835405961996,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L3 q",
+   "max_abs_err": 1.053820919416637e-10,
+   "max_abs_ref": 6.524737153087783,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 1.2755237838169009e-11,
+   "max_abs_ref": 0.8193421508471909,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 9.517719945506542e-11,
+   "max_abs_ref": 20.19717915226923,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.6645851363961128e-12,
+   "max_abs_ref": 0.24741219789943802,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L3 attn acc",
+   "max_abs_err": 1.5972362321647893e-11,
+   "max_abs_ref": 2.9988034660240754,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L3 x after attn",
+   "max_abs_err": 4.4171890537653136e-12,
+   "max_abs_ref": 0.06097889894493062,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L3 ffn",
+   "max_abs_err": 4.9495096794664984e-12,
+   "max_abs_ref": 0.06097889894506546,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L3 gelu in",
+   "max_abs_err": 9.694534064408344e-11,
+   "max_abs_ref": 8.46595495774968,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L3 gelu out",
+   "max_abs_err": 5.008327086386544e-12,
+   "max_abs_ref": 4.18100563863854,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L3 x after ffn",
+   "max_abs_err": 4.399896428622349e-12,
+   "max_abs_ref": 0.06152188275567974,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L4 attn",
+   "max_abs_err": 4.100237510629157e-12,
+   "max_abs_ref": 0.061521882755132484,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L4 q",
+   "max_abs_err": 1.2437029184297899e-10,
+   "max_abs_ref": 9.44275241091746,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 1.3902462514536751e-11,
+   "max_abs_ref": 1.1118104649584877,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.077786748737708e-10,
+   "max_abs_ref": 28.463564433825642,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 2.023006762108537e-12,
+   "max_abs_ref": 0.2795666939542768,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L4 attn acc",
+   "max_abs_err": 1.486655243354562e-11,
+   "max_abs_ref": 1.724072991671148,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L4 x after attn",
+   "max_abs_err": 4.29391374887067e-12,
+   "max_abs_ref": 0.06900301158384928,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L4 ffn",
+   "max_abs_err": 4.3731353174120136e-12,
+   "max_abs_ref": 0.0690030115844118,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L4 gelu in",
+   "max_abs_err": 7.493117237800107e-11,
+   "max_abs_ref": 10.465401240934744,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L4 gelu out",
+   "max_abs_err": 4.138217546412193e-12,
+   "max_abs_ref": 3.157453468014078,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L4 x after ffn",
+   "max_abs_err": 4.575111990645642e-12,
+   "max_abs_ref": 0.07446303388396018,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L5 attn",
+   "max_abs_err": 4.238198333950116e-12,
+   "max_abs_ref": 0.07446303388300521,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L5 q",
+   "max_abs_err": 7.544542768300744e-11,
+   "max_abs_ref": 10.014929745558197,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 9.587886040662852e-12,
+   "max_abs_ref": 1.2503929649478478,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 8.730527412126321e-11,
+   "max_abs_ref": 29.063843355400834,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 2.2608581673466688e-12,
+   "max_abs_ref": 0.253017871067582,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L5 attn acc",
+   "max_abs_err": 1.886002465312231e-11,
+   "max_abs_ref": 3.2311534261791808,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L5 x after attn",
+   "max_abs_err": 4.041954271283288e-12,
+   "max_abs_ref": 0.09857413413784474,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L5 ffn",
+   "max_abs_err": 4.921922678452484e-12,
+   "max_abs_ref": 0.09857413413733608,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L5 gelu in",
+   "max_abs_err": 2.0868196060064292e-11,
+   "max_abs_ref": 7.96014889590403,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L5 gelu out",
+   "max_abs_err": 4.2688352852593425e-12,
+   "max_abs_ref": 3.3948930745050663,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L5 x after ffn",
+   "max_abs_err": 4.6780875614244044e-12,
+   "max_abs_ref": 0.08897174327069474,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L6 attn",
+   "max_abs_err": 4.358906031259879e-12,
+   "max_abs_ref": 0.08897174326950624,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L6 q",
+   "max_abs_err": 7.343120556058125e-11,
+   "max_abs_ref": 7.5341613392135365,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 8.145775720613813e-12,
+   "max_abs_ref": 0.9767972374100202,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.2960654771632107e-10,
+   "max_abs_ref": 36.5410333372719,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 3.772537837676282e-12,
+   "max_abs_ref": 0.23119261368979535,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L6 attn acc",
+   "max_abs_err": 2.0090151764406983e-11,
+   "max_abs_ref": 2.414635156259207,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L6 x after attn",
+   "max_abs_err": 4.3422097514844715e-12,
+   "max_abs_ref": 0.13575858942563468,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L6 ffn",
+   "max_abs_err": 4.69752492113229e-12,
+   "max_abs_ref": 0.13575858942599744,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L6 gelu in",
+   "max_abs_err": 1.1620926443356439e-11,
+   "max_abs_ref": 22.29761171003988,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L6 gelu out",
+   "max_abs_err": 4.325255431592012e-12,
+   "max_abs_ref": 3.185667224303639,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L6 x after ffn",
+   "max_abs_err": 4.225481497072833e-12,
+   "max_abs_ref": 0.11818653195911169,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L7 attn",
+   "max_abs_err": 4.411474440954577e-12,
+   "max_abs_ref": 0.11818653195798418,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L7 q",
+   "max_abs_err": 3.9257042061535685e-11,
+   "max_abs_ref": 10.414955353897854,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 4.917337370624608e-12,
+   "max_abs_ref": 1.3025646090687708,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.0275513773194689e-10,
+   "max_abs_ref": 25.882529355947646,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.4741957654607063e-12,
+   "max_abs_ref": 0.2708680463089156,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L7 attn acc",
+   "max_abs_err": 2.212363625631042e-11,
+   "max_abs_ref": 3.547718448161003,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L7 x after attn",
+   "max_abs_err": 5.0648463287977785e-12,
+   "max_abs_ref": 0.14934596355762605,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L7 ffn",
+   "max_abs_err": 4.060398284960742e-12,
+   "max_abs_ref": 0.1493459635581731,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L7 gelu in",
+   "max_abs_err": 1.4316769991751244e-11,
+   "max_abs_ref": 8.589306798401644,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L7 gelu out",
+   "max_abs_err": 5.147736403809944e-12,
+   "max_abs_ref": 6.843358094758676,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L7 x after ffn",
+   "max_abs_err": 5.015363369945318e-12,
+   "max_abs_ref": 0.14343520362437479,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L8 attn",
+   "max_abs_err": 4.839429204595014e-12,
+   "max_abs_ref": 0.14343520362406276,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L8 q",
+   "max_abs_err": 4.096931127683945e-11,
+   "max_abs_ref": 8.243497329596726,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 5.0298064324660885e-12,
+   "max_abs_ref": 1.0068503252971426,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 5.0720094790790426e-11,
+   "max_abs_ref": 35.41212903964076,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.9803048090238917e-12,
+   "max_abs_ref": 0.26251050082040545,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L8 attn acc",
+   "max_abs_err": 1.9140522500293855e-11,
+   "max_abs_ref": 2.5261253516482105,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L8 x after attn",
+   "max_abs_err": 4.669017776570694e-12,
+   "max_abs_ref": 0.18622251437876375,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L8 ffn",
+   "max_abs_err": 4.288721687439811e-12,
+   "max_abs_ref": 0.1862225143783422,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L8 gelu in",
+   "max_abs_err": 2.0063395389513516e-11,
+   "max_abs_ref": 5.387996580206339,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L8 gelu out",
+   "max_abs_err": 4.406273956814033e-12,
+   "max_abs_ref": 2.9668062777571667,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L8 x after ffn",
+   "max_abs_err": 4.105750461835811e-12,
+   "max_abs_ref": 0.15875455518945328,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L9 attn",
+   "max_abs_err": 5.068623233706301e-12,
+   "max_abs_ref": 0.15875455518845302,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L9 q",
+   "max_abs_err": 1.0620393453564247e-11,
+   "max_abs_ref": 10.64310722863993,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 1.2874146193553315e-12,
+   "max_abs_ref": 1.330605556278884,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.8054890915664146e-11,
+   "max_abs_ref": 25.86787770902517,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.2171652574721747e-12,
+   "max_abs_ref": 0.31507961462308415,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L9 attn acc",
+   "max_abs_err": 4.9278692237919586e-11,
+   "max_abs_ref": 3.1476559861397826,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L9 x after attn",
+   "max_abs_err": 5.447188773408326e-12,
+   "max_abs_ref": 0.2522297228744733,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L9 ffn",
+   "max_abs_err": 4.607051719285327e-12,
+   "max_abs_ref": 0.25222972287396567,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L9 gelu in",
+   "max_abs_err": 1.7795320772506784e-11,
+   "max_abs_ref": 6.5046447318474305,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L9 gelu out",
+   "max_abs_err": 4.206329728972946e-12,
+   "max_abs_ref": 3.479990710135078,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L9 x after ffn",
+   "max_abs_err": 4.155742807168683e-12,
+   "max_abs_ref": 0.2910994656853832,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L10 attn",
+   "max_abs_err": 4.806412646357616e-12,
+   "max_abs_ref": 0.2910994656863158,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L10 q",
+   "max_abs_err": 2.2408408462126772e-11,
+   "max_abs_ref": 10.298004243326382,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 2.8587340827890273e-12,
+   "max_abs_ref": 1.2851632702621894,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 2.382583019766571e-11,
+   "max_abs_ref": 22.17223697699312,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.1738943150874093e-12,
+   "max_abs_ref": 0.24911663531945116,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L10 attn acc",
+   "max_abs_err": 8.845768562082412e-11,
+   "max_abs_ref": 2.6617045453909265,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L10 x after attn",
+   "max_abs_err": 5.208846375059917e-12,
+   "max_abs_ref": 0.39453856617224825,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L10 ffn",
+   "max_abs_err": 4.8910537078783456e-12,
+   "max_abs_ref": 0.3945385661709899,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L10 gelu in",
+   "max_abs_err": 1.9277912599591218e-11,
+   "max_abs_ref": 5.818958998037688,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L10 gelu out",
+   "max_abs_err": 4.517664020653456e-12,
+   "max_abs_ref": 3.349321740992217,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L10 x after ffn",
+   "max_abs_err": 4.8814936468022374e-12,
+   "max_abs_ref": 0.41970393472039413,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L11 attn",
+   "max_abs_err": 4.976958081770455e-12,
+   "max_abs_ref": 0.419703934719928,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L11 q",
+   "max_abs_err": 1.5761614235998422e-11,
+   "max_abs_ref": 10.227273183520182,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "rotary q",
+   "max_abs_err": 1.985606123966477e-12,
+   "max_abs_ref": 1.2783979303482145,
+   "level": 1,
+   "deg": 2
+  },
+  {
+   "tag": "scores r=0",
+   "max_abs_err": 1.7779555605557107e-11,
+   "max_abs_ref": 22.17425244322115,
+   "level": 2,
+   "deg": 2
+  },
+  {
+   "tag": "weights r=0",
+   "max_abs_err": 1.0141887329950805e-12,
+   "max_abs_ref": 0.645215191979503,
+   "level": 4,
+   "deg": 2
+  },
+  {
+   "tag": "L11 attn acc",
+   "max_abs_err": 3.449884822259719e-11,
+   "max_abs_ref": 6.991395666191935,
+   "level": 5,
+   "deg": 2
+  },
+  {
+   "tag": "L11 x after attn",
+   "max_abs_err": 5.30374355545149e-12,
+   "max_abs_ref": 0.5754863446029763,
+   "level": 6,
+   "deg": 2
+  },
+  {
+   "tag": "refresh L11 ffn",
+   "max_abs_err": 4.155015141996385e-12,
+   "max_abs_ref": 0.5754863446021783,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "L11 gelu in",
+   "max_abs_err": 2.0707990877610882e-11,
+   "max_abs_ref": 4.590729180100686,
+   "level": 0,
+   "deg": 2
+  },
+  {
+   "tag": "L11 gelu out",
+   "max_abs_err": 5.164896288434306e-12,
+   "max_abs_ref": 2.4451423822010603,
+   "level": 7,
+   "deg": 1
+  },
+  {
+   "tag": "L11 x after ffn",
+   "max_abs_err": 4.704240469388665e-12,
+   "max_abs_ref": 0.5353255140628984,
+   "level": 7,
+   "deg": 2
+  },
+  {
+   "tag": "refresh head",
+   "max_abs_err": 4.362443113104601e-12,
+   "max_abs_ref": 0.5353255140626912,
+   "level": 0,
+   "deg": 1
+  },
+  {
+   "tag": "logits block 0",
+   "max_abs_err": 2.9458213646194054e-11,
+   "max_abs_ref": 24.083975640041345,
+   "level": 10,
+   "deg": 2
+  }
+ ],
+ "summary": {
+  "passes": 1,
+  "s_per_pass": 527.1362070760224,
+  "logit_max_abs_err": 1.9073486328125e-05,
+  "argmax_agree_min": 1.0,
+  "kl_to_plain_max": -1.1416561918053958e-08,
+  "ops": {
+   "norm": "client",
+   "attn": "pow",
+   "gelu": "client",
+   "refresh": "client",
+   "embed": "server"
+  }
+ }
+}

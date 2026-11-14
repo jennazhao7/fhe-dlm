@@ -1,0 +1,557 @@
+// E0 GPU feasibility (HANDOFF §6.1): does the E5 parameter set run on one
+// 24 GB Quadro RTX 6000 (sm_75) under FIDESlib, and how fast?
+//
+// Same CKKS parameters as the CPU sweep (scripts/e0_microbench.py,
+// scripts/e0_matvec_bench.py): N = 2^17, depth 43, scaling/first 59/60,
+// FLEXIBLEAUTO, HEStd_128_classic, UNIFORM_TERNARY, HYBRID key switching.
+//
+//   fides_e0 boot <slots> [budget]   [budget,budget] bootstrap, default 4
+//   fides_e0 matvec                  1024x1024 BSGS matvec (1->1) at level 21
+//
+// One mode per process: a CUDA OOM inside FIDESlib is not reliably
+// recoverable, and the job script runs each mode separately so one failure
+// does not hide the others. Each mode prints exactly one line
+//   RESULT {json}
+// that cluster/job_gpu_fides.sh collects. GPU memory is read with
+// cudaMemGetInfo after each phase (includes FIDESlib's memory-pool cache,
+// i.e. what the process actually holds); the job also samples nvidia-smi.
+//
+// FIDESlib rule: every key (mult, rotation, bootstrap) must be generated
+// BEFORE LoadContext, which uploads all of them to the device at once --
+// LoadContext is therefore where a 24 GB card either fits or does not.
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <random>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <cuda_runtime.h>
+#include <sys/resource.h>
+
+#include <fideslib.hpp>
+
+#include "gpu_encode.hpp"
+
+using namespace fideslib;
+
+static constexpr uint32_t DEPTH = 43;
+// Overrides for a CPU dry run of the code paths (FIDESlib falls back to
+// OpenFHE when no device is set):  FIDES_E0_CPU=1 FIDES_E0_LOGN=12 fides_e0 matvec
+static const bool CPU_ONLY = std::getenv("FIDES_E0_CPU") != nullptr;
+static const uint32_t RING = 1u << (std::getenv("FIDES_E0_LOGN") ? std::atoi(std::getenv("FIDES_E0_LOGN")) : 17);
+static constexpr uint32_t D = 1024, N1 = 32, N2 = D / N1;
+static constexpr uint32_t MV_LEVEL = 21;  // post-bootstrap level, as in e0_matvec_bench.py
+
+using clk = std::chrono::steady_clock;
+static double since(clk::time_point t0) { return std::chrono::duration<double>(clk::now() - t0).count(); }
+
+// Max over visible devices: with FIDES_E0_GPUS > 1 each card holds a share,
+// and the question is whether the fullest one fits.
+static double gpu_used_gb() {
+	if (CPU_ONLY) return -1;
+	int n = 0, cur = 0;
+	if (cudaGetDeviceCount(&n) != cudaSuccess) return -1;
+	cudaGetDevice(&cur);
+	double worst = 0;
+	for (int d = 0; d < n; ++d) {
+		size_t free_b = 0, total_b = 0;
+		cudaSetDevice(d);
+		if (cudaMemGetInfo(&free_b, &total_b) == cudaSuccess)
+			worst = std::max(worst, double(total_b - free_b) / (1ull << 30));
+	}
+	cudaSetDevice(cur);
+	return worst;
+}
+static double host_peak_gb() {
+	rusage u{};
+	getrusage(RUSAGE_SELF, &u);
+	return double(u.ru_maxrss) / (1 << 20);
+}
+
+struct Json {
+	std::ostringstream s;
+	bool first = true;
+	template <class T> Json& kv(const std::string& k, const T& v) {
+		s << (first ? "{" : ", ") << '"' << k << "\": " << v;
+		first = false;
+		return *this;
+	}
+	Json& ks(const std::string& k, const std::string& v) { return kv(k, '"' + v + '"'); }
+	std::string str() const { return s.str() + "}"; }
+};
+
+static void phase(Json& j, const std::string& name, clk::time_point t0) {
+	double s = since(t0), g = gpu_used_gb();
+	j.kv(name + "_s", s).kv(name + "_gpu_gb", g);
+	std::cerr << "[fides_e0] " << name << ": " << s << " s, gpu used " << g << " GB, host peak "
+	          << host_peak_gb() << " GB" << std::endl;
+}
+
+static CryptoContext<DCRTPoly> make_context() {
+	CCParams<CryptoContextCKKSRNS> p;
+	p.SetSecretKeyDist(UNIFORM_TERNARY);
+	p.SetSecurityLevel(RING < (1u << 17) ? HEStd_NotSet : HEStd_128_classic);
+	p.SetRingDim(RING);
+	p.SetScalingModSize(59);
+	p.SetFirstModSize(60);
+	p.SetScalingTechnique(FLEXIBLEAUTO);
+	p.SetKeySwitchTechnique(HYBRID);
+	p.SetMultiplicativeDepth(DEPTH);
+	// FIDES_E0_GPUS=n splits limbs and keys over devices 0..n-1 (needs the NCCL
+	// build, cluster/setup_fideslib_mgpu.sh); default is one device.
+	if (!CPU_ONLY) {
+		const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+		std::vector<int> devs;
+		for (int d = 0; d < ngpu; ++d) devs.push_back(d);
+		p.SetDevices(std::move(devs));
+	}
+	auto cc = GenCryptoContext(p);
+	cc->Enable(PKE);
+	cc->Enable(KEYSWITCH);
+	cc->Enable(LEVELEDSHE);
+	cc->Enable(ADVANCEDSHE);
+	cc->Enable(FHE);
+	return cc;
+}
+
+// Bootstrap timing/precision on an already loaded context (bootstrap keys for
+// `slots` generated before LoadContext).
+static void boot_body(auto& cc, auto& keys, uint32_t slots, Json& j) {
+	auto t0 = clk::now();
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);  // same input range as e0_microbench.py
+	std::vector<double> x(slots);
+	for (auto& v : x) v = U(rng);
+	auto pt = cc->MakeCKKSPackedPlaintext(x, 1, DEPTH - 1, nullptr, slots);
+	auto ct = cc->Encrypt(keys.publicKey, pt);
+
+	// 1 warm-up (first-touch allocations, lazy uploads), then 3 timed.
+	auto out = cc->EvalBootstrap(ct);
+	cc->Synchronize();
+	j.kv("gpu_gb_after_warmup", gpu_used_gb());
+	std::vector<double> ts;
+	for (int r = 0; r < 3; ++r) {
+		t0 = clk::now();
+		out = cc->EvalBootstrap(ct);
+		cc->Synchronize();
+		ts.push_back(since(t0));
+	}
+	std::ostringstream tv;
+	tv << "[" << ts[0] << ", " << ts[1] << ", " << ts[2] << "]";
+	j.kv("bootstrap_s", tv.str()).kv("gpu_gb_peak_seen", gpu_used_gb());
+
+	// Same definitions as e0_microbench.py: levels_left = depth - level,
+	// precision = -log2(max abs error).
+	j.kv("levels_left_after", int(DEPTH) - int(out->GetLevel()));
+	Plaintext dec;
+	cc->Decrypt(keys.secretKey, out, &dec);
+	dec->SetLength(slots);
+	auto got = dec->GetRealPackedValue();
+	double err = 0;
+	for (uint32_t i = 0; i < slots; ++i) err = std::max(err, std::abs(got[i] - x[i]));
+	j.kv("max_abs_error", err).kv("precision_bits", err > 0 ? -std::log2(err) : 99.0);
+	j.kv("host_peak_gb", host_peak_gb());
+}
+
+static int run_boot(uint32_t slots, uint32_t budget) {
+	Json j;
+	j.ks("mode", "boot").kv("gpus", std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	phase(j, "keygen", t0);
+
+	t0 = clk::now();
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	phase(j, "boot_keygen", t0);
+	j.kv("host_peak_gb_after_keygen", host_peak_gb());
+
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);  // uploads every key: the 24 GB question
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	boot_body(cc, keys, slots, j);
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
+// Mirrors scripts/e0_matvec_bench.py: interleaved slot = dim*T + token,
+// BSGS over the D diagonals, diagonals encoded on the fly (pre-encoding 1024
+// diagonals at level 21 is ~24 GB: does not fit either).
+//
+// Rotation keys: job 1519057 OOMed loading the 62 keys of a hoisted BSGS
+// (one per baby/giant step, ~354 MB each at N=2^17). Here baby steps are
+// successive rotations by T and the giant steps run Horner-style with
+// rotations by N1*T, so the matvec needs exactly 2 keys (~0.7 GB) for the
+// same 31 + 31 rotations. It gives up hoisting, which did not pay off on CPU.
+static int run_matvec() {
+	Json j;
+	j.ks("mode", "matvec").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	const uint32_t T = RING / 2 / D;
+	const int32_t BABY = int32_t(T), GIANT = int32_t(N1 * T);
+	cc->EvalRotateKeyGen(keys.secretKey, { BABY, GIANT });
+	j.kv("rotation_keys", 2);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);
+	std::vector<double> X(T * D), W(D * D);  // X[t*D+d], W[out*D+in]
+	for (auto& v : X) v = U(rng);
+	for (auto& v : W) v = U(rng) / std::sqrt(double(D));
+	std::vector<double> xs(D * T);
+	for (uint32_t d = 0; d < D; ++d)
+		for (uint32_t t = 0; t < T; ++t) xs[d * T + t] = X[t * D + d];
+	auto ptx = cc->MakeCKKSPackedPlaintext(xs, 1, MV_LEVEL);
+	auto ct = cc->Encrypt(keys.publicKey, ptx);
+
+	// diag_slots(W, i, shift): diagonal i (out j <- in j+i), rolled by +shift dims.
+	auto diag = [&](uint32_t i, uint32_t shift) {
+		std::vector<double> v(D * T);
+		for (uint32_t j = 0; j < D; ++j) {
+			uint32_t src = (j + D - shift) % D;  // np.roll(d, shift)[j] = d[j - shift]
+			double w = W[src * D + (src + i) % D];
+			for (uint32_t t = 0; t < T; ++t) v[j * T + t] = w;
+		}
+		return v;
+	};
+
+	double rot_s = 0, enc_s = 0, load_s = 0, mult_s = 0;
+	auto total0 = clk::now();
+	t0 = clk::now();
+	std::vector<Ciphertext<DCRTPoly>> bab{ ct };       // bab[b] = rot(x, b*T)
+	for (uint32_t b = 1; b < N1; ++b) bab.push_back(cc->EvalRotate(bab.back(), BABY));
+	cc->Synchronize();
+	rot_s += since(t0);
+
+	// Horner over the giant steps: out = sum_g rot(acc_g, g*N1*T)
+	//   = acc_0 + rot(acc_1 + rot(acc_2 + ...), N1*T), so g runs high to low.
+	Ciphertext<DCRTPoly> out;
+	for (uint32_t gi = N2; gi-- > 0;) {
+		const uint32_t g = gi;
+		Ciphertext<DCRTPoly> acc;
+		for (uint32_t b = 0; b < N1; ++b) {
+			auto t1 = clk::now();
+			auto pt = cc->MakeCKKSPackedPlaintext(diag(g * N1 + b, g * N1), 1, MV_LEVEL);
+			auto t2 = clk::now();
+			cc->LoadPlaintext(pt);
+			cc->Synchronize();
+			auto t3 = clk::now();
+			auto term = cc->EvalMult(bab[b], pt);
+			acc = acc ? cc->EvalAdd(acc, term) : term;
+			cc->Synchronize();
+			enc_s += std::chrono::duration<double>(t2 - t1).count();
+			load_s += std::chrono::duration<double>(t3 - t2).count();
+			mult_s += since(t3);
+		}
+		t0 = clk::now();
+		out = out ? cc->EvalAdd(cc->EvalRotate(out, GIANT), acc) : acc;
+		cc->Synchronize();
+		rot_s += since(t0);
+	}
+	double total = since(total0);
+	j.kv("total_s", total).kv("rotate_s", rot_s).kv("encode_s", enc_s).kv("h2d_s", load_s).kv("mult_add_s", mult_s);
+	j.kv("compute_only_s", rot_s + mult_s).kv("gpu_gb_peak_seen", gpu_used_gb());
+
+	Plaintext dec;
+	cc->Decrypt(keys.secretKey, out, &dec);
+	dec->SetLength(D * T);
+	auto got = dec->GetRealPackedValue();
+	double err = 0;
+	for (uint32_t t = 0; t < T; ++t)
+		for (uint32_t o = 0; o < D; ++o) {
+			double want = 0;
+			for (uint32_t i = 0; i < D; ++i) want += W[o * D + i] * X[t * D + i];
+			err = std::max(err, std::abs(got[o * T + t] - want));
+		}
+	j.kv("max_abs_error", err).kv("levels_used", int(out->GetLevel()) - int(MV_LEVEL));
+	j.kv("host_peak_gb", host_peak_gb());
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
+// GPU-encoded token-major matvec on an already loaded context with rotation
+// keys {+1, +N1, -D} (see run_matvec_enc).
+static void matvec_enc_body(auto& cc, auto& keys, Json& j) {
+	auto t0 = clk::now();
+	const uint32_t T = RING / 2 / D;
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);
+	std::vector<double> X(T * D), W(D * D);  // X[t*D+d] -- already token-major
+	for (auto& v : X) v = U(rng);
+	for (auto& v : W) v = U(rng) / std::sqrt(double(D));
+	auto ptx = cc->MakeCKKSPackedPlaintext(X, 1, MV_LEVEL);
+	auto ct  = cc->Encrypt(keys.publicKey, ptx);
+
+	// Period-D plaintext for (diagonal i, half h), pre-rolled by +g*N1 for the
+	// Horner giant step: pt[j] = v[(j - g*N1) mod D], v[j] = W[j][(j+i)%D] on
+	// half 0 = {j < D-i}, half 1 = {j >= D-i}.
+	auto pt_vec = [&](uint32_t g, uint32_t b, int half) {
+		const uint32_t i = g * N1 + b, shift = g * N1;
+		std::vector<double> v(D, 0.0);
+		for (uint32_t jj = 0; jj < D; ++jj) {
+			const uint32_t src = (jj + D - shift) % D;
+			const bool lo      = src < D - i;
+			if (lo == (half == 0)) v[jj] = W[src * D + (src + i) % D];
+		}
+		return v;
+	};
+
+	// Reference plaintexts through the normal path: one is the buffer the GPU
+	// encoder overwrites (it fixes level + scaling factor), the other is the
+	// bit-exactness check.
+	auto ref = cc->MakeCKKSPackedPlaintext(pt_vec(0, 0, 0), 1, MV_LEVEL, nullptr, D);
+	cc->LoadPlaintext(ref);
+	auto buf = cc->MakeCKKSPackedPlaintext(pt_vec(0, 1, 0), 1, MV_LEVEL, nullptr, D);
+	cc->LoadPlaintext(buf);
+	auto* enc = e0::gpuenc_create(cc->gpu, cc->GetDevicePlaintext(ref->gpu), D);
+	const double sf = e0::gpuenc_scaling_factor(enc);
+
+	t0 = clk::now();
+	std::vector<std::vector<int64_t>> coeffs(2 * D);  // set index 2*i + half
+	for (uint32_t g = 0; g < N2; ++g)
+		for (uint32_t b = 0; b < N1; ++b)
+			for (int h = 0; h < 2; ++h) coeffs[2 * (g * N1 + b) + h] = e0::ckks_coeffs(pt_vec(g, b, h), RING, sf);
+	j.kv("host_fft_s", since(t0));
+	j.kv("upload_s", e0::gpuenc_upload(enc, coeffs));
+
+	// Bit-exactness: GPU-encode set (g=0,b=0,lo) into `buf`, compare with `ref`.
+	e0::gpuenc_encode(enc, 0, cc->GetDevicePlaintext(buf->gpu));
+	const uint64_t ndiff = e0::gpuenc_count_diff(enc, cc->GetDevicePlaintext(ref->gpu), cc->GetDevicePlaintext(buf->gpu));
+	j.kv("encode_check_residues_differing", ndiff);
+	std::cerr << "[fides_e0] GPU encode vs OpenFHE: " << ndiff << " residues differ" << std::endl;
+
+	double rot_s = 0, gpuenc_s = 0, mult_s = 0;
+	auto total0 = clk::now();
+	t0 = clk::now();
+	// One half at a time (h = 0: rot(x, i) terms, h = 1: rot(x, i - D) terms),
+	// each with its own Horner pass, so only 32 baby-step ciphertexts are live:
+	// job 1546415 OOMed with both sets (64 cts) on top of the full-slot
+	// bootstrap keys on 3 GPUs. Costs a second set of 31 giant rotations.
+	auto& dev_buf = cc->GetDevicePlaintext(buf->gpu);
+	Ciphertext<DCRTPoly> out;
+	uint32_t n_mults = 0;
+	for (int h = 0; h < 2; ++h) {
+		t0 = clk::now();
+		std::vector<Ciphertext<DCRTPoly>> bab{ h ? cc->EvalRotate(ct, -int32_t(D)) : ct };
+		for (uint32_t b = 1; b < N1; ++b) bab.push_back(cc->EvalRotate(bab.back(), 1));
+		cc->Synchronize();
+		rot_s += since(t0);
+		Ciphertext<DCRTPoly> half;
+		for (uint32_t g = N2; g-- > 0;) {
+			Ciphertext<DCRTPoly> acc;
+			for (uint32_t b = 0; b < N1; ++b) {
+				if (h == 1 && g == 0 && b == 0) continue;  // i = 0: no wrapped half
+				auto t1 = clk::now();
+				e0::gpuenc_encode(enc, 2 * (g * N1 + b) + h, dev_buf);
+				auto t2 = clk::now();
+				auto term = cc->EvalMult(bab[b], buf);
+				acc       = acc ? cc->EvalAdd(acc, term) : term;
+				cc->Synchronize();
+				gpuenc_s += std::chrono::duration<double>(t2 - t1).count();
+				mult_s += since(t2);
+				++n_mults;
+			}
+			t0   = clk::now();
+			half = half ? cc->EvalAdd(cc->EvalRotate(half, int32_t(N1)), acc) : acc;
+			cc->Synchronize();
+			rot_s += since(t0);
+		}
+		out = out ? cc->EvalAdd(out, half) : half;
+	}
+	double total = since(total0);
+	j.kv("total_s", total).kv("rotate_s", rot_s).kv("gpu_encode_s", gpuenc_s).kv("mult_add_s", mult_s);
+	j.kv("pt_mults", n_mults).kv("gpu_gb_peak_seen", gpu_used_gb());
+
+	Plaintext dec;
+	cc->Decrypt(keys.secretKey, out, &dec);
+	dec->SetLength(D * T);
+	auto got  = dec->GetRealPackedValue();
+	double err = 0;
+	for (uint32_t t = 0; t < T; ++t)
+		for (uint32_t o = 0; o < D; ++o) {
+			double want = 0;
+			for (uint32_t i = 0; i < D; ++i) want += W[o * D + i] * X[t * D + i];
+			err = std::max(err, std::abs(got[t * D + o] - want));
+		}
+	j.kv("max_abs_error", err).kv("host_peak_gb", host_peak_gb());
+	e0::gpuenc_destroy(enc);
+}
+
+// Same 1024x1024 matvec, with diagonals encoded ON THE GPU (gpu_encode.hpp).
+// Layout is token-major, slot = token*D + dim, so every diagonal plaintext is
+// period-D and needs only 2D coefficients. Rotating by i then crosses token
+// boundaries for dims j >= D-i, so diagonal i splits by the mask j < D-i:
+//   y = sum_i (m_i.d_i) * rot(x, i) + ((1-m_i).d_i) * rot(x, i-D)
+// with rot(x, i-D) = rot(rot(x, -D), i). BSGS i = g*N1 + b as before (Horner
+// over g), on two baby-step sets: x and x' = rot(x, -D). Keys: +1, +N1, -D.
+// Cost vs run_matvec: ~2x plaintext mults (2047) and baby rotations (63) --
+// GPU work that took ~1.4 s -- in exchange for no host encode / big H2D.
+static int run_matvec_enc() {
+	Json j;
+	j.ks("mode", "matvec_enc").kv("ring", RING).kv("depth", DEPTH).kv("level", MV_LEVEL).kv("D", D);
+	auto t0 = clk::now();
+	auto cc = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
+	j.kv("rotation_keys", 3);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	matvec_enc_body(cc, keys, j);
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
+// E5's shape on the GPU: bootstrap keys (full slots) AND the matvec's rotation
+// keys in ONE context, loaded once, then the GPU-encoded matvec and the
+// bootstrap back to back -- what a real pass needs. Meant for FIDES_E0_GPUS>1.
+// Prints one RESULT line per part (setup, matvec_enc, boot).
+static int run_combo(uint32_t budget) {
+	const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+	const uint32_t slots = RING / 2;
+	Json js;
+	js.ks("mode", "combo_setup").kv("gpus", ngpu).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0   = clk::now();
+	auto cc   = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	cc->EvalRotateKeyGen(keys.secretKey, { 1, int32_t(N1), -int32_t(D) });
+	phase(js, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(js, "load_context", t0);
+	js.kv("host_peak_gb", host_peak_gb());
+	std::cout << "RESULT " << js.str() << std::endl;
+
+	Json jm;
+	jm.ks("mode", "combo_matvec_enc").kv("gpus", ngpu).kv("level", MV_LEVEL).kv("D", D);
+	matvec_enc_body(cc, keys, jm);
+	std::cout << "RESULT " << jm.str() << std::endl;
+
+	Json jb;
+	jb.ks("mode", "combo_boot").kv("gpus", ngpu).kv("slots", slots).kv("level_budget", budget);
+	boot_body(cc, keys, slots, jb);
+	std::cout << "RESULT " << jb.str() << std::endl;
+	return 0;
+}
+
+// Two-pass (Meta-BTS) bootstrap composed from single bootstraps.
+// FIDESlib's EvalBootstrap takes numIterations/precision, but its GPU path
+// drops them (third_party/FIDESlib/api/CryptoContext.cpp calls
+// CKKS::Bootstrap(ct, slots, prescaled)); only the CPU fallback forwards them.
+// So the iteration is built here from ops the GPU path does implement -- the
+// same sequence as scripts/e0_iterboot.py --manual, which checks it against
+// OpenFHE's built-in numIterations=2 on CPU:
+//   b1   = Boot(ct)               m + e1
+//   diff = ct - b1                -e1        (EvalSub level-matches b1 down to ct)
+//   diff *= 2^p by p self-adds    -e1 2^p    (|.| < 1 because p = floor(bits(e1)))
+//   b2   = Boot(diff)             -e1 2^p + e2
+//   out  = b1 + b2 * 2^-p         m + e2 2^-p   (costs one extra level)
+// Precision is measured over EVERY slot (max and RMS), not a sample.
+//   fides_e0 iterboot <slots> [budget] [precision; 0 = floor of measured 1-pass bits]
+static int run_iterboot(uint32_t slots, uint32_t budget, int precision_arg) {
+	const int ngpu = std::getenv("FIDES_E0_GPUS") ? std::atoi(std::getenv("FIDES_E0_GPUS")) : 1;
+	Json j;
+	j.ks("mode", "iterboot").kv("gpus", ngpu).kv("ring", RING).kv("depth", DEPTH).kv("slots", slots).kv("level_budget", budget);
+	auto t0   = clk::now();
+	auto cc   = make_context();
+	auto keys = cc->KeyGen();
+	cc->EvalMultKeyGen(keys.secretKey);
+	cc->EvalBootstrapSetup({ budget, budget }, { 0, 0 }, slots, 0);
+	cc->EvalBootstrapKeyGen(keys.secretKey, slots);
+	phase(j, "keygen", t0);
+	t0 = clk::now();
+	cc->LoadContext(keys.publicKey);
+	cc->Synchronize();
+	phase(j, "load_context", t0);
+
+	std::mt19937_64 rng(0);
+	std::uniform_real_distribution<double> U(-1.0, 1.0);  // residual stream is normalised to |x/S| < 1
+	std::vector<double> x(slots);
+	for (auto& v : x) v = U(rng);
+	auto pt = cc->MakeCKKSPackedPlaintext(x, 1, DEPTH - 1, nullptr, slots);
+	auto ct = cc->Encrypt(keys.publicKey, pt);
+
+	// By value: FIDESlib's Decrypt takes a non-const Ciphertext& (it may upload
+	// or sync device state); Ciphertext is a shared_ptr, so the copy is cheap.
+	auto measure = [&](auto c, const std::string& tag) {
+		Plaintext dec;
+		cc->Decrypt(keys.secretKey, c, &dec);
+		dec->SetLength(slots);
+		auto got  = dec->GetRealPackedValue();
+		double mx = 0, ss = 0;
+		for (uint32_t i = 0; i < slots; ++i) {
+			const double e = std::abs(got[i] - x[i]);
+			mx = std::max(mx, e);
+			ss += e * e;
+		}
+		const double rms = std::sqrt(ss / slots);
+		j.kv(tag + "_max_err_bits", mx > 0 ? -std::log2(mx) : 99.0)
+		    .kv(tag + "_rms_err_bits", rms > 0 ? -std::log2(rms) : 99.0)
+		    .kv(tag + "_usable_levels", int(DEPTH) - int(c->GetLevel()) - 1);  // e0_levels_offbyone.json
+		return mx;
+	};
+
+	auto b1 = cc->EvalBootstrap(ct);  // warm-up: first-touch allocations, lazy uploads
+	cc->Synchronize();
+	t0 = clk::now();
+	b1 = cc->EvalBootstrap(ct);
+	cc->Synchronize();
+	j.kv("pass1_s", since(t0));
+	const double e1 = measure(b1, "pass1");
+	const int p     = precision_arg > 0 ? precision_arg : int(std::floor(-std::log2(e1)));
+	j.kv("precision_arg", p);
+
+	t0        = clk::now();
+	auto c1   = cc->EvalBootstrap(ct);
+	auto diff = cc->EvalSub(ct, c1);
+	for (int i = 0; i < p; ++i) diff = cc->EvalAdd(diff, diff);
+	auto c2  = cc->EvalBootstrap(diff);
+	auto out = cc->EvalAdd(c1, cc->EvalMult(c2, std::ldexp(1.0, -p)));
+	cc->Synchronize();
+	j.kv("pass2_manual_s", since(t0));
+	measure(out, "pass2");
+	j.kv("gpu_gb_peak_seen", gpu_used_gb()).kv("host_peak_gb", host_peak_gb());
+	std::cout << "RESULT " << j.str() << std::endl;
+	return 0;
+}
+
+int main(int argc, char** argv) {
+	std::string mode = argc > 1 ? argv[1] : "";
+	try {
+		if (mode == "boot" && argc > 2) return run_boot(std::stoul(argv[2]), argc > 3 ? std::stoul(argv[3]) : 4);
+		if (mode == "matvec") return run_matvec();
+		if (mode == "matvec_enc") return run_matvec_enc();
+		if (mode == "combo") return run_combo(argc > 2 ? std::stoul(argv[2]) : 4);
+		if (mode == "iterboot" && argc > 2)
+			return run_iterboot(std::stoul(argv[2]), argc > 3 ? std::stoul(argv[3]) : 4, argc > 4 ? std::stoi(argv[4]) : 0);
+	} catch (const std::exception& e) {
+		std::cout << "RESULT {\"mode\": \"" << mode << "\", \"error\": \"" << e.what() << "\"}" << std::endl;
+		return 2;
+	}
+	std::cerr << "usage: fides_e0 boot <slots> [budget] | matvec | matvec_enc | combo [budget] | iterboot <slots> [budget] [precision]" << std::endl;
+	return 1;
+}

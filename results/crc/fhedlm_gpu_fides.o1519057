@@ -1,0 +1,93 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_gpu_fides (1519057)
+queue     : gpu
+started   : Fri Oct  9 12:14:08 AM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Fri Oct  9 00:14:08 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:06:00.0 Off |                    0 |
+| N/A   21C    P8             14W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+=== fides_e0 boot 4096 4 (Fri Oct  9 12:14:08 AM EDT 2026)
+[fides_e0] keygen: 5.19019 s, gpu used 0.162964 GB, host peak 1.1272 GB
+[fides_e0] boot_keygen: 25.7035 s, gpu used 0.162964 GB, host peak 19.34 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+Adding bootstrap precomputation to GPU for 4096 slots.
+Plaintexts loaded: 120 ~ 5940MB
+Rotation keys loaded: 34 ~ 12036MB
+[fides_e0] load_context: 41.5213 s, gpu used 18.8016 GB, host peak 24.9585 GB
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b689]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54be20]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fdf6a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4f8ce3]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x52103b]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4b0eea]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x48add0]
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'
+=== exit 0
+=== fides_e0 boot 65536 4 (Fri Oct  9 12:15:23 AM EDT 2026)
+[fides_e0] keygen: 5.06327 s, gpu used 0.162964 GB, host peak 1.12772 GB
+[fides_e0] boot_keygen: 46.6305 s, gpu used 0.162964 GB, host peak 34.8995 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b7ee]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54cfdd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fa153]
+/lib64/libgomp.so.1(GOMP_parallel+0x46)[0x15205cc1f576]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4ff6dd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x534d13]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58442a]
+Adding bootstrap precomputation to GPU for 65536 slots.
+Plaintexts loaded: 248 ~ 12276MB
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'
+=== exit 0
+=== fides_e0 matvec (Fri Oct  9 12:17:04 AM EDT 2026)
+[fides_e0] keygen: 34.9114 s, gpu used 0.162964 GB, host peak 23.6001 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x58fc3a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5ca35a]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x5387ad]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54b7ee]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x54cc1d]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4fa153]
+/lib64/libgomp.so.1(GOMP_parallel+0x46)[0x153681c1b576]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4ff6dd]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x534d27]
+/groups/tjung/jzhao7/fhe-dlm/gpu/fides_e0/build/fides_e0[0x4a9e24]
+Cuda failure /groups/tjung/jzhao7/fhe-dlm/third_party/FIDESlib/src/CudaUtils.cu:410: 'out of memory'
+=== exit 0
+{
+  "runs": [],
+  "nvidia_smi_peak_mib": 22677.0
+}
+[gpu] done at Fri Oct  9 12:18:32 AM EDT 2026
+Loading CRC_default/1.1

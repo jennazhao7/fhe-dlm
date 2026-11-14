@@ -1,0 +1,51 @@
+{
+  "runs": [
+    {
+      "mode": "iterboot",
+      "gpus": 4,
+      "ring": 131072,
+      "depth": 43,
+      "slots": 4096,
+      "level_budget": 4,
+      "keygen_s": 21.9028,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 62.6987,
+      "load_context_gpu_gb": 8.88562,
+      "pass1_s": 0.752625,
+      "pass1_max_err_bits": 99,
+      "pass1_rms_err_bits": 99,
+      "pass1_usable_levels": 21,
+      "precision_arg": -2147483648,
+      "pass2_manual_s": 1.52423,
+      "pass2_max_err_bits": 99,
+      "pass2_rms_err_bits": 99,
+      "pass2_usable_levels": 20,
+      "gpu_gb_peak_seen": 11.0302,
+      "host_peak_gb": 27.4752
+    },
+    {
+      "mode": "iterboot",
+      "gpus": 4,
+      "ring": 131072,
+      "depth": 43,
+      "slots": 65536,
+      "level_budget": 4,
+      "keygen_s": 33.9663,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 86.7413,
+      "load_context_gpu_gb": 14.8856,
+      "pass1_s": 1.1427,
+      "pass1_max_err_bits": 8.52531,
+      "pass1_rms_err_bits": 10.9561,
+      "pass1_usable_levels": 21,
+      "precision_arg": 8,
+      "pass2_manual_s": 2.23145,
+      "pass2_max_err_bits": 16.3991,
+      "pass2_rms_err_bits": 18.9443,
+      "pass2_usable_levels": 20,
+      "gpu_gb_peak_seen": 18.0302,
+      "host_peak_gb": 43.0212
+    }
+  ],
+  "nvidia_smi_peak_mib": 18463.0
+}

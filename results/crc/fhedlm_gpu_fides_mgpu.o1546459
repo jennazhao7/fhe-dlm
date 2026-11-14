@@ -1,0 +1,112 @@
+Loading CRC_default/1.1
+Loading CRC_default/1.1
+==============================================================
+host      : qa-rtx6k-019.crc.nd.edu
+job       : fhedlm_gpu_fides_mgpu (1546459)
+queue     : gpu
+started   : Thu Oct 15 01:13:36 PM EDT 2026
+cwd       : /groups/tjung/jzhao7/fhe-dlm
+CUDA_VISIBLE_DEVICES=unset
+==============================================================
+Thu Oct 15 13:13:36 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.91.07              Driver Version: 595.91.07      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Quadro RTX 6000                Off |   00000000:06:00.0 Off |                    0 |
+| N/A   42C    P0             53W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  Quadro RTX 6000                Off |   00000000:2F:00.0 Off |                    0 |
+| N/A   42C    P0             58W /  250W |    1964MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  Quadro RTX 6000                Off |   00000000:86:00.0 Off |                    0 |
+| N/A   41C    P0             49W /  250W |       0MiB /  23040MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================================================
+FIDES_E0_GPUS=3 CUDA_VISIBLE_DEVICES=unset NCCL=/groups/tjung/jzhao7/fhe-dlm/third_party/nccl-cu13/nvidia/nccl/lib
+=== fides_e0 combo 4 (Thu Oct 15 01:13:37 PM EDT 2026)
+[fides_e0] keygen: 34.5357 s, gpu used 0.162964 GB, host peak 36.4839 GB
+GPU 0: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 1: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU 2: Quadro RTX 6000
+ SMs: 72, SharedMem: 64 KB, Blocks/SM: 16, Threads/SM: 1024, L2 size: 6 MB, Bus: 384-bit
+GPU P2P? 1
+Adding bootstrap precomputation to GPU for 65536 slots.
+Plaintexts loaded: 248 ~ 12276MB
+Rotation keys loaded: 62 ~ 21948MB
+[fides_e0] load_context: 107.217 s, gpu used 17.8856 GB, host peak RESULT {"mode": "combo_setup", "gpus": 3, "ring": 131072, "depth": 43, "slots": 65536, "level_budget": 4, "keygen_s": 34.5357, "keygen_gpu_gb": 0.162964, "load_context_s": 107.217, "load_context_gpu_gb": 17.8856, "host_peak_gb": 42.4066}
+42.4066 GB
+[fides_e0] GPU encode vs OpenFHE: 0 residues differ
+RESULT {"mode": "combo_matvec_enc", "gpus": 3, "level": 21, "D": 1024, "host_fft_s": 0.213376, "upload_s": 0.0543773, "encode_check_residues_differing": 0, "total_s": 2.80771, "rotate_s": 1.17037, "gpu_encode_s": 0.840824, "mult_add_s": 0.794975, "pt_mults": 2047, "gpu_gb_peak_seen": 22.0614, "max_abs_error": 3.02896e-11, "host_peak_gb": 42.4538}
+RESULT {"mode": "combo_boot", "gpus": 3, "slots": 65536, "level_budget": 4, "gpu_gb_after_warmup": 22.0302, "bootstrap_s": [0.964127, 0.962424, 0.965613], "gpu_gb_peak_seen": 22.0302, "levels_left_after": 22, "max_abs_error": 0.00291766, "precision_bits": 8.42097, "host_peak_gb": 42.7059}
+=== exit 0
+{
+  "runs": [
+    {
+      "mode": "combo_setup",
+      "gpus": 3,
+      "ring": 131072,
+      "depth": 43,
+      "slots": 65536,
+      "level_budget": 4,
+      "keygen_s": 34.5357,
+      "keygen_gpu_gb": 0.162964,
+      "load_context_s": 107.217,
+      "load_context_gpu_gb": 17.8856,
+      "host_peak_gb": 42.4066
+    },
+    {
+      "mode": "combo_matvec_enc",
+      "gpus": 3,
+      "level": 21,
+      "D": 1024,
+      "host_fft_s": 0.213376,
+      "upload_s": 0.0543773,
+      "encode_check_residues_differing": 0,
+      "total_s": 2.80771,
+      "rotate_s": 1.17037,
+      "gpu_encode_s": 0.840824,
+      "mult_add_s": 0.794975,
+      "pt_mults": 2047,
+      "gpu_gb_peak_seen": 22.0614,
+      "max_abs_error": 3.02896e-11,
+      "host_peak_gb": 42.4538
+    },
+    {
+      "mode": "combo_boot",
+      "gpus": 3,
+      "slots": 65536,
+      "level_budget": 4,
+      "gpu_gb_after_warmup": 22.0302,
+      "bootstrap_s": [
+        0.964127,
+        0.962424,
+        0.965613
+      ],
+      "gpu_gb_peak_seen": 22.0302,
+      "levels_left_after": 22,
+      "max_abs_error": 0.00291766,
+      "precision_bits": 8.42097,
+      "host_peak_gb": 42.7059
+    }
+  ],
+  "nvidia_smi_peak_mib": 22591.0
+}
+[gpu] done at Thu Oct 15 01:16:14 PM EDT 2026
+Loading CRC_default/1.1

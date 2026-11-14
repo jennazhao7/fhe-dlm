@@ -1,0 +1,72 @@
+{
+  "packed": true,
+  "logn": 17,
+  "slots": 65536,
+  "D": 1024,
+  "d": 768,
+  "hd": 64,
+  "B": 8,
+  "T": 64,
+  "depth": 43,
+  "bootstrap_depth": 22,
+  "usable_after_boot": 21,
+  "gelu_degree": 31,
+  "levels_attention": 8,
+  "levels_ffn": 10,
+  "levels_per_layer": 18,
+  "cost_model_levels_per_layer": 18,
+  "bootstraps": 0,
+  "layers": 2,
+  "stages_layer0": [
+    {
+      "stage": "norm1 (+token mask)",
+      "levels": 1
+    },
+    {
+      "stage": "QKV packed: 1 pass for 3 blocks",
+      "levels": 1
+    },
+    {
+      "stage": "split Q/K/V (group mask) + replicate",
+      "levels": 1
+    },
+    {
+      "stage": "scores..xV (block + cache keys)",
+      "levels": 4
+    },
+    {
+      "stage": "out-proj",
+      "levels": 1
+    },
+    {
+      "stage": "== attention half",
+      "levels": 8
+    },
+    {
+      "stage": "norm2 (+token mask)",
+      "levels": 1
+    },
+    {
+      "stage": "FFN up packed: 1 pass for 3 blocks",
+      "levels": 1
+    },
+    {
+      "stage": "GELU deg 31 (1 call, not 3)",
+      "levels": 7
+    },
+    {
+      "stage": "FFN down packed + group sum",
+      "levels": 1
+    },
+    {
+      "stage": "== FFN half",
+      "levels": 10
+    }
+  ],
+  "log": [
+    "layer 0: max|err| 1.05e-04  max|x/S| 0.42  max|gelu in| 4.0  levels used 18/43",
+    "layer 1: max|err| 1.38e-04  max|x/S| 0.54  max|gelu in| 3.9  levels used 36/43"
+  ],
+  "setup_s": 41.77349514514208,
+  "run_s": 1868.4918136931956
+}

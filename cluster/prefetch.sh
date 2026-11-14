@@ -5,7 +5,7 @@
 # pulls the TF, Flax, ONNX and Rust copies too -- 19 GB instead of 3 -- which is
 # how this project briefly ate two thirds of the free space in a shared $HOME.
 source ~/.bashrc
-conda activate fhedlm
+conda activate /groups/tjung/jzhao7/conda-envs/fhedlm
 set -uo pipefail
 export FHEDLM_ROOT="${FHEDLM_ROOT:-/groups/tjung/jzhao7/fhe-dlm}"
 export HF_HOME="$FHEDLM_ROOT/hf-cache"
