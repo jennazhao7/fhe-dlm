@@ -1012,7 +1012,38 @@ jobs launched automatically on the node's four cards.
   the server with placeholder constants: every register matches numpy to
   ~1e-11. Levels: attention half 8, GELU 7, FFN half 10, as in the audit.
 
-### Running / queued (2026-11-13 20:30)
+- **Deep circuit on one GPU (job 1747229, `results/e5/deep_mech_checks.json`,
+  extracted from the log: the run wrote no JSON).** Exact MDLM weights with
+  placeholder fixed-norm and (s+b)²/Z constants, depth 13, client refresh,
+  `--debug`: 83 registers checked against numpy through layer 6, worst
+  relative error 1.2e-8, ~40 s per layer with the debug decrypts, 8.7 GB peak.
+  It stopped in layer 6 when the placeholder model's own values overflowed
+  (2.8e10), not on an FHE fault. FIDESlib's device-side level handling
+  (rescale / adjust in mult, add, multPt) behaves like OpenFHE's FLEXIBLEAUTO.
+- **Server-side LayerNorm (`--norm rsqrt`).** var = mean(x²) − mean(x)² from
+  2 × 10 rotations (valid at dim 0), w = var/vmax, h ≈ 1/(2√w) by a degree-15
+  Chebyshev start, g = 2wh, two Goldschmidt steps, mask + replicate (10
+  rotations), u = x·h, bootstrap u/64. 14 levels. Public bounds per norm come
+  from `e5_circuit.py calib` (`results/e5/var_exact64.json`): variance grows
+  from 0.06 (layer 0) to 1.2e4 (head), but max/min within one norm is ≤ 34.
+  numpy circuit vs torch MDLM with this norm: logit error 1–2e-3, argmax
+  agreement 100%. Toy ring with real bootstraps (CPU fallback): registers
+  match numpy to ~4e-5 (the single-pass bootstrap's error).
+  So the fixed-constant norm (E1 stage A) is not needed for a pass without
+  the client; the cost is 4 bootstraps per layer (x and u, twice).
+- **Linear assist at L = 256 (job 1747331, `results/e5/linear_L256.json`,
+  8 steps):** 636 s per pass (4 ciphertexts, 880 blocks).
+
+### Running / queued (2026-11-13 21:15)
+
+- 1747366 (4 GPUs, held): exact MDLM, `--norm rsqrt --attn client --gelu client
+  --refresh boot2`, one pass with `--debug` → `results/e5/boot_exact.json`.
+  First run of rot/mult/cheb on the multi-GPU build.
+- 1747367 (4 GPUs, held on 1747366): the `e1_bc64` student with everything on
+  the server, `--norm rsqrt --refresh boot2`, 16 steps → `results/e5/full_bc64.json`.
+- 1747231 now waits for 1747367.
+
+### Earlier queue (2026-11-13 20:30)
 
 - 1747200 `e1bc64` (exact-norm B, C at L = 64) → `ckpt/e1_bc64`, `results/plain/e1_bc64.json`.
 - 1747229 deep circuit on the GPU with placeholder constants, `--debug`
