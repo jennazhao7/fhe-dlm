@@ -1095,6 +1095,20 @@ jobs launched automatically on the node's four cards.
    → `results/e5/deep_B64.json` (the fallback: every part already validated).
 4. 1747507 `e1bc256`.
 
+### Update 00:45 on 2026-11-14
+
+- **1747625 (4 GPUs, stage B, GELU on the client) finished pass 0 and ran out
+  of memory in pass 1** (`results/e5/full_bc64_stageB.json` holds pass 0:
+  1017 s without `--debug`, logit error 0.07, argmax agreement 100%, KL
+  2.2e-5, 100 bootstraps, 22.0 GB per card at the end). The pool creeps from
+  pass to pass. `e5_circuit.py --restart-vm` now starts a fresh `fides_vm`
+  (new keys, ~3 min) for every pass, and the head is decrypted 10 blocks at a
+  time.
+- Queue now: 1747841 (1 GPU, stage B, client norm/GELU/refresh, 16 steps →
+  `results/e5/deep_B64.json`, running) → the 4-GPU generation again with
+  `--restart-vm` (8 h limit; job id in `qstat`, → `results/e5/full_bc64_stageB.json`,
+  overwriting the pass-0 file) → 1747507 `e1bc256`.
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs

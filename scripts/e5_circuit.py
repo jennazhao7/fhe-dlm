@@ -556,12 +556,18 @@ class Circuit:
             be.tolevel("x", "x", max(0, cfg.depth - 4))      # the 50 head blocks on few towers
         Wp = self.normed_input("head", f.get("c"), f["g"] * (1 + f["scale"]), f["W"], m, level=max(0, cfg.depth - 3))
         Wb = self.weights("head.b", lambda: (blocks_of(Wp, nb, 1, D, DM), bias_of(f["W"] @ f["shift"] + f["b"], nb, D)))
-        outs = [f"l{k}" for k in range(nb)]
-        be.matvec("head", Wb[0], Wb[1], ["u"], outs)
-        be.check("logits block 0", "l0")
-        lg = np.concatenate([np.asarray(be.dec(r)).reshape(T, D) for r in outs], 1)[:, :VOC]
-        be.free("u", "x", *outs)
-        return lg
+        # 10 output blocks at a time: 50 live output ciphertexts added ~1 GB per card to the pool
+        # (21.0 -> 22.0 GB at the end of a pass, jobs 1747614 / 1747625).
+        parts = []
+        for c0 in range(0, nb, 10):
+            outs = [f"l{k}" for k in range(c0, min(nb, c0 + 10))]
+            be.matvec(f"head.{c0}", Wb[0][c0:c0 + 10], Wb[1][c0:c0 + 10], ["u"], outs)
+            if c0 == 0:
+                be.check("logits block 0", "l0")
+            parts += [np.asarray(be.dec(r)).reshape(T, D) for r in outs]
+            be.free(*outs)
+        be.free("u", "x")
+        return np.concatenate(parts, 1)[:, :VOC]
 
 
 # ---------------------------------------------------------------- torch side
@@ -687,15 +693,30 @@ def cmd_run(a):
     P = extract(m, a.L, a.norm == "fixed", a.attn != "client", a.gelu == "poly")
     wd = tempfile.mkdtemp(prefix="e5c_", dir=a.workdir)
     os.environ["FIDES_VM_N1"] = str(a.n1)
-    vm = VM(a.bin, a.logn, a.depth, D, a.gpus, rot_keys(a.n1), a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
-    print("[e5c]", json.dumps(vm.ready), flush=True)
-    chk = []
-    be = PairBE(VmBE(vm), NumpyBE(vm.slots), chk) if a.debug else VmBE(vm)
+    chk, files = [], {}
+
+    def new_vm():
+        v = VM(a.bin, a.logn, a.depth, D, a.gpus, rot_keys(a.n1), a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
+        print("[e5c]", json.dumps(v.ready), flush=True)
+        vb = VmBE(v)
+        vb.files = files                       # weight files on disk outlive a server restart
+        return v, (PairBE(vb, NumpyBE(v.slots), chk) if a.debug else vb)
+    vm, be = new_vm()
     circ = Circuit(be, P, a)
     res = {"args": vars(a), "ready": vm.ready, "setup_s": time.perf_counter() - t0, "passes": [], "checks": chk}
     real = pp.forward_logits
 
     def fl(mm, x):
+        nonlocal vm
+        restart_s = 0.0
+        if a.restart_vm and res["passes"]:
+            # FIDESlib's memory pool never shrinks and creeps from pass to pass (job 1747625 ran
+            # out of memory in pass 1 at 22 GB per card). A fresh server per pass: new keys, same
+            # circuit; costs the key generation and upload again.
+            t_r = time.perf_counter()
+            vm.close()
+            vm, circ.be = new_vm()
+            restart_s = time.perf_counter() - t_r
         before = {kk: dict(v) for kk, v in vm.stats().items()}
         circ.stat.clear()
         t1 = time.perf_counter()
@@ -710,7 +731,7 @@ def cmd_run(a):
         rec = {"pass": len(res["passes"]), "n_masked": int((x == pp.MASK).sum()), "wall_s": wall, "vm_seconds": d("seconds"),
                "vm_calls": d("calls"), "matvec": d("matvec"), "logit_max_abs_err": float((lg - ref)[fin].abs().max()),
                "logit_max_abs": float(ref[fin].abs().max()), "argmax_agree": float((lg.argmax(-1) == ref.argmax(-1)).float().mean()),
-               "kl_to_plain": kl, "stat": dict(circ.stat), "mem": vm.cmd("mem")}
+               "kl_to_plain": kl, "stat": dict(circ.stat), "mem": vm.cmd("mem"), "vm_restart_s": restart_s}
         res["passes"].append(rec)
         print("[e5c]", json.dumps(rec), flush=True)
         if a.out:
@@ -787,6 +808,7 @@ def main():
             s.add_argument("--steps", type=int, default=16)
             s.add_argument("--infill", type=float, default=0.0, help="start from real text with this share masked (0: all masked)")
             s.add_argument("--max-passes", type=int, default=0)
+            s.add_argument("--restart-vm", action="store_true", help="fresh fides_vm (new keys) for every pass: bounds GPU memory")
             s.add_argument("--debug", action="store_true", help="numpy reference alongside; compare registers at stage boundaries")
             s.add_argument("--workdir", default=os.environ.get("TMPDIR", "/tmp"))
     a = ap.parse_args()
