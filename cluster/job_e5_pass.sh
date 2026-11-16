@@ -21,7 +21,8 @@
 #   qsub -v E5_SCRIPT=e5_circuit.py,E5_TAG=deep_C64,E5_ARGS="run --ckpt ckpt/e1_bc64/stageC.pt --stage C --exact-norm --steps 16" cluster/job_e5_pass.sh
 # E5_STUDENT=<ckpt dir>  (e5_circuit.py) picks the student from an e1_kd.py --exact-norm run: stage C if
 #   its checkpoint exists and the run did not abort there, else stage B with the GELU on the client;
-#   appends --ckpt/--stage/--exact-norm[/--gelu client] to E5_ARGS. Use with -hold_jid <the E1 job>.
+#   appends --ckpt/--stage/--exact-norm[/--gelu client unless E5_ARGS has --gelu] to E5_ARGS.
+#   Use with -hold_jid <the E1 job>.
 # E5_GPUS=n  (n > 1) one fides_vm over n cards with the multi-GPU FIDESlib build (needed for bootstraps:
 #   --refresh boot|boot2, depth 43); submit with -l gpu=n. Appends --gpus n.
 # E5_CALIB=1 (e5_circuit.py) first runs `calib` for the chosen model (variance bounds for --norm rsqrt,
@@ -88,7 +89,8 @@ if [ -n "${E5_STUDENT:-}" ]; then
   if [ -f "$E5_STUDENT/stageC.pt" ] && [[ " $aborted " != *" C "* ]]; then
     STU=(--ckpt "$E5_STUDENT/stageC.pt" --stage C --exact-norm)
   elif [ -f "$E5_STUDENT/stageB.pt" ] && [[ " $aborted " != *" B "* ]]; then
-    STU=(--ckpt "$E5_STUDENT/stageB.pt" --stage B --exact-norm --gelu client); TAG="${TAG}_stageB"
+    STU=(--ckpt "$E5_STUDENT/stageB.pt" --stage B --exact-norm); TAG="${TAG}_stageB"
+    [[ " ${ARGS[*]} " == *" --gelu "* ]] || STU+=(--gelu client)     # E5_ARGS may ask for --gelu server
   else
     echo "=== no usable student in $E5_STUDENT -- aborting"; kill $SMI; exit 1
   fi

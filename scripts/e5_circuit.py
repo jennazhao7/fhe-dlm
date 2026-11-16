@@ -10,6 +10,9 @@ E1 student (scripts/e1_kd.py):
   --norm  fixed   c[mask_t] * g * (x - mean)       (E1 stage A)   | client: exact LayerNorm
   --attn  pow     (q.k/8 + b_h)^2 / z[h, mask_t]   (E1 stage B)   | client: rotary + softmax
   --gelu  poly    Chebyshev degree 31 on [-8, 8]   (E1 stage C)   | client: exact GELU
+          server  the model's own GELU as one Chebyshev series on [-B, B], B = a power of two >= gelu-margin
+                  * max|input| of that layer (from `calib`), degree picked for max error < 1e-3 (247 for
+                  B = 64, 495 for B = 128; depth 9-10). No retraining; works with the stage-B student.
           rsqrt   exact LayerNorm on the server: var = mean(x^2) - mean(x)^2 by rotations, 1/sigma by a
                   Chebyshev start + Goldschmidt steps, x/sigma bootstrapped; needs --refresh boot|boot2 and
                   --var-file (public variance bounds per norm, from `calib`). No client inside the pass.
@@ -56,6 +59,28 @@ UN = 64.0        # x/sigma is bootstrapped as u / UN (uncentred: |x|/sigma reach
 
 def gelu_np(z):
     return 0.5 * z * (1 + np.tanh(math.sqrt(2 / math.pi) * (z + 0.044715 * z ** 3)))
+
+
+GELU_DEGREES = (59, 119, 247, 495, 1007)     # OpenFHE Paterson-Stockmeyer: depth 6, 7, 8, 9, 10 (+1 affine)
+_GELU_SERIES = {}
+
+
+def gelu_series(B, tol=1e-3):
+    """Chebyshev coefficients of GELU(B t), t in [-1, 1]: the lowest degree in GELU_DEGREES whose max
+    error on a fine grid is below tol. GELU is ReLU-like at the scale of B, so the degree grows ~4 B."""
+    if B not in _GELU_SERIES:
+        t = np.linspace(-1, 1, 200001)
+        for n in GELU_DEGREES:
+            c = np.polynomial.chebyshev.chebinterpolate(lambda u: gelu_np(B * u), n)
+            err = float(np.abs(np.polynomial.chebyshev.chebval(t, c) - gelu_np(B * t)).max())
+            if err < tol:
+                break
+        _GELU_SERIES[B] = (c, err)
+    return _GELU_SERIES[B]
+
+
+def cheb_depth(n):
+    return int(math.ceil(math.log2(n + 1))) + 1
 
 
 # ---------------------------------------------------------------- backends
@@ -506,6 +531,8 @@ class Circuit:
         if self.cfg.gelu == "poly":
             for p in ps:
                 be.cheb(p, p, -lay["R"], lay["R"], lay["gc"])
+        elif self.cfg.gelu == "server":
+            self.gelu_server(i, ps)
         else:
             for p in ps:
                 u = be.dec(p)
@@ -519,6 +546,34 @@ class Circuit:
         be.add("x", "x", "y")
         be.free("y", *ps)
         be.check(f"L{i} x after ffn", "x")
+
+    def gelu_range(self, i):
+        cfg = self.cfg
+        gm = (cfg.xmax or {}).get(f"L{i}.gelu")
+        if gm is None:
+            return cfg.gelu_B
+        return max(8.0, 2.0 ** math.ceil(math.log2(cfg.gelu_margin * gm)))
+
+    def gelu_server(self, i, ps):
+        """GELU(p) for the up-projection's 3 registers: one Chebyshev series on [-B, B]. When fewer levels
+        are left than the series, the down matvec and one spare need, p/B is bootstrapped first."""
+        be, cfg = self.be, self.cfg
+        B = self.gelu_range(i)
+        c, err = gelu_series(B)
+        self.stat["gelu_B_max"] = max(self.stat["gelu_B_max"], B)
+        self.stat["gelu_deg_max"] = max(self.stat["gelu_deg_max"], len(c) - 1)
+        self.stat["gelu_series_err"] = max(self.stat["gelu_series_err"], err)
+        for p in ps:
+            i_ = be.info(p)
+            left = cfg.depth - i_["level"] - (i_["deg"] - 1)
+            if cfg.refresh in ("boot", "boot2") and left < cheb_depth(len(c) - 1) + 2:
+                be.mulc(p, p, 1.0 / B)
+                self.boot_reg(p)
+                be.cheb(p, p, -1.0, 1.0, c)
+                self.stat["gelu_boots"] += 1
+            else:
+                be.cheb(p, p, -B, B, c)
+        self.stat["server_gelu"] += 1
 
     # --- pass
     def forward(self, ids, mask_id=50257):
@@ -632,6 +687,8 @@ def cmd_check(a):
 
 def load_var(a):
     a.var = a.xmax = None
+    if a.gelu == "server" and a.var_file and a.norm != "rsqrt":
+        a.xmax = json.load(open(a.var_file)).get("xmax")
     if a.norm == "rsqrt":
         cal = json.load(open(a.var_file))
         a.var, a.xmax = cal["var"], cal.get("xmax")
@@ -659,6 +716,7 @@ def cmd_calib(a):
     for i, b in enumerate(pp.blocks(m)):
         b.norm1.register_forward_pre_hook(hook(f"L{i}.qkv"))
         b.norm2.register_forward_pre_hook(hook(f"L{i}.up"))
+        b.mlp[1].register_forward_pre_hook(hook(f"L{i}.gelu"))
     m.backbone.output_layer.norm_final.register_forward_pre_hook(hook("head"))
     data = pp.load_chunks(a.L, a.n, seed=a.seed)
     g = torch.Generator().manual_seed(a.seed)
@@ -672,7 +730,9 @@ def cmd_calib(a):
     if a.gen_n:
         pp.PIN0 = True
         pp.sample(m, a.gen_n, a.L, a.steps, a.seed)
+    gel = {k: rng.pop(k) and xmax[k] for k in [k for k in rng if k.endswith(".gelu")]}
     res = {"args": vars(a), "var": rng, "xmax": xmax, "widest_ratio": max(v[1] / v[0] for v in rng.values())}
+    print("[e5c] max|GELU input| by layer", [round(v, 1) for v in gel.values()], flush=True)
     print("[e5c]", json.dumps({k: [round(v[0], 3), round(v[1], 1)] for k, v in rng.items()}), flush=True)
     print(f"[e5c] widest max/min variance ratio {res['widest_ratio']:.1f}; max|x| by norm "
           f"{[round(xmax[k], 1) for k in rng]}", flush=True)
@@ -784,7 +844,9 @@ def main():
         s.add_argument("--n1", type=int, default=32, help="matvec baby steps (16 halves its memory; use with the bootstrap keys loaded)")
         s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
         s.add_argument("--attn", choices=("pow", "client", "client-pow"), default=None)
-        s.add_argument("--gelu", choices=("poly", "client"), default=None)
+        s.add_argument("--gelu", choices=("poly", "client", "server"), default=None)
+        s.add_argument("--gelu-margin", type=float, default=1.5, help="--gelu server: B >= margin * max|input| (calib)")
+        s.add_argument("--gelu-B", type=float, default=128.0, help="--gelu server: range when calib has no entry")
         s.add_argument("--exact-norm", action="store_true", help="student trained with e1_kd.py --exact-norm (norms on the client)")
         s.add_argument("--S", type=float, default=1024.0, help="residual-stream scale: x is held as x/S")
         s.add_argument("--L", type=int, default=64)
