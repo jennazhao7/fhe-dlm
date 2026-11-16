@@ -1131,6 +1131,29 @@ jobs launched automatically on the node's four cards.
   on the measured range (|x| ≤ ~48 → scale to [-1, 1]); validate in numpy
   against the stage-B student, then one 4-GPU pass.
 
+### Server-side GELU: first pass with no client step inside (2026-11-16)
+
+- `--gelu server`: the model's own (tanh) GELU as one Chebyshev series on
+  [-B, B], B = power of two >= 1.5 x max|GELU input| of that layer (new
+  `L{i}.gelu` entries in `calib`), degree = the lowest of 59/119/247/495/1007
+  with max error < 1e-3 (B = 32 → 119, 64 → 247, 128 → 495). No retraining:
+  it runs on the stage-B student. Plain Chebyshev works because GELU is
+  smooth at scale 1: on [-64, 64] degree 255 gives 9e-5, on [-128, 128]
+  degree 511 gives 9e-5, sum|c| ~ B (`scratch/gelu_cheb.py`).
+- Calib (stage-B student): max|GELU input| by layer 19, 17, 15, 12, 15, 46, 58,
+  12, 8, 11, 9, 8 → B = 128 only in layers 5–6.
+- numpy vs torch (`results/e5/check_gelu_server.json`, B = 128 everywhere):
+  logit error 8e-3, argmax 100%.
+- **Job 1760799 (4 GPUs, 1 pass, `--debug`, `results/e5/nocl1pass_stageB.json`):
+  embedding, rsqrt LayerNorm, squared attention, GELU, all matvecs, 100
+  two-pass bootstraps and the head on the server; the client only encrypts
+  tokens and decrypts logits.** Logit error 0.075 on ±26.5, argmax 100%, KL
+  2.8e-5, 1038 s with checks, 21.5 GB peak. GELU in/out errors ~0.01 (the
+  bootstrap noise passes through); the series fits in the 13 levels after the
+  up matvec (x ends at level 40 of 43), no extra bootstraps.
+- Queued: 1760990, the same for 16 passes with `--restart-vm` →
+  `results/e5/nocl_bc64_stageB.json` (~5.5 h).
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs

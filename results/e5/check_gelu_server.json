@@ -1,0 +1,62 @@
+{
+ "args": {
+  "cmd": "check",
+  "ckpt": "ckpt/e1_bc64/stageB.pt",
+  "stage": "B",
+  "norm": "client",
+  "var_file": null,
+  "var_margin": 3.0,
+  "s_margin": 2.0,
+  "rsqrt_deg": 15,
+  "gold_iters": 2,
+  "n1": 32,
+  "boot_bits": 8,
+  "attn": "pow",
+  "gelu": "server",
+  "gelu_margin": 1.5,
+  "gelu_B": 128.0,
+  "exact_norm": true,
+  "S": 1024.0,
+  "L": 64,
+  "layers": null,
+  "seed": 11,
+  "out": "results/e5/check_gelu_server.json",
+  "n": 2,
+  "refresh": "none",
+  "depth": 0,
+  "embed": "client",
+  "var": null,
+  "xmax": null
+ },
+ "cases": [
+  {
+   "n_masked": 20,
+   "logit_max_abs_err": 0.008086078110459027,
+   "logit_max_abs": 26.734275817871094,
+   "argmax_agree": 1.0,
+   "stat": {
+    "x_max": 593.8935119255361,
+    "client_norm": 25.0,
+    "gelu_B_max": 128.0,
+    "gelu_deg_max": 495,
+    "gelu_series_err": 0.00013882021774236364,
+    "server_gelu": 12.0
+   }
+  },
+  {
+   "n_masked": 39,
+   "logit_max_abs_err": 0.008347501930683343,
+   "logit_max_abs": 29.393199920654297,
+   "argmax_agree": 1.0,
+   "stat": {
+    "x_max": 592.003992745785,
+    "client_norm": 25.0,
+    "gelu_B_max": 128.0,
+    "gelu_deg_max": 495,
+    "gelu_series_err": 0.00013882021774236364,
+    "server_gelu": 12.0
+   }
+  }
+ ],
+ "ok": true
+}
