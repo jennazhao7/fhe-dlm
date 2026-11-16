@@ -1109,6 +1109,28 @@ jobs launched automatically on the node's four cards.
   `--restart-vm` (8 h limit; job id in `qstat`, → `results/e5/full_bc64_stageB.json`,
   overwriting the pass-0 file) → 1747507 `e1bc256`.
 
+### Results of the chain (checked 2026-11-16)
+
+- **1747841, 1 GPU, 16-step infill (`results/e5/deep_B64.json`):** stage-B
+  student; matvecs, embedding and squared attention on the server; norm, GELU
+  and refresh on the client. All 16 passes: 520 s/pass, logit error ≤ 2.2e-5,
+  argmax agreement 100%, KL ≈ 0, 8.4 GB.
+- **1748192, 4 GPUs, 16-step infill (`results/e5/full_bc64_stageB.json`):**
+  same student with rsqrt LayerNorm and 100 two-pass bootstraps per pass on the
+  server; only the GELU (12 rounds) on the client. All 16 passes, no OOM with
+  `--restart-vm`: 1016 s/pass + 183 s VM restart (~5.3 h total), 21.0 GB per
+  card, logit error ≤ 0.11 on ±27.7, argmax agreement ≥ 63/64 (one token off
+  in passes 4 and 10), KL ≤ 3e-5. **Same sample as 1747841** (= the plaintext
+  student). `gelu_in_max` 41–47 in every pass.
+- **1747507 `e1bc256` (`results/plain/e1_bc256.json`):** stage B at L=256 OK
+  (NLL 2.56/4.13/6.92 at mask 0.15/0.5/0.9; teacher 2.15/3.84/7.06; KL
+  0.82/0.83/0.30); stage C (2000 steps) failed like L=64: 2.1% of GELU inputs
+  outside [-8, 8] (max 152), NLL 705–907, aborted.
+- The polynomial-GELU student is dead at both lengths. Next: server-side GELU
+  as ½x(1 + erf(x/√2)) with erf from a composite odd polynomial (sign-style)
+  on the measured range (|x| ≤ ~48 → scale to [-1, 1]); validate in numpy
+  against the stage-B student, then one 4-GPU pass.
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs
