@@ -1173,9 +1173,25 @@ Pass 0 = 953 s (no `--debug`); pass 1 ran out of memory without
   (60 ms) 768 times per pass.
 - enc/dec ~50 s.
 
-Fixes in progress: `--rotsum log` (doubling window sums, 13 keys; numpy
-check OK, error 0.08–0.11 with rsqrt norm + server GELU; GPU memory test =
-job 1768788), batched diagonal encodes, 1/sqrt(z) folded into q.
+### Three speedups (job 1769076, 2026-11-17; `results/e5/fast1_stageB.json`)
+
+`--rotsum log --zfold --batch-enc 4`, 1 pass, 4 GPUs: **708 s per pass
+(was 953 s)**, logit error 0.076, argmax 100%, KL 3.0e-5 (same as before).
+
+| seconds per pass | job 1765111 | job 1769076 |
+|---|---|---|
+| matvec (diagonal encodes) | 476 (295) | 373 (191) |
+| rotations (count) | 201 (28.9k) | 94 (13.5k) |
+| mulpt | 59 | 36 |
+| bootstraps | 113 | 113 |
+
+Memory: 22.0 GB after the first pass vs 21.0 (13 rotation keys + batch
+buffers); peak 21.6 GB per card on nvidia-smi. `--restart-vm` still needed
+for more than one pass. Job 1770029 (`fast16`) = the 16-pass generation with
+all three flags + `--restart-vm`.
+
+Largest remaining costs: the diagonal encodes (191 s; `matvec@40`, the head
+and embedding, still 147 s) and the bootstraps (113 s).
 
 ### Not done
 
