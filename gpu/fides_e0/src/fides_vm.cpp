@@ -173,7 +173,7 @@ static std::string do_matvec(Vm& vm, uint32_t n_out, uint32_t n_in, const std::v
 		if (x->GetLevel() != level) throw std::runtime_error("matvec: inputs at different levels");
 	Vm::Enc* en = CPU_ONLY ? nullptr : &vm.encoder(level);
 	const double sf = en ? en->sf : 0;
-	double rot_s = 0, fft_s = 0, up_s = 0, mult_s = 0;
+	double rot_s = 0, fft_s = 0, up_s = 0, mult_s = 0, enc_s = 0;
 	uint32_t n_mults = 0, n_rots = 0, n_skipped = 0;
 	std::vector<Ct> acc_out(n_out);
 
@@ -248,7 +248,9 @@ static std::string do_matvec(Vm& vm, uint32_t n_out, uint32_t n_in, const std::v
 						}
 						Ct term;
 						if (en) {
-							e0::gpuenc_encode(en->e, k, cc->GetDevicePlaintext(en->buf->gpu));
+							const auto te = clk::now();
+							e0::gpuenc_encode(en->e, k, cc->GetDevicePlaintext(en->buf->gpu));   // syncs all cards
+							enc_s += since(te);
 							term = cc->EvalMult(bab[b], en->buf);
 						} else {
 							auto pt = cc->MakeCKKSPackedPlaintext(vecs[k], 1, level, nullptr, D);
@@ -297,7 +299,7 @@ static std::string do_matvec(Vm& vm, uint32_t n_out, uint32_t n_in, const std::v
 		vm.reg[outs[o]] = acc_out[o];
 	}
 	std::ostringstream s;
-	s << "\"rot_s\": " << rot_s << ", \"host_fft_s\": " << fft_s << ", \"upload_s\": " << up_s << ", \"mult_s\": " << mult_s
+	s << "\"rot_s\": " << rot_s << ", \"host_fft_s\": " << fft_s << ", \"upload_s\": " << up_s << ", \"mult_s\": " << mult_s << ", \"enc_s\": " << enc_s
 	  << ", \"pt_mults\": " << n_mults << ", \"rots\": " << n_rots << ", \"skipped\": " << n_skipped << ", \"level\": " << level;
 	return s.str();
 }
@@ -468,6 +470,13 @@ int main(int argc, char** argv) {
 			} else
 				throw std::runtime_error("unknown op " + op);
 			cc->Synchronize();
+			{   // level of the op's first register (the result for most ops): per-level profiles
+				std::istringstream in2(line);
+				std::string op2, r0;
+				in2 >> op2 >> r0;
+				auto it = vm.reg.find(r0);
+				if (op != "matvec" && op != "info" && it != vm.reg.end() && it->second) extra << ", \"lvl\": " << it->second->GetLevel();
+			}
 			std::cout << "OK {\"op\": \"" << op << "\", \"s\": " << since(t0) << extra.str() << "}" << std::endl;
 		} catch (const std::exception& e) {
 			std::cout << "ERR " << op << ": " << e.what() << std::endl;

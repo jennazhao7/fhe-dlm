@@ -791,7 +791,8 @@ def cmd_run(a):
         rec = {"pass": len(res["passes"]), "n_masked": int((x == pp.MASK).sum()), "wall_s": wall, "vm_seconds": d("seconds"),
                "vm_calls": d("calls"), "matvec": d("matvec"), "logit_max_abs_err": float((lg - ref)[fin].abs().max()),
                "logit_max_abs": float(ref[fin].abs().max()), "argmax_agree": float((lg.argmax(-1) == ref.argmax(-1)).float().mean()),
-               "kl_to_plain": kl, "stat": dict(circ.stat), "mem": vm.cmd("mem"), "vm_restart_s": restart_s}
+               "kl_to_plain": kl, "stat": dict(circ.stat), "mem": vm.cmd("mem"), "vm_restart_s": restart_s,
+               "prof_s": d("prof_s"), "prof_n": d("prof_n")}
         res["passes"].append(rec)
         print("[e5c]", json.dumps(rec), flush=True)
         if a.out:

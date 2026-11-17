@@ -46,6 +46,8 @@ class VM:
         self.t = collections.defaultdict(float)     # seconds by op
         self.n = collections.defaultdict(int)
         self.mv = collections.defaultdict(float)    # matvec breakdown
+        self.ps = collections.defaultdict(float)    # seconds by "op@level of its result" (fides_vm replies with lvl)
+        self.pn = collections.defaultdict(int)
         self.p = subprocess.Popen([binary, str(logn), str(depth), str(D), str(gpus), ",".join(map(str, rots)), str(int(boot))],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1, env=env)
         self.ready = self._reply()
@@ -66,8 +68,12 @@ class VM:
         r = self._reply()
         self.t[r["op"]] += r["s"]; self.n[r["op"]] += 1
         if r["op"] == "matvec":
-            for k in ("rot_s", "host_fft_s", "upload_s", "mult_s", "pt_mults", "rots", "skipped"):
-                self.mv[k] += r[k]
+            for k in ("rot_s", "host_fft_s", "upload_s", "mult_s", "enc_s", "pt_mults", "rots", "skipped"):
+                self.mv[k] += r.get(k, 0.0)
+            key = f"matvec@{r.get('level', '?')}"
+        else:
+            key = f"{r['op']}@{r.get('lvl', '-')}"
+        self.ps[key] += r["s"]; self.pn[key] += 1
         return r
 
     def enc(self, r, v, level=0):
@@ -90,7 +96,8 @@ class VM:
             self.p.kill()
 
     def stats(self):
-        return {"seconds": dict(self.t), "calls": dict(self.n), "matvec": dict(self.mv)}
+        return {"seconds": dict(self.t), "calls": dict(self.n), "matvec": dict(self.mv),
+                "prof_s": dict(self.ps), "prof_n": dict(self.pn)}
 
 
 class EncLinear:
