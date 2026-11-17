@@ -783,7 +783,7 @@ def cmd_run(a):
     P = extract(m, a.L, a.norm == "fixed", a.attn != "client", a.gelu == "poly")
     wd = tempfile.mkdtemp(prefix="e5c_", dir=a.workdir)
     os.environ["FIDES_VM_N1"] = str(a.n1)
-    os.environ["FIDES_VM_BATCH"] = "1" if a.batch_enc else "0"
+    os.environ["FIDES_VM_BATCH"] = str(a.batch_enc)
     chk, files = [], {}
 
     def new_vm():
@@ -879,8 +879,8 @@ def main():
         s.add_argument("--gelu", choices=("poly", "client", "server"), default=None)
         s.add_argument("--zfold", action="store_true",
                        help="attention: fold 1/sqrt(z) into q and the bias; the per-shift multiply is a 0/1 mask")
-        s.add_argument("--batch-enc", action="store_true",
-                       help="fides_vm encodes a giant step's diagonals in one batch (FIDES_VM_BATCH=1)")
+        s.add_argument("--batch-enc", type=int, default=0,
+                       help="fides_vm encodes matvec diagonals K at a time (FIDES_VM_BATCH=K; 0 = one by one)")
         s.add_argument("--rotsum", choices=("lin", "log"), default="lin",
                        help="window sums: lin = 9 rotation keys; log = doubling, 13 keys, about half the rotations")
         s.add_argument("--gelu-margin", type=float, default=1.5, help="--gelu server: B >= margin * max|input| (calib)")

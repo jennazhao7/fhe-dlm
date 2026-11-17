@@ -55,9 +55,11 @@ using namespace fideslib;
 using Ct = Ciphertext<DCRTPoly>;
 
 static const bool CPU_ONLY = std::getenv("FIDES_E0_CPU") != nullptr;
-// FIDES_VM_BATCH=1: matvec encodes each giant step's diagonals in one gpuenc_encode_batch (one
-// plaintext buffer per baby step) instead of one synchronised gpuenc_encode per diagonal.
-static const bool BATCH_ENC = std::getenv("FIDES_VM_BATCH") && std::atoi(std::getenv("FIDES_VM_BATCH")) != 0;
+// FIDES_VM_BATCH=K (> 0): matvec encodes a giant step's diagonals K at a time with gpuenc_encode_batch
+// (K plaintext buffers and K scratch polynomials per encoder level) instead of one synchronised
+// gpuenc_encode per diagonal. 0 / unset: off.
+static const uint32_t BATCH_K = std::getenv("FIDES_VM_BATCH") ? uint32_t(std::max(0, std::atoi(std::getenv("FIDES_VM_BATCH")))) : 0;
+static const bool BATCH_ENC = BATCH_K > 0;
 static uint32_t RING, DEPTH, D, N1, N2, SLOTS;
 
 using clk = std::chrono::steady_clock;
@@ -139,7 +141,7 @@ struct Vm {
 		cc->LoadPlaintext(en.ref);
 		en.buf = cc->MakeCKKSPackedPlaintext(z, 1, level, nullptr, D);
 		cc->LoadPlaintext(en.buf);
-		for (uint32_t b = 0; BATCH_ENC && b < N1; ++b) {
+		for (uint32_t b = 0; BATCH_ENC && b < std::min(BATCH_K, N1); ++b) {
 			en.bufs.push_back(cc->MakeCKKSPackedPlaintext(z, 1, level, nullptr, D));
 			cc->LoadPlaintext(en.bufs.back());
 		}
@@ -249,27 +251,30 @@ static std::string do_matvec(Vm& vm, uint32_t n_out, uint32_t n_in, const std::v
 				Ct half;
 				for (uint32_t g = N2; g-- > 0;) {
 					Ct acc;
-					if (en && BATCH_ENC) {   // all live plaintexts of this giant step in one batch
-						std::vector<size_t> ks;
-						std::vector<std::shared_ptr<void>*> ds;
-						for (uint32_t b = 0; b < N1; ++b)
-							if (live[g * N1 + b]) {
-								ks.push_back(g * N1 + b);
-								ds.push_back(&cc->GetDevicePlaintext(en->bufs[b]->gpu));
-							}
-						const auto te = clk::now();
-						if (!ks.empty()) e0::gpuenc_encode_batch(en->e, ks, ds);
-						enc_s += since(te);
-					}
+					std::vector<uint32_t> slot(N1, 0);   // batch buffer holding baby step b's plaintext
+					uint32_t next_b = 0;                 // first baby step not yet encoded (batched mode)
 					for (uint32_t b = 0; b < N1; ++b) {
 						const uint32_t k = g * N1 + b;
 						if (!live[k]) {
 							++n_skipped;
 							continue;
 						}
+						if (en && BATCH_ENC && b >= next_b) {   // encode the next K live diagonals at once
+							std::vector<size_t> ks;
+							std::vector<std::shared_ptr<void>*> ds;
+							for (next_b = b; next_b < N1 && ks.size() < en->bufs.size(); ++next_b)
+								if (live[g * N1 + next_b]) {
+									slot[next_b] = uint32_t(ks.size());
+									ks.push_back(g * N1 + next_b);
+									ds.push_back(&cc->GetDevicePlaintext(en->bufs[ks.size() - 1]->gpu));
+								}
+							const auto te = clk::now();
+							e0::gpuenc_encode_batch(en->e, ks, ds);
+							enc_s += since(te);
+						}
 						Ct term;
 						if (en && BATCH_ENC) {
-							term = cc->EvalMult(bab[b], en->bufs[b]);
+							term = cc->EvalMult(bab[b], en->bufs[slot[b]]);
 						} else if (en) {
 							const auto te = clk::now();
 							e0::gpuenc_encode(en->e, k, cc->GetDevicePlaintext(en->buf->gpu));   // syncs all cards
