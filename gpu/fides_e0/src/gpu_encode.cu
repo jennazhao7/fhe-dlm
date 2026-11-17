@@ -52,6 +52,7 @@ struct GpuEncoder {
 	uint32_t N = 0, D = 0, gap = 0;
 	double sf = 0;
 	std::unique_ptr<RNSPoly> scratch;
+	std::vector<std::unique_ptr<RNSPoly>> scr;   // gpuenc_encode_batch: one scratch per batch slot
 	// One copy of the coefficient sets per device: with FIDES_E0_GPUS > 1 the
 	// limbs (and so the scatter kernels) are spread over the cards.
 	std::map<int, int64_t*> d_coef;
@@ -146,6 +147,45 @@ void gpuenc_encode(GpuEncoder* e, size_t idx, std::shared_ptr<void>& dst_dev_pt)
 	sync_all(*e->cc);
 	dst.NoiseFactor = e->sf;
 	dst.NoiseLevel  = 1;
+}
+
+void gpuenc_encode_batch(GpuEncoder* e, const std::vector<size_t>& idx, const std::vector<std::shared_ptr<void>*>& dst) {
+	if (idx.size() != dst.size())
+		throw std::runtime_error("gpuenc_encode_batch: idx and dst differ in length");
+	ContextData& cc     = *e->cc;
+	constexpr int block = 256;
+	const uint32_t grid = (e->N + block - 1) / block;
+	while (e->scr.size() < idx.size())
+		e->scr.push_back(std::make_unique<RNSPoly>(cc, e->level));
+	sync_all(cc);  // the previous batch's EvalMults have read their plaintexts
+	for (size_t j = 0; j < idx.size(); ++j) {
+		if (idx[j] >= e->n_sets)
+			throw std::runtime_error("gpuenc_encode_batch: index out of range");
+		auto& d = *std::static_pointer_cast<Plaintext>(*dst[j]);
+		if (d.c0.getLevel() != e->level)
+			throw std::runtime_error("gpuenc_encode_batch: destination plaintext is at a different level");
+		RNSPoly& sp           = *e->scr[j];
+		const size_t coef_off = idx[j] * 2 * size_t(e->D);
+		for (int i = 0; i <= e->level; ++i) {   // scatter on the partition stream: NTT(sync) waits on it
+			auto& part = sp.GPU.at(cc.limbGPUid.at(i).x);
+			auto& l    = limb_at(cc, sp, i);
+			CK(cudaSetDevice(part.device));
+			scatter_limb<<<grid, block, 0, part.s.ptr()>>>(l.v.data, e->d_coef.at(part.device) + coef_off, e->N, e->gap,
+			                                               cc.prime.at(l.primeid).p);
+		}
+		CK(cudaGetLastError());
+		sp.NTT(cc.batch, true);                  // limb streams wait on part.s, then part.s waits on them
+		for (int i = 0; i <= e->level; ++i) {
+			auto& part = sp.GPU.at(cc.limbGPUid.at(i).x);
+			auto& s    = limb_at(cc, sp, i);
+			auto& dd   = limb_at(cc, d.c0, i);
+			CK(cudaSetDevice(part.device));
+			CK(cudaMemcpyAsync(dd.v.data, s.v.data, size_t(e->N) * sizeof(uint64_t), cudaMemcpyDeviceToDevice, part.s.ptr()));
+		}
+		d.NoiseFactor = e->sf;
+		d.NoiseLevel  = 1;
+	}
+	sync_all(cc);  // every dst is ready for EvalMult on whatever streams it uses
 }
 
 uint64_t gpuenc_count_diff(GpuEncoder* e, std::shared_ptr<void>& a, std::shared_ptr<void>& b) {

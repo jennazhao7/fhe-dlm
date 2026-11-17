@@ -39,6 +39,11 @@ double gpuenc_scaling_factor(const GpuEncoder* e);
 double gpuenc_upload(GpuEncoder* e, const std::vector<std::vector<int64_t>>& coeffs);
 // Overwrite dst_dev_pt with coefficient set `idx` (scatter + NTT + copy). Synchronizes.
 void gpuenc_encode(GpuEncoder* e, size_t idx, std::shared_ptr<void>& dst_dev_pt);
+// Batched: dst[j] <- coefficient set idx[j]. Each set gets its own scratch polynomial; the scatter,
+// NTT and copy are ordered on the scratch's partition streams, so there are only two host syncs over
+// all cards per batch (before: previous readers of dst are done; after: dst is ready) instead of
+// three per plaintext. Job 1765111 spent 295 of 420 matvec seconds in gpuenc_encode.
+void gpuenc_encode_batch(GpuEncoder* e, const std::vector<size_t>& idx, const std::vector<std::shared_ptr<void>*>& dst);
 // Residue-by-residue comparison of two device plaintexts: number of differing entries.
 uint64_t gpuenc_count_diff(GpuEncoder* e, std::shared_ptr<void>& a, std::shared_ptr<void>& b);
 void gpuenc_destroy(GpuEncoder* e);
