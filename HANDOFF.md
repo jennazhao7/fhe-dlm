@@ -1158,6 +1158,25 @@ jobs launched automatically on the node's four cards.
   21.5 GB peak per card. Same sample as the client-assisted runs (= the
   plaintext student).
 
+### Profile of one pass (job 1765111, 2026-11-17; `results/e5/prof3_stageB.json`)
+
+Pass 0 = 953 s (no `--debug`); pass 1 ran out of memory without
+`--restart-vm`, so the pool creep is still there. Seconds by op@level:
+
+- matvec 420 s (`mult_s`), of which **295 s are the diagonal encodes**
+  (`gpuenc_encode`, 380k calls, 3 all-card syncs each: latency-bound). Even
+  the head + embedding at 3–4 towers (`matvec@40`) take 193 s.
+- boot 113 s (100 × 1.13 s).
+- rot 21.5k at levels 33/35 (attention: 30 per token shift with linear window
+  sums) = 144 s, 6.7 ms each; norms' window sums another ~50 s.
+- mulpt@35 46 s: the per-token-shift (T, D) mask/normalizer, CPU-encoded
+  (60 ms) 768 times per pass.
+- enc/dec ~50 s.
+
+Fixes in progress: `--rotsum log` (doubling window sums, 13 keys; numpy
+check OK, error 0.08–0.11 with rsqrt norm + server GELU; GPU memory test =
+job 1768788), batched diagonal encodes, 1/sqrt(z) folded into q.
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs

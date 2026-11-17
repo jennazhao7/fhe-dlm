@@ -52,7 +52,9 @@ D, DM, HD, NH, VOC = 1024, 768, 64, 12, 50258
 # 7 rotation keys: 1, 32, -D for the matvec; window sums and replication are two-level sums over
 # (1, 8) or (1, 32) and their negatives. Job 1747455 loaded 21 keys (+-2^k) next to the bootstrap
 # keys and ran out of memory on the third bootstrap (22.6 of 24 GB per card).
-def rot_keys(n1):
+def rot_keys(n1, rotsum="lin"):
+    if rotsum == "log":                    # doubling window sums: +-2^k up to 32 (4 more keys than "lin")
+        return sorted({k * sg for k in (1, 2, 4, 8, 16, 32, n1) for sg in (1, -1)} | {-D})
     return sorted({1, 8, n1, HD // 2, -1, -8, -n1, -(HD // 2), -D})      # +-32: rotary
 UN = 64.0        # x/sigma is bootstrapped as u / UN (uncentred: |x|/sigma reaches 35 at layer 0)
 
@@ -273,8 +275,23 @@ class Circuit:
         return (np.asarray(per_tok, np.float64)[:, None] * dims[None, :]).reshape(-1)
 
     def winsum(self, r, n1, s1, n2, s2):
-        """r <- sum_{i < n1, j < n2} rot(r, i s1 + j s2), n1 + n2 - 2 rotations with keys s1, s2."""
+        """r <- sum_{i < n1, j < n2} rot(r, i s1 + j s2), n1 + n2 - 2 rotations with keys s1, s2.
+        --rotsum log (s2 = n1 s1, n1 n2 a power of two): the same sum by doubling, log2(n1 n2) steps,
+        each a rotation by 2^k s1 composed from the keys +-1..32 (36 rotations for 1024 instead of 78)."""
         be = self.be
+        if self.cfg.rotsum == "log" and s2 == n1 * s1 and (n1 * n2) & (n1 * n2 - 1) == 0:
+            amt = s1
+            while abs(amt) < abs(s1) * n1 * n2:
+                be.mov("ws", r)
+                left = abs(amt)
+                while left:
+                    k = min(32, 1 << (left.bit_length() - 1))
+                    be.rot("ws", "ws", k if amt > 0 else -k)
+                    left -= k
+                be.add(r, r, "ws")
+                amt *= 2
+            be.free("ws")
+            return
         for n, st in ((n1, s1), (n2, s2)):
             be.mov("ws", r)
             for _ in range(n - 1):
@@ -756,7 +773,7 @@ def cmd_run(a):
     chk, files = [], {}
 
     def new_vm():
-        v = VM(a.bin, a.logn, a.depth, D, a.gpus, rot_keys(a.n1), a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
+        v = VM(a.bin, a.logn, a.depth, D, a.gpus, rot_keys(a.n1, a.rotsum), a.refresh in ("boot", "boot2"), wd, cpu=a.cpu)
         print("[e5c]", json.dumps(v.ready), flush=True)
         vb = VmBE(v)
         vb.files = files                       # weight files on disk outlive a server restart
@@ -846,6 +863,8 @@ def main():
         s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
         s.add_argument("--attn", choices=("pow", "client", "client-pow"), default=None)
         s.add_argument("--gelu", choices=("poly", "client", "server"), default=None)
+        s.add_argument("--rotsum", choices=("lin", "log"), default="lin",
+                       help="window sums: lin = 9 rotation keys; log = doubling, 13 keys, about half the rotations")
         s.add_argument("--gelu-margin", type=float, default=1.5, help="--gelu server: B >= margin * max|input| (calib)")
         s.add_argument("--gelu-B", type=float, default=128.0, help="--gelu server: range when calib has no entry")
         s.add_argument("--exact-norm", action="store_true", help="student trained with e1_kd.py --exact-norm (norms on the client)")
