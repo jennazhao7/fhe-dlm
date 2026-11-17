@@ -470,12 +470,25 @@ class Circuit:
 
     def attention_server(self, lay, m):
         be, T = self.be, self.T
-        self.rotary("qr", "q", 1.0 / math.sqrt(HD))
+        if self.cfg.zfold:
+            # (s + b)^2 / z = (s / sqrt z + b / sqrt z)^2, z > 0 (exp of log_z) and per query token: fold
+            # 1/sqrt z into q's rotary plaintexts and into B. The per-shift multiply is then only the
+            # head-first-dim 0/1 mask, a period-D plaintext (job 1765111: the full-slot (T, D) mask
+            # cost 60 ms x 768 = 46 s per pass, CPU-encoded every time).
+            rz = 1.0 / np.sqrt(lay["az"][:, m].T)                                   # (T, NH)
+            qs = np.repeat(rz, HD, axis=1)                                          # (T, NH * HD)
+            qs = np.concatenate([qs, np.zeros((T, D - NH * HD))], 1).reshape(-1) / math.sqrt(HD)
+            self.rotary("qr", "q", qs)
+            ptb = np.zeros((T, D)); ptb[:, np.arange(NH) * HD] = lay["ab"][None, :] * rz
+            ptb = ptb.reshape(-1)
+            M = np.zeros(D); M[np.arange(NH) * HD] = 1.0
+        else:
+            self.rotary("qr", "q", 1.0 / math.sqrt(HD))
+            ptb = np.zeros(D); ptb[np.arange(NH) * HD] = lay["ab"]
+            M = np.zeros((T, D)); M[:, np.arange(NH) * HD] = 1.0 / lay["az"][:, m].T       # (T, NH)
+            M = M.reshape(-1)
         self.rotary("kr", "k", 1.0)
         be.check("rotary q", "qr")
-        ptb = np.zeros(D); ptb[np.arange(NH) * HD] = lay["ab"]
-        M = np.zeros((T, D)); M[:, np.arange(NH) * HD] = 1.0 / lay["az"][:, m].T       # (T, NH)
-        M = M.reshape(-1)
         for r in range(T):
             if r:
                 be.rot("kr", "kr", -D); be.rot("v", "v", -D)
@@ -864,6 +877,8 @@ def main():
         s.add_argument("--boot-bits", type=int, default=8, help="two-pass bootstrap: floor of the single-pass precision")
         s.add_argument("--attn", choices=("pow", "client", "client-pow"), default=None)
         s.add_argument("--gelu", choices=("poly", "client", "server"), default=None)
+        s.add_argument("--zfold", action="store_true",
+                       help="attention: fold 1/sqrt(z) into q and the bias; the per-shift multiply is a 0/1 mask")
         s.add_argument("--batch-enc", action="store_true",
                        help="fides_vm encodes a giant step's diagonals in one batch (FIDES_VM_BATCH=1)")
         s.add_argument("--rotsum", choices=("lin", "log"), default="lin",
