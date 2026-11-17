@@ -1151,8 +1151,12 @@ jobs launched automatically on the node's four cards.
   2.8e-5, 1038 s with checks, 21.5 GB peak. GELU in/out errors ~0.01 (the
   bootstrap noise passes through); the series fits in the 13 levels after the
   up matvec (x ends at level 40 of 43), no extra bootstraps.
-- Queued: 1760990, the same for 16 passes with `--restart-vm` →
-  `results/e5/nocl_bc64_stageB.json` (~5.5 h).
+- **Job 1760990 (16 passes, `--restart-vm`, `results/e5/nocl_bc64_stageB.json`):
+  complete encrypted generation with no client step inside any pass.** 945 s
+  per pass + 148 s VM restart (4 h 53 min in all), logit error ≤ 0.095,
+  argmax agreement ≥ 63/64 (one token off in passes 4, 5, 10), KL ≤ 3e-5,
+  21.5 GB peak per card. Same sample as the client-assisted runs (= the
+  plaintext student).
 
 ### Not done
 
