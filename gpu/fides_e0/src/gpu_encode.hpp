@@ -44,6 +44,10 @@ void gpuenc_encode(GpuEncoder* e, size_t idx, std::shared_ptr<void>& dst_dev_pt)
 // all cards per batch (before: previous readers of dst are done; after: dst is ready) instead of
 // three per plaintext. Job 1765111 spent 295 of 420 matvec seconds in gpuenc_encode.
 void gpuenc_encode_batch(GpuEncoder* e, const std::vector<size_t>& idx, const std::vector<std::shared_ptr<void>*>& dst);
+// Sparse encode (FIDES_VM_SPARSE): per limb a 2D-point negacyclic NTT + gather instead of scatter +
+// N-point NTT + copy (the plaintext is q(X^(N/2D))). Calibrates against FIDESlib's NTT and checks one
+// random set bit-exactly; returns false (and stays on the full path) if any residue differs.
+bool gpuenc_enable_sparse(GpuEncoder* e);
 // Residue-by-residue comparison of two device plaintexts: number of differing entries.
 uint64_t gpuenc_count_diff(GpuEncoder* e, std::shared_ptr<void>& a, std::shared_ptr<void>& b);
 void gpuenc_destroy(GpuEncoder* e);

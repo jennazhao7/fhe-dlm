@@ -1190,6 +1190,12 @@ buffers); peak 21.6 GB per card on nvidia-smi. `--restart-vm` still needed
 for more than one pass. Job 1770029 (`fast16`) = the 16-pass generation with
 all three flags + `--restart-vm`.
 
+**Job 1770029 (16 passes, `results/e5/fast16_stageB.json`): 703 s per pass
++ 155 s VM restart, 3 h 50 min in all (was 4 h 53 min).** Logit error ≤
+0.096, argmax agreement ≥ 63/64 (one token off in passes 4 and 10), KL ≤
+3.1e-5, 22.0 GB per card; the sample is token-for-token the plaintext
+student's.
+
 Largest remaining costs: the diagonal encodes (191 s; `matvec@40`, the head
 and embedding, still 147 s) and the bootstraps (113 s).
 

@@ -60,6 +60,9 @@ static const bool CPU_ONLY = std::getenv("FIDES_E0_CPU") != nullptr;
 // gpuenc_encode per diagonal. 0 / unset: off.
 static const uint32_t BATCH_K = std::getenv("FIDES_VM_BATCH") ? uint32_t(std::max(0, std::atoi(std::getenv("FIDES_VM_BATCH")))) : 0;
 static const bool BATCH_ENC = BATCH_K > 0;
+// FIDES_VM_SPARSE=1: diagonal encodes by a 2D-point NTT per limb + gather (gpuenc_enable_sparse), checked
+// bit-exactly against the full NTT per encoder level at startup.
+static const bool SPARSE_ENC = std::getenv("FIDES_VM_SPARSE") && std::atoi(std::getenv("FIDES_VM_SPARSE")) > 0;
 static uint32_t RING, DEPTH, D, N1, N2, SLOTS;
 
 using clk = std::chrono::steady_clock;
@@ -147,6 +150,8 @@ struct Vm {
 		}
 		en.e  = e0::gpuenc_create(cc->gpu, cc->GetDevicePlaintext(en.ref->gpu), D);
 		en.sf = e0::gpuenc_scaling_factor(en.e);
+		if (SPARSE_ENC && !e0::gpuenc_enable_sparse(en.e))
+			throw std::runtime_error("sparse encode differs from the full NTT at level " + std::to_string(level));
 		return encs[level] = en;
 	}
 	Ct& konst(uint32_t level, double c) {

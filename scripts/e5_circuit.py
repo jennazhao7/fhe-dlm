@@ -784,6 +784,7 @@ def cmd_run(a):
     wd = tempfile.mkdtemp(prefix="e5c_", dir=a.workdir)
     os.environ["FIDES_VM_N1"] = str(a.n1)
     os.environ["FIDES_VM_BATCH"] = str(a.batch_enc)
+    os.environ["FIDES_VM_SPARSE"] = "1" if a.sparse_enc else "0"
     chk, files = [], {}
 
     def new_vm():
@@ -881,6 +882,8 @@ def main():
                        help="attention: fold 1/sqrt(z) into q and the bias; the per-shift multiply is a 0/1 mask")
         s.add_argument("--batch-enc", type=int, default=0,
                        help="fides_vm encodes matvec diagonals K at a time (FIDES_VM_BATCH=K; 0 = one by one)")
+        s.add_argument("--sparse-enc", action="store_true",
+                       help="fides_vm encodes diagonals by a 2D-point NTT per limb + gather (FIDES_VM_SPARSE=1)")
         s.add_argument("--rotsum", choices=("lin", "log"), default="lin",
                        help="window sums: lin = 9 rotation keys; log = doubling, 13 keys, about half the rotations")
         s.add_argument("--gelu-margin", type=float, default=1.5, help="--gelu server: B >= margin * max|input| (calib)")
