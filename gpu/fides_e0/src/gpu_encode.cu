@@ -176,6 +176,8 @@ double gpuenc_upload(GpuEncoder* e, const std::vector<std::vector<int64_t>>& coe
 	return std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
 }
 
+static void sparse_launch(GpuEncoder* e, const std::vector<size_t>& idx, const std::vector<RNSPoly*>& dst);
+
 void gpuenc_encode(GpuEncoder* e, size_t idx, std::shared_ptr<void>& dst_dev_pt) {
 	if (idx >= e->n_sets)
 		throw std::runtime_error("gpuenc_encode: index out of range");

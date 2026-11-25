@@ -1199,6 +1199,33 @@ student's.
 Largest remaining costs: the diagonal encodes (191 s; `matvec@40`, the head
 and embedding, still 147 s) and the bootstraps (113 s).
 
+### Sparse encoder build and test (2026-11-20)
+
+The multi-GPU `fides_vm` target built on CRC after adding the missing
+declaration of `sparse_launch` in `gpu_encode.cu`. The binary SHA-256 is
+`e90001b4aac7b3501bedb06d8da360d20fe5dad2d189779fd181f025551b3d0d`.
+
+Job 1786925 stopped before model startup on `qa-rtx6k-019`. Only two of
+four cards passed the CUDA check. A separate CUDA 13.2.1 test (job 1787082)
+timed out at `cudaSetDevice` on PCI buses `06:00.0` and `D8:00.0`.
+The other two cards allocated and wrote GPU memory successfully.
+
+Submitted job 1786997 to `gpu@@crc_rtx6k` for one pass with `--sparse-enc`.
+It uses the same stage-B checkpoint, variance bounds, seed (11), and 64-token
+infill settings as job 1769076. The baseline pass took 708.166 s, with max
+absolute logit error 0.07618, top-token agreement 64/64, and KL to plaintext
+of 2.975e-5. The baseline JSON stores these metrics, without raw logits.
+
+**2026-11-25:** no output file or accounting record exists for jobs
+1786925, 1786997 or 1787082 (CRC's `qacct` has no accounting file), so the
+4-GPU sparse test has not run. The 1-GPU binary (`build/`) now builds too
+(46 s on the front end). Job 1819824 (1 GPU + spare, `--sparse-enc
+--batch-enc 16`, tag `sparse1g`) got cards `06:00.0` and `2F:00.0` on
+`qa-rtx6k-019` and hung for 10+ min in the job script's first CUDA check
+(the `timeout 180` could not kill it); deleted. With the node idle its load
+average was 19, which points to processes stuck in the driver: the node
+probably needs a reboot by CRC before any GPU job runs there.
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs
