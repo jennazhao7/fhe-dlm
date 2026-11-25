@@ -1226,6 +1226,14 @@ of 2.975e-5. The baseline JSON stores these metrics, without raw logits.
 average was 19, which points to processes stuck in the driver: the node
 probably needs a reboot by CRC before any GPU job runs there.
 
+**Card check (job 1819905, `cluster/job_gpu_check.sh`, all 4 cards tested
+in parallel with a hard kill):** `2F:00.0` and `86:00.0` work (CUDA init +
+2 GiB + 16k matmul in ~1 s); `06:00.0` and `D8:00.0` give no answer in 220 s
+and are killed (rc 137), this time without leaving stuck processes. The node's
+load was 0 before the test, so the load of 19 earlier was job 1819824's own
+hung check. Two cards: enough for 1-GPU runs, not for the depth-43 circuit
+(about 22 GB per card on 4; it has fit on 3, never on 2).
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs
