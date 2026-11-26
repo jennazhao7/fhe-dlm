@@ -1234,6 +1234,24 @@ load was 0 before the test, so the load of 19 earlier was job 1819824's own
 hung check. Two cards: enough for 1-GPU runs, not for the depth-43 circuit
 (about 22 GB per card on 4; it has fit on 3, never on 2).
 
+### Sparse encode works (job 1819922, 2026-11-25; `results/e5/sparse1g_stageB.json`)
+
+`cluster/job_e5_pass.sh` now skips 06:00.0 and D8:00.0 (`E5_SKIP_BUS`) and
+checks the other cards in parallel (9 s; submit with `-l gpu=4`). 1 GPU,
+depth 13, client norm/GELU/refresh, `--batch-enc 16 --sparse-enc`, same
+settings as job 1768812 (`--batch-enc 4`, full NTT):
+
+- Startup check: 0 differing residues at every encoder level (2, 3, 6, 7,
+  13); FIDESlib's NTT output is in standard form (scale 1). Real-size
+  self-test with the sparse path: matvec error 1e-7..6e-7.
+- Pass: **535 → 453 s**; matvec 311 → 244 s (`enc_s` 193 → 141 s); logit
+  error 1.9e-5, argmax 100% (identical to before); **GPU memory 9.4 → 7.5
+  GB** (no scratch polynomials).
+- `enc_s` includes waiting at the batch's first sync for the previous batch's
+  EvalMults, so it is not the encode kernel's own time; the gain is far below
+  the ~10× fewer NTT operations, so what is left is mostly the ct×pt products
+  and the syncs, not the encoding. Not yet run on 4 GPUs (2 cards work).
+
 ### Not done
 
 - The deep circuit holds 64 tokens in one ciphertext; L = 256 needs

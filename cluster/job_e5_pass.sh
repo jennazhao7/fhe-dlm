@@ -29,9 +29,9 @@
 #   on the CPU) -> results/e5/var_<tag>.json and appends --var-file.
 #   qsub -l gpu=4 -l h_rt=5:00:00 -v E5_GPUS=4,E5_CALIB=1,E5_SCRIPT=e5_circuit.py,E5_TAG=full_bc64,E5_STUDENT=$PWD/ckpt/e1_bc64,E5_ARGS="run --norm rsqrt --refresh boot2 --depth 43 --S 2048 --steps 16" cluster/job_e5_pass.sh
 # E5_SELFTEST=0 skips the real-size matvec self-test (results/e5/selftest_gpu_<job>.json)
-# The node's cards hang at CUDA init now and then (HANDOFF §11), and SGE cannot
-# choose one, so ask for a spare (`-l gpu=2`): every assigned card is checked
-# and the first that passes is used.
+# The node's cards hang at CUDA init (HANDOFF §11, §12: 06:00.0 and D8:00.0 since 2026-11-20), and SGE
+# cannot choose one: known-bad cards are skipped by bus id (E5_SKIP_BUS), the rest are checked in
+# parallel, and the first NG that pass are used. Ask for all four cards (`-l gpu=4`).
 source ~/.bashrc
 set -uo pipefail
 export FHEDLM_ROOT=/groups/tjung/jzhao7/fhe-dlm
@@ -45,12 +45,29 @@ export PROBE_DEV=cpu      # the client's plaintext steps run on the CPU; the car
 mkdir -p results/e5 results/logs
 
 GOOD=""; GOODS=(); NG=${E5_GPUS:-1}
-for i in $(seq 0 $(( $(nvidia-smi -L | wc -l) - 1 ))); do
-  bus=$(nvidia-smi -i "$i" --query-gpu=pci.bus_id --format=csv,noheader)
-  if CUDA_VISIBLE_DEVICES=$i timeout 180 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))"; then
+# Cards that hang at CUDA init (job 1819905, 2026-11-25) are skipped by bus id; the rest are checked in
+# parallel with a hard kill, so a card that hangs in the driver cannot block the others. Ask for all
+# four cards (-l gpu=4) to be sure the working ones are among those assigned.
+SKIP_BUS=${E5_SKIP_BUS:-"06:00.0 D8:00.0"}
+CHK=$(mktemp -d)
+for i in $(seq 0 $(( $(timeout -s KILL 60 nvidia-smi -L | wc -l) - 1 ))); do
+  bus=$(timeout -s KILL 30 nvidia-smi -i "$i" --query-gpu=pci.bus_id --format=csv,noheader)
+  skip=0; for b in $SKIP_BUS; do [[ "$bus" == *"$b" ]] && skip=1; done
+  if [ $skip = 1 ]; then echo "=== card $i ($bus) skipped (E5_SKIP_BUS)"; continue; fi
+  echo "$bus" > "$CHK/$i.bus"
+  ( CUDA_VISIBLE_DEVICES=$i timeout -s KILL 120 "$PY" -c "import torch; x = torch.ones(1024, device='cuda'); torch.cuda.synchronize(); print('cuda ok', torch.cuda.get_device_name(), float(x.sum()))" > "$CHK/$i.log" 2>&1; echo "rc=$?" >> "$CHK/$i.log" ) &
+done
+end=$(( $(date +%s) + 130 ))
+while [ "$(date +%s)" -lt "$end" ]; do
+  n_bus=$(ls "$CHK"/*.bus 2>/dev/null | wc -l); n_done=$(grep -l "^rc=" "$CHK"/*.log 2>/dev/null | wc -l)
+  [ "$n_done" -ge "$n_bus" ] && break; sleep 2
+done
+for f in $(ls "$CHK"/*.bus 2>/dev/null | sort -V); do
+  i=$(basename "$f" .bus); bus=$(cat "$f")
+  if grep -q "^cuda ok" "$CHK/$i.log" 2>/dev/null; then
     echo "=== card $i ($bus) ok"; [ -z "$GOOD" ] && GOOD=$i; GOODS+=("$i")
   else
-    echo "=== CUDA sanity check failed or timed out on card $i ($bus)"
+    echo "=== CUDA sanity check failed or timed out on card $i ($bus): $(tail -1 "$CHK/$i.log" 2>/dev/null)"
   fi
 done
 if [ -z "$GOOD" ]; then echo "=== no working card -- aborting"; exit 1; fi
