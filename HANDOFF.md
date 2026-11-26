@@ -1,5 +1,8 @@
 # FHE-DLM — Agent Handoff (2026-10-05)
 
+> **New agent: read `START_HERE.md` first** (current state, machines, access, rules, next steps;
+> 2026-11-26). This file is the full chronological log; §12 covers the encrypted pipeline.
+
 You are picking up the **E0 (cost model + microbenchmarks, kill gate)** stage of
 the FHE-DLM project: encrypted (CKKS) inference for a ~110M masked/block
 diffusion LM (MDLM / BD3-LM, GPT-2 tokenizer, d=768, 12 layers, L ≤ 256), where
